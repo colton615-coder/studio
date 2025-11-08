@@ -4,14 +4,14 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recha
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 
-const data = [
-  { month: 'Jan', spending: 1800 },
-  { month: 'Feb', spending: 1650 },
-  { month: 'Mar', spending: 2100 },
-  { month: 'Apr', spending: 1900 },
-  { month: 'May', spending: 2300 },
-  { month: 'Jun', spending: 2050 },
-];
+type ChartData = {
+  month: string;
+  spending: number;
+}
+
+interface FinanceChartProps {
+  data: ChartData[];
+}
 
 const chartConfig = {
   spending: {
@@ -21,40 +21,48 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 
-export function FinanceChart() {
+export function FinanceChart({ data }: FinanceChartProps) {
   return (
     <Card className="shadow-neumorphic-outset">
       <CardHeader>
         <CardTitle>Monthly Spending</CardTitle>
-        <CardDescription>A look at your spending over the last 6 months.</CardDescription>
+        <CardDescription>A look at your spending over time.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <ResponsiveContainer>
-            <BarChart data={data}>
-              <XAxis
-                dataKey="month"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `$${value}`}
-              />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--accent) / 0.1)' }}
-                content={<ChartTooltipContent indicator="dot" />}
-              />
-              <Bar dataKey="spending" fill="var(--color-spending)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+        {data.length > 0 ? (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <ResponsiveContainer>
+              <BarChart data={data} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+                <XAxis
+                  dataKey="month"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--accent) / 0.1)' }}
+                  content={<ChartTooltipContent indicator="dot" />}
+                />
+                <Bar dataKey="spending" fill="var(--color-spending)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        ) : (
+          <div className="flex h-[300px] w-full items-center justify-center">
+            <p className="text-muted-foreground">Log an expense to see your spending chart.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
+    
