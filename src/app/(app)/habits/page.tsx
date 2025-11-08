@@ -1,8 +1,16 @@
 'use client';
 import { useState } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+} from '@/firebase/non-blocking-updates';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Flame, Target, PlusCircle } from 'lucide-react';
+import { Flame, Target, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,50 +24,57 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-
+// Matches the Habit entity, but 'id' will be added by the useCollection hook
 type Habit = {
-  id: string;
   name: string;
   done: boolean;
   streak: number;
+  createdAt: any; // Firestore Timestamp
+  userProfileId: string;
 };
 
-const initialHabits: Habit[] = [
-  { id: 'workout', name: 'Complete a workout', done: false, streak: 12 },
-  { id: 'read', name: 'Read for 20 minutes', done: true, streak: 5 },
-  { id: 'meditate', name: 'Meditate for 10 minutes', done: false, streak: 33 },
-  { id: 'journal', name: 'Write a journal entry', done: false, streak: 2 },
-  { id: 'no-sugar', name: 'Avoid sugary snacks', done: true, streak: 8 },
-  { id: 'hydrate', name: 'Drink 8 glasses of water', done: true, streak: 21 },
-];
-
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>(initialHabits);
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
 
-  const handleHabitToggle = (id: string) => {
-    setHabits(
-      habits.map((habit) =>
-        habit.id === id ? { ...habit, done: !habit.done, streak: habit.done ? habit.streak -1 : habit.streak + 1 } : habit
-      )
-    );
+  const habitsCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'habits');
+  }, [user, firestore]);
+
+  const { data: habits, isLoading } = useCollection<Habit>(habitsCollection);
+
+  const handleHabitToggle = (id: string, currentDone: boolean, currentStreak: number) => {
+    if (!habitsCollection) return;
+    const docRef = doc(habitsCollection, id);
+    const newStreak = currentDone ? currentStreak - 1 : currentStreak + 1;
+    updateDocumentNonBlocking(docRef, { done: !currentDone, streak: newStreak });
   };
-  
+
   const handleAddHabit = () => {
-    if (newHabitName.trim()) {
-      const newHabit: Habit = {
-        id: Date.now().toString(),
+    if (newHabitName.trim() && habitsCollection && user) {
+      const newHabit: Omit<Habit, 'id' | 'createdAt'> = {
         name: newHabitName,
         done: false,
         streak: 0,
+        userProfileId: user.uid,
       };
-      setHabits([newHabit, ...habits]);
+      addDocumentNonBlocking(habitsCollection, {
+        ...newHabit,
+        createdAt: serverTimestamp(),
+      });
       setNewHabitName('');
       setIsDialogOpen(false);
     }
   };
 
+  const handleDeleteHabit = (id: string) => {
+    if (!habitsCollection) return;
+    const docRef = doc(habitsCollection, id);
+    deleteDocumentNonBlocking(docRef);
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -68,7 +83,7 @@ export default function HabitsPage() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/80 hover:bg-accent text-accent-foreground">
+        <Button onClick={() => setIsDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New Habit
         </Button>
@@ -83,7 +98,15 @@ export default function HabitsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {habits.map((habit) => (
+            {isLoading && (
+              <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              </div>
+            )}
+            {!isLoading && habits?.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No habits yet. Add one to get started!</p>
+            )}
+            {habits?.map((habit) => (
               <div
                 key={habit.id}
                 className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset"
@@ -92,7 +115,7 @@ export default function HabitsPage() {
                   <Checkbox
                     id={habit.id}
                     checked={habit.done}
-                    onCheckedChange={() => handleHabitToggle(habit.id)}
+                    onCheckedChange={() => handleHabitToggle(habit.id, habit.done, habit.streak)}
                     className="h-6 w-6 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"
                   />
                   <label
@@ -102,9 +125,14 @@ export default function HabitsPage() {
                     {habit.name}
                   </label>
                 </div>
-                <div className="flex items-center gap-2 text-accent">
-                  <Flame className="h-5 w-5" />
-                  <span className="font-semibold text-lg">{habit.streak}</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-accent">
+                    <Flame className="h-5 w-5" />
+                    <span className="font-semibold text-lg">{habit.streak}</span>
+                  </div>
+                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit.id)}>
+                      <Trash2 size={16}/>
+                  </Button>
                 </div>
               </div>
             ))}
