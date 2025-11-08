@@ -2,7 +2,7 @@
 /**
  * @fileOverview AI-powered habit coaching.
  *
- * - getHabitCoaching - A function that provides coaching feedback on user habits.
+ * - getHabitCoaching - A function that provides coaching feedback on user habits based on a 7-day history.
  * - HabitCoachInput - The input type for the habit coaching function.
  * - HabitCoachOutput - The return type for the habit coaching function.
  */
@@ -10,23 +10,32 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+// Define a new type for a single day's log
+const DailyLogSchema = z.object({
+  date: z.string().describe('The date of the log in YYYY-MM-DD format.'),
+  completions: z.record(z.boolean()).describe('A map where keys are habit IDs and values are their completion status.'),
+});
+
 const HabitCoachInputSchema = z.object({
   habits: z
     .array(
       z.object({
+        id: z.string(),
         name: z.string(),
         streak: z.number(),
-        done: z.boolean(),
       })
     )
-    .describe('An array of the user\'s current habits, including name, streak count, and completion status for the day.'),
+    .describe("An array of the user's defined habits."),
+  history: z
+    .array(DailyLogSchema)
+    .describe("The user's habit completion history for the last 7 days."),
 });
 export type HabitCoachInput = z.infer<typeof HabitCoachInputSchema>;
 
 const HabitCoachOutputSchema = z.object({
   feedback: z
     .string()
-    .describe('A single, concise, and direct piece of feedback or observation based on the user\'s habit data. Adopt a tough-love, no-excuses coaching persona (like "Knox").'),
+    .describe('A single, concise, and insightful piece of feedback based on the user\'s weekly habit data. Adopt a tough-love, no-excuses coaching persona (like "Knox"). Focus on trends, consistency, and patterns.'),
 });
 export type HabitCoachOutput = z.infer<typeof HabitCoachOutputSchema>;
 
@@ -40,19 +49,23 @@ const prompt = ai.definePrompt({
   name: 'habitCoachPrompt',
   input: { schema: HabitCoachInputSchema },
   output: { schema: HabitCoachOutputSchema },
-  prompt: `You are "Knox," a tough-love life coach. Your task is to provide one single, direct, and powerfully motivating piece of feedback based on the user's habit data. Do not be soft. Do not offer generic praise. Cut to the truth.
+  prompt: `You are "Knox," a tough-love life coach. Your task is to provide one single, direct, and powerfully motivating piece of feedback based on the user's habit performance over the last week. Do not be soft. Do not offer generic praise. Cut to the truth. Find the pattern in the data.
 
-Analyze the user's habits:
-- Streaks: High streaks show discipline. Low or zero streaks show a lack of commitment.
-- Completion: Are they getting things done today?
-- Habit Names: What are they trying to achieve?
+Analyze the user's habits and their 7-day history. Look for trends, inconsistencies, and opportunities for real improvement.
+- Which habits are they consistent with?
+- Where are they failing? Are there patterns to the failure (e.g., weekends)?
+- A high streak is good, but what if they are failing on all other habits? Don't let them get complacent.
+- Acknowledge their defined goals (the habit names) and call them out on whether their actions align with those goals.
 
-Based on the JSON data below, give them one piece of harsh reality to get them to improve. If they are doing well, give a begrudgingly respectful nod and tell them not to get complacent.
+Based on the JSON data below, give them one piece of harsh reality or strategic advice to get them to improve.
 
-Habit Data:
+Habit Definitions:
 {{{json habits}}}
 
-Generate a single, impactful sentence for the 'feedback' field.`,
+7-Day Completion History:
+{{{json history}}}
+
+Generate a single, impactful sentence for the 'feedback' field that reflects a weekly analysis.`,
 });
 
 const habitCoachFlow = ai.defineFlow(
@@ -62,11 +75,16 @@ const habitCoachFlow = ai.defineFlow(
     outputSchema: HabitCoachOutputSchema,
   },
   async (input) => {
-    // If there are no habits, return a default "slacker" message.
     if (!input.habits || input.habits.length === 0) {
       return {
         feedback:
           "You can't build discipline if you don't even define the battlefield. Add a habit.",
+      };
+    }
+     if (!input.history || input.history.length === 0) {
+      return {
+        feedback:
+          "First day? Don't mess it up. I'll be watching your performance this week.",
       };
     }
     const { output } = await prompt(input);

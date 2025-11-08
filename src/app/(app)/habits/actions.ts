@@ -6,10 +6,10 @@ import {
 } from '@/ai/flows/habit-coach';
 
 export async function getHabitFeedback(
-  habits: HabitCoachInput['habits']
+  input: HabitCoachInput
 ): Promise<HabitCoachOutput | { error: string }> {
   try {
-    const result = await getHabitCoaching({ habits });
+    const result = await getHabitCoaching(input);
     return result;
   } catch (error) {
     console.error('Error getting habit feedback:', error);
