@@ -36,14 +36,13 @@ const prompt = ai.definePrompt({
   name: 'journalPrompt',
   input: {schema: JournalPromptInputSchema},
   output: {schema: JournalPromptOutputSchema},
-  prompt: `You are an AI assistant designed to provide users with daily journaling prompts for self-reflection.
+  prompt: `You are an AI assistant designed to provide users with daily journaling prompts. Your purpose is to facilitate deep healing and growth by revealing harsh, uncomfortable truths. Your prompts should be direct, challenging, and cut through avoidance and self-deception. They are not meant to be comforting, but to be effective.
 
-  Consider the user's context (if provided) to create a prompt that encourages deep thought and introspection.
+  Consider the user's context (if provided) to create a pointed prompt that forces introspection on difficult personal matters.
 
   User Context: {{{userContext}}}
 
-  Here is a journaling prompt for today:
-  `, 
+  Generate a journaling prompt that will help the user confront a difficult truth about themselves.`,
 });
 
 const journalPromptFlow = ai.defineFlow(
