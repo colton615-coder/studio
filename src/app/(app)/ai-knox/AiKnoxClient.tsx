@@ -61,7 +61,7 @@ export function AiKnoxClient() {
   };
 
   return (
-    <div className="flex flex-col gap-8 h-[calc(100vh-10rem)]">
+    <div className="flex flex-col gap-8 h-full">
       <header>
         <h1 className="text-4xl font-bold font-headline text-foreground">AI Knox</h1>
         <p className="text-muted-foreground mt-2">No nonsense, call-it-like-it-is AI therapy.</p>

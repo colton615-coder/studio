@@ -23,7 +23,7 @@ export default function DashboardPage() {
         <h1 className="text-4xl font-bold font-headline text-foreground">Welcome to LiFE-iN-SYNC</h1>
         <p className="text-muted-foreground mt-2">Your all-in-one life management dashboard. Pick a module to get started.</p>
       </header>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((link) => (
           <Link href={link.href} key={link.href}>
             <Card className="h-full shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-shadow duration-200 ease-in-out cursor-pointer group">

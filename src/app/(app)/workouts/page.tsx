@@ -56,12 +56,12 @@ export default function WorkoutsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex justify-between items-center">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-bold font-headline text-foreground">Workouts</h1>
           <p className="text-muted-foreground mt-2">Construct and start your workout sessions.</p>
         </div>
-        <Button className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+        <Button className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground w-full md:w-auto">
           <PlusCircle className="mr-2 h-4 w-4" />
           New Template
         </Button>

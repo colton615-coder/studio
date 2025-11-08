@@ -133,17 +133,17 @@ export default function FinancePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex justify-between items-center">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-bold font-headline text-foreground">Finance</h1>
           <p className="text-muted-foreground mt-2">Manage your budgets and visualize your spending habits.</p>
         </div>
-        <div className="flex gap-2">
-           <Button onClick={() => setIsBudgetDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={!!activeBudget}>
+        <div className="flex gap-2 w-full md:w-auto">
+           <Button onClick={() => setIsBudgetDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={!!activeBudget}>
              <PlusCircle className="mr-2 h-4 w-4" />
              New Budget
            </Button>
-            <Button onClick={() => setIsExpenseDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground" disabled={!activeBudget}>
+            <Button onClick={() => setIsExpenseDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground" disabled={!activeBudget}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Expense
             </Button>
@@ -169,7 +169,7 @@ export default function FinancePage() {
          </Card>
       ) : (
       <>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="shadow-neumorphic-outset">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{activeBudget.name}</CardTitle>
@@ -207,11 +207,7 @@ export default function FinancePage() {
             <CardTitle>Budget Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <Progress value={progress} className="h-4 bg-background shadow-neumorphic-inset" indicatorClassName="bg-accent" />
-            <div className="flex justify-between text-sm mt-2 text-muted-foreground">
-              <span>${spent.toLocaleString()} spent</span>
-              <span>${budgetAmount.toLocaleString()} total</span>
-            </div>
+            <Progress value={progress} className="h-4" indicatorClassName="bg-accent" />
           </CardContent>
         </Card>
         

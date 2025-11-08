@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
-import { Bot, Loader2, Menu } from 'lucide-react';
+import { Bot, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -76,14 +76,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center justify-between border-b border-border px-4 md:hidden">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset">
-                  <Bot className="h-5 w-5 text-accent" />
-              </div>
-              <h1 className="text-lg font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
-            </Link>
-            <SidebarTrigger>
-                <Menu />
+            <SidebarTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset">
+                        <Bot className="h-5 w-5 text-accent" />
+                    </div>
+                    <h1 className="text-lg font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
+                </div>
             </SidebarTrigger>
         </header>
         <main className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8">{children}</main>

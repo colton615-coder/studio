@@ -49,8 +49,8 @@ export default function CalendarPage() {
         <h1 className="text-4xl font-bold font-headline text-foreground">Calendar</h1>
         <p className="text-muted-foreground mt-2">Log events and plans throughout the year.</p>
       </header>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="shadow-neumorphic-outset lg:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <Card className="shadow-neumorphic-outset md:col-span-2">
           <CardContent className="p-2 sm:p-4">
             <Calendar
               mode="single"

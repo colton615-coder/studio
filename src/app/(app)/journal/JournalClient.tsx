@@ -132,7 +132,7 @@ export function JournalClient() {
 
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-8">
         <header>
           <h1 className="text-4xl font-bold font-headline text-foreground">AI Journal</h1>
@@ -191,7 +191,7 @@ export function JournalClient() {
         </Card>
       </div>
 
-      <div className="lg:sticky lg:top-8">
+      <div className="md:sticky md:top-8">
         <Card className="shadow-neumorphic-outset min-h-[300px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
