@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
 import { cn } from '@/lib/utils';
@@ -74,7 +75,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <main className="min-h-screen p-4 sm:p-6 lg:p-8">{children}</main>
+        <header className="flex h-12 items-center justify-end border-b border-border px-4 md:hidden">
+          <SidebarTrigger className="shadow-neumorphic-outset active:shadow-neumorphic-inset"/>
+        </header>
+        <main className="min-h-[calc(100vh-3rem)] p-4 sm:p-6 lg:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

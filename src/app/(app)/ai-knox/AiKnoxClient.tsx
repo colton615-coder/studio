@@ -39,12 +39,13 @@ export function AiKnoxClient() {
     e.preventDefault();
     if (!input.trim() || isPending) return;
 
-    const userMessage: Message = { sender: 'user', text: input };
+    const currentInput = input;
+    const userMessage: Message = { sender: 'user', text: currentInput };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
 
     startTransition(async () => {
-      const result = await getAiKnoxResponse(input);
+      const result = await getAiKnoxResponse(currentInput);
       if ('error' in result) {
         toast({
           variant: 'destructive',
