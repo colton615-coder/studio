@@ -14,7 +14,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
-import { cn } from '@/lib/utils';
 import { Bot, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 
@@ -55,10 +54,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === link.href}
-                  className={cn(
-                    'shadow-neumorphic-outset active:shadow-neumorphic-inset',
-                    pathname === link.href && 'bg-accent/10 text-accent shadow-neumorphic-inset'
-                  )}
+                  className={
+                    pathname === link.href ? 'bg-accent/10 text-accent shadow-neumorphic-inset' : 'shadow-neumorphic-outset'
+                  }
                   tooltip={{
                     children: link.label,
                     className: "shadow-neumorphic-outset text-foreground bg-background border-transparent"
@@ -75,7 +73,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-12 items-center justify-end border-b border-border px-4 md:hidden">
+        <header className="flex h-12 items-center justify-start border-b border-border px-4 md:hidden">
           <SidebarTrigger className="shadow-neumorphic-outset active:shadow-neumorphic-inset"/>
         </header>
         <main className="min-h-[calc(100vh-3rem)] p-4 sm:p-6 lg:p-8">{children}</main>
