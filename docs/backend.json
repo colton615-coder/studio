@@ -1,0 +1,763 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile within the LiFE-iN-SYNC application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's chosen username."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Habit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Habit",
+      "type": "object",
+      "description": "Represents a user-defined habit to be tracked daily.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the habit."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Habit)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the habit."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the habit."
+        },
+        "reminderTime": {
+          "type": "string",
+          "description": "Time of day to send a reminder for the habit."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the habit was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the habit was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "name",
+        "description",
+        "reminderTime",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HabitLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HabitLog",
+      "type": "object",
+      "description": "Represents a daily log entry for a specific habit.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the habit log entry."
+        },
+        "habitId": {
+          "type": "string",
+          "description": "Reference to Habit. (Relationship: Habit 1:N HabitLog)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the habit log entry.",
+          "format": "date-time"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates whether the habit was completed on the logged date."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the log entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the log entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "habitId",
+        "date",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "JournalEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JournalEntry",
+      "type": "object",
+      "description": "Represents a user's journal entry for a specific date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the journal entry."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N JournalEntry)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the journal entry.",
+          "format": "date-time"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the journal entry."
+        },
+        "aiInsight": {
+          "type": "string",
+          "description": "AI-generated insight based on the journal entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the journal entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the journal entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "date",
+        "content",
+        "aiInsight",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Budget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Budget",
+      "type": "object",
+      "description": "Represents a user's budget settings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the budget."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Budget)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the budget (e.g., 'Monthly Expenses')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Budget amount."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date the budget takes effect.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The last date the budget is in effect.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the budget was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the budget was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "name",
+        "amount",
+        "startDate",
+        "endDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single expense.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Expense)"
+        },
+        "budgetId": {
+          "type": "string",
+          "description": "Reference to Budget. (Relationship: Budget 1:N Expense)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the expense."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the expense.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the expense was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the expense was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "budgetId",
+        "description",
+        "amount",
+        "date",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutTemplate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorkoutTemplate",
+      "type": "object",
+      "description": "Represents a workout template defined by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the workout template."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N WorkoutTemplate)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the workout template."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the workout template."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the workout template was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the workout template was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "name",
+        "description",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Exercise": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Exercise",
+      "type": "object",
+      "description": "Represents a specific exercise within a workout template.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the exercise."
+        },
+        "workoutTemplateId": {
+          "type": "string",
+          "description": "Reference to WorkoutTemplate. (Relationship: WorkoutTemplate 1:N Exercise)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the exercise."
+        },
+        "sets": {
+          "type": "number",
+          "description": "Number of sets for the exercise."
+        },
+        "reps": {
+          "type": "number",
+          "description": "Number of repetitions for each set."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the exercise."
+        },
+        "rest": {
+          "type": "number",
+          "description": "Rest time between sets."
+        }
+      },
+      "required": [
+        "id",
+        "workoutTemplateId",
+        "name",
+        "sets",
+        "reps",
+        "duration",
+        "rest"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task or reminder logged by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Task)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level of the task (e.g., High, Medium, Low)."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Date when the task is due.",
+          "format": "date-time"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates whether the task is completed."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the task was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the task was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "description",
+        "priority",
+        "dueDate",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ShoppingListItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShoppingListItem",
+      "type": "object",
+      "description": "Represents an item on a shopping list.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the shopping list item."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N ShoppingListItem)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the item."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the item needed."
+        },
+        "purchased": {
+          "type": "boolean",
+          "description": "Indicates whether the item has been purchased."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the shopping list item was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the shopping list item was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "description",
+        "quantity",
+        "purchased",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CalendarEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Represents an event or plan logged on the calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the calendar event."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N CalendarEvent)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the event."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the event."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date and time of the event.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date and time of the event.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the calendar event was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the calendar event was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "title",
+        "description",
+        "startDate",
+        "endDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Collection of user profiles, where each document represents a user. User profiles are private to each user. The `userId` parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/habits/{habitId}",
+        "definition": {
+          "entityName": "Habit",
+          "schema": {
+            "$ref": "#/backend/entities/Habit"
+          },
+          "description": "Collection of habits for a specific user.  The `userProfileId` within each habit document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "habitId",
+              "description": "The unique ID of the habit."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/habitLogs/{habitLogId}",
+        "definition": {
+          "entityName": "HabitLog",
+          "schema": {
+            "$ref": "#/backend/entities/HabitLog"
+          },
+          "description": "Collection of habit logs for a specific user's habit. The `userProfileId` and `habitId` could be denormalized here if granular access control is needed on specific habit logs. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "habitLogId",
+              "description": "The unique ID of the habit log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/journalEntries/{journalEntryId}",
+        "definition": {
+          "entityName": "JournalEntry",
+          "schema": {
+            "$ref": "#/backend/entities/JournalEntry"
+          },
+          "description": "Collection of journal entries for a specific user. The `userProfileId` within each journal entry document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "journalEntryId",
+              "description": "The unique ID of the journal entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/budgets/{budgetId}",
+        "definition": {
+          "entityName": "Budget",
+          "schema": {
+            "$ref": "#/backend/entities/Budget"
+          },
+          "description": "Collection of budgets for a specific user. The `userProfileId` within each budget document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "budgetId",
+              "description": "The unique ID of the budget."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/budgets/{budgetId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Collection of expenses for a specific user's budget. The `userProfileId` and `budgetId` could be denormalized here if granular access control is needed on specific expenses. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "budgetId",
+              "description": "The unique ID of the budget."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique ID of the expense."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/workoutTemplates/{workoutTemplateId}",
+        "definition": {
+          "entityName": "WorkoutTemplate",
+          "schema": {
+            "$ref": "#/backend/entities/WorkoutTemplate"
+          },
+          "description": "Collection of workout templates for a specific user. The `userProfileId` within each workout template document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "workoutTemplateId",
+              "description": "The unique ID of the workout template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/workoutTemplates/{workoutTemplateId}/exercises/{exerciseId}",
+        "definition": {
+          "entityName": "Exercise",
+          "schema": {
+            "$ref": "#/backend/entities/Exercise"
+          },
+          "description": "Collection of exercises for a specific user's workout template. The `userProfileId` and `workoutTemplateId` could be denormalized here if granular access control is needed on specific expenses. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "workoutTemplateId",
+              "description": "The unique ID of the workout template."
+            },
+            {
+              "name": "exerciseId",
+              "description": "The unique ID of the exercise."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Collection of tasks for a specific user. The `userProfileId` within each task document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique ID of the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/shoppingListItems/{shoppingListItemId}",
+        "definition": {
+          "entityName": "ShoppingListItem",
+          "schema": {
+            "$ref": "#/backend/entities/ShoppingListItem"
+          },
+          "description": "Collection of shopping list items for a specific user. The `userProfileId` within each shopping list item document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "shoppingListItemId",
+              "description": "The unique ID of the shopping list item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/calendarEvents/{calendarEventId}",
+        "definition": {
+          "entityName": "CalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/CalendarEvent"
+          },
+          "description": "Collection of calendar events for a specific user. The `userProfileId` within each calendar event document is equal to the `userId` path parameter, ensuring ownership. Includes `userProfileId` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "calendarEventId",
+              "description": "The unique ID of the calendar event."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to provide a secure, scalable, and easily maintainable backend for the LiFE-iN-SYNC application, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.\n\n**Authorization Independence:** Each subcollection related to a user profile (Habits, HabitLogs, JournalEntries, Budgets, Expenses, WorkoutTemplates, Exercises, Tasks, ShoppingListItems, CalendarEvents) is nested under the `/users/{userId}` path. This eliminates the need for `get()` calls in security rules, ensuring atomic operations and easier debugging.  The `userProfileId` field within each document ensures that the document is always associated with a specific user.\n\n**Clarity of Intent (Debuggability):** The path structure clearly indicates ownership and relationships.  For example, `/users/{userId}/habits/{habitId}` explicitly shows that a habit belongs to a specific user.\n\n**DBAC (No Custom Claims):**  The application relies solely on `request.auth.uid` for authentication. There are no custom claims used for authorization.\n\n**QAPs (Rules are not Filters):** Data segregation is used to enforce secure `list` operations.  All data related to a user is stored under their specific user ID, preventing unintended access to other users' data.  There are no collections containing mixed data with different access requirements.\n\n**Invariants:** The structure supports the integrity of ownership by clearly defining parent-child relationships through path-based ownership. Timestamps (`createdAt`, `updatedAt`) are included in each document to track creation and modification times.  Data that might be needed in multiple places is duplicated (denormalized) to avoid complex queries and ensure data availability for authorization.\n\nThe structure is designed to scale efficiently by leveraging Firestore's document model. It allows for easy querying and filtering of data based on user IDs and other relevant fields."
+  }
+}
