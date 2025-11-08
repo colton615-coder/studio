@@ -7,6 +7,7 @@ import {
   useMemoFirebase,
   setDocumentNonBlocking,
   deleteDocumentNonBlocking,
+  addDocumentNonBlocking,
 } from '@/firebase';
 import { collection, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { format, isToday } from 'date-fns';
