@@ -15,16 +15,29 @@ type Message = {
 };
 
 export function AiKnoxClient() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: 'ai',
-      text: "I'm AI Knox. I don't sugarcoat. What's on your mind? Get to it.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Initial message from Knox
+    startTransition(async () => {
+      const result = await getAiKnoxResponse('First message');
+       if ('error' in result) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error,
+        });
+      } else {
+        const aiMessage: Message = { sender: 'ai', text: result.therapyResponse };
+        setMessages([aiMessage]);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -104,7 +117,7 @@ export function AiKnoxClient() {
                   )}
                 </div>
               ))}
-               {isPending && (
+               {isPending && messages.length > 0 && (
                 <div className="flex items-start gap-3 justify-start">
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/20 text-accent flex items-center justify-center shadow-neumorphic-inset">
                     <Bot size={18} />
