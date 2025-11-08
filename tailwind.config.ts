@@ -66,10 +66,14 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
       },
+      boxShadow: {
+        'neumorphic-outset': '5px 5px 10px #1a1a1a, -5px -5px 10px #282828',
+        'neumorphic-inset': 'inset 5px 5px 10px #1a1a1a, inset -5px -5px 10px #282828',
+      },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 4px)',
+        sm: 'calc(var(--radius) - 6px)',
       },
       keyframes: {
         'accordion-down': {

@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/journal-insight-prompt.ts';
+import '@/ai/flows/mood-analysis-from-journal.ts';
+import '@/ai/flows/ai-knox-therapy.ts';
