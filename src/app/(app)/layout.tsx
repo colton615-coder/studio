@@ -1,7 +1,7 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -14,10 +14,27 @@ import {
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
 import { cn } from '@/lib/utils';
-import { Bot } from 'lucide-react';
+import { Bot, Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-accent" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
