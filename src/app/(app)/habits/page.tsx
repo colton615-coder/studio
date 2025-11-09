@@ -1,3 +1,31 @@
+// This component has been significantly refactored for Step 3 to include
+// the Proactive and Interactive AI Coach features.
+//
+// Key Architectural Changes:
+// 1.  State Management: New state variables `proactiveSuggestions`, `interactiveSuggestion`,
+//     and `isAiLoading` are introduced to manage the AI-generated data and loading states.
+// 2.  AI Integration Hooks:
+//     - A `useEffect` hook is added to the `Dialog` component's `onOpenChange` handler. When the
+//       modal opens, it triggers `handleProactiveSuggestions` to fetch suggestions based on the
+//       user's journal.
+//     - The `useDebouncedCallback` hook from `use-debounce` is used to trigger
+//       `handleInteractiveSuggestion` as the user types, providing real-time refinement.
+// 3.  Component Logic:
+//     - `handleProactiveSuggestions`: Fetches recent journal entries from Firestore, calls the
+//       `fetchProactiveSuggestions` server action, and populates the state.
+//     - `handleInteractiveSuggestion`: Takes the current input value, calls the
+//       `fetchInteractiveSuggestion` server action, and updates the state.
+//     - `handleSuggestionClick`: A new handler that takes a suggested habit object and uses
+//       the form's `setValue` function to pre-fill the entire "Add Habit" form, connecting
+//       the AI suggestion directly to the user's workflow.
+// 4.  UI Enhancements in Modal:
+//     - A dedicated section for "AI Suggestions" is added.
+//     - It displays a loading skeleton (`AiLoadingSkeleton`) while the proactive suggestions are being fetched.
+//     - Proactive suggestions are rendered as clickable `SuggestionPill` components.
+//     - The interactive suggestion is rendered as a `SuggestionPill` directly below the input field.
+// 5.  Silent Error Handling: All AI-related fetch calls are wrapped in try/catch blocks that
+//     fail silently (by not setting state or showing an error toast), ensuring the user can
+//     always add a habit manually even if the AI is unavailable.
 
 'use client';
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
@@ -10,10 +38,13 @@ import {
   deleteDocumentNonBlocking,
   addDocumentNonBlocking,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
 import { format, isToday, subDays } from 'date-fns';
-import { getHabitFeedback } from './actions';
+import { getHabitFeedback, fetchProactiveSuggestions, fetchInteractiveSuggestion } from './actions';
 import * as LucideIcons from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { useDebouncedCallback } from 'use-debounce';
+
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,9 +64,11 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
-const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck } = LucideIcons;
+const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2 } = LucideIcons;
 const habitIcons = { BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, BrainCircuit };
 type IconName = keyof typeof habitIcons;
 
@@ -45,8 +78,8 @@ const habitColors = [
 
 type Frequency = {
   type: 'daily' | 'weekly';
-  days: number[]; // 0-6 for Sun-Sat
-}
+  days: number[];
+};
 
 type Habit = {
   id: string;
@@ -60,6 +93,15 @@ type Habit = {
   createdAt: any;
 };
 
+// This type represents the AI-suggested habit object.
+// It's a partial habit, as it doesn't have an ID, userId, etc.
+type HabitSuggestion = Omit<Habit, 'id' | 'userId' | 'streak' | 'lastCompleted' | 'createdAt'>;
+
+type JournalEntry = {
+  id: string;
+  content: string;
+}
+
 type HabitCompletionLog = {
   [habitId: string]: boolean;
 };
@@ -69,21 +111,43 @@ type DailyLog = {
   log: HabitCompletionLog;
 };
 
+// Type for the form data
+type HabitFormData = {
+  name: string;
+  icon: IconName;
+  color: string;
+  frequency: Frequency;
+};
+
 export default function HabitsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newHabitName, setNewHabitName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<IconName | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [frequency, setFrequency] = useState<Frequency>({ type: 'daily', days: [] });
   const [isSaving, setIsSaving] = useState(false);
-  const [modalError, setModalError] = useState<string | null>(null);
 
   const [feedback, setFeedback] = useState('Analyzing your weekly performance...');
   const [isAnalyzing, startTransition] = useTransition();
+
+  // State for AI suggestions
+  const [proactiveSuggestions, setProactiveSuggestions] = useState<HabitSuggestion[]>([]);
+  const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+
+  const { control, handleSubmit, watch, setValue, reset } = useForm<HabitFormData>({
+    defaultValues: {
+      name: '',
+      icon: 'BrainCircuit',
+      color: habitColors[0],
+      frequency: { type: 'daily', days: [] }
+    }
+  });
+
+  const watchName = watch('name');
+  const watchFrequency = watch('frequency');
+
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -95,6 +159,11 @@ export default function HabitsPage() {
   const habitLogsCollection = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'habitLogs');
+  }, [user, firestore]);
+
+  const journalEntriesCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'journalEntries');
   }, [user, firestore]);
 
   const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollection);
@@ -153,41 +222,114 @@ export default function HabitsPage() {
     }
   }, [habits, habitHistory, isLoadingHistory]);
 
-  const resetModalState = () => {
-    setNewHabitName('');
-    setSelectedIcon(null);
-    setSelectedColor(null);
-    setFrequency({ type: 'daily', days: [] });
-    setModalError(null);
-    setIsSaving(false);
+
+  // --- AI Suggestion Logic ---
+  
+  // 1. Proactive suggestions based on journal entries
+  const handleProactiveSuggestions = async () => {
+    if (!journalEntriesCollection || !habits) return;
+    setIsAiLoading(true);
+    setProactiveSuggestions([]);
+    try {
+      // Fetch the last 5 journal entries
+      const q = query(journalEntriesCollection, orderBy('createdAt', 'desc'), limit(5));
+      const querySnapshot = await getDocs(q);
+      const journalEntries = querySnapshot.docs.map(doc => doc.data().content as string);
+      
+      if (journalEntries.length > 0) {
+        const existingHabits = habits.map(h => h.name);
+        const result = await fetchProactiveSuggestions({ journalEntries, existingHabits });
+        setProactiveSuggestions(result.suggestions);
+      }
+    } catch (error) {
+      console.error("Proactive AI suggestion failed:", error);
+      // Fails silently as per requirements
+    } finally {
+      setIsAiLoading(false);
+    }
   };
+
+  // 2. Interactive suggestion based on user input (debounced)
+  const handleInteractiveSuggestion = useDebouncedCallback(async (name: string) => {
+    if (!name.trim() || name.length < 5) {
+      setInteractiveSuggestion(null);
+      return;
+    }
+    try {
+      const result = await fetchInteractiveSuggestion({ userInput: name });
+      if (result.suggestion) {
+        setInteractiveSuggestion(result.suggestion);
+      } else {
+        setInteractiveSuggestion(null);
+      }
+    } catch (error) {
+      console.error("Interactive AI suggestion failed:", error);
+      setInteractiveSuggestion(null); // Fail silently
+    }
+  }, 750);
+
+  useEffect(() => {
+    handleInteractiveSuggestion(watchName);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchName]);
+
+
+  // 3. Handler to pre-fill the form when a suggestion is clicked
+  const handleSuggestionClick = (suggestion: HabitSuggestion) => {
+    setValue('name', suggestion.name);
+    // Ensure the icon exists in our list, otherwise default.
+    if (Object.keys(habitIcons).includes(suggestion.icon)) {
+      setValue('icon', suggestion.icon as IconName);
+    }
+    // Simple color validation
+    if (suggestion.color.startsWith('#')) {
+       setValue('color', suggestion.color);
+    }
+    setValue('frequency', suggestion.frequency);
+    setInteractiveSuggestion(null); // Clear interactive suggestion after applying
+  };
+
 
   const onOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
-    if (!open) resetModalState();
+    if (open) {
+      handleProactiveSuggestions(); // Trigger proactive suggestions when modal opens
+    } else {
+      reset(); // Reset form on close
+      setProactiveSuggestions([]);
+      setInteractiveSuggestion(null);
+    }
   };
 
-  const handleAddHabit = async () => {
-    if (!newHabitName.trim() || !selectedIcon || !selectedColor || !habitsCollection || !user) {
-      setModalError("Please fill out all fields.");
+  const onSubmit = async (data: HabitFormData) => {
+    if (!habitsCollection || !user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not save habit. User not found.",
+      });
       return;
     }
     setIsSaving(true);
-    setModalError(null);
     try {
       await addDocumentNonBlocking(habitsCollection, {
-        name: newHabitName,
-        icon: selectedIcon,
-        color: selectedColor,
-        frequency,
+        ...data,
         streak: 0,
         userId: user.uid,
         createdAt: serverTimestamp(),
       });
+      toast({
+        title: "Habit Created!",
+        description: `${data.name} has been added to your list.`
+      })
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to add habit:", error);
-      setModalError("Could not save habit. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not save habit. Please try again.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -234,13 +376,29 @@ export default function HabitsPage() {
     return `${freq.days.length}x a week`;
   };
 
-  const isSaveDisabled = isSaving || !newHabitName.trim() || !selectedIcon || !selectedColor;
   const isLoading = isLoadingHabits || isLoadingLog;
 
   const Icon = ({name, ...props}: {name: IconName} & React.ComponentProps<"svg">) => {
     const LucideIcon = habitIcons[name];
-    return LucideIcon ? <LucideIcon {...props} /> : null;
+    return LucideIcon ? <LucideIcon {...props} /> : <BrainCircuit {...props} />;
   }
+
+  const SuggestionPill = ({ suggestion, onClick }: { suggestion: HabitSuggestion, onClick: () => void }) => (
+    <button onClick={onClick} className="flex items-center gap-2 p-2 rounded-full bg-background shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-all text-sm text-foreground">
+        <div className="h-6 w-6 rounded-full flex items-center justify-center" style={{ backgroundColor: `${suggestion.color}33`, color: suggestion.color }}>
+            <Icon name={suggestion.icon as IconName} className="h-4 w-4" />
+        </div>
+        <span>{suggestion.name}</span>
+    </button>
+  );
+
+  const AiLoadingSkeleton = () => (
+    <div className="flex flex-wrap gap-2">
+      {[...Array(3)].map((_, i) => (
+        <Skeleton key={i} className="h-10 w-40 rounded-full" />
+      ))}
+    </div>
+  )
 
   return (
     <div className="flex flex-col gap-8">
@@ -310,67 +468,124 @@ export default function HabitsPage() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
+        <DialogContent className="shadow-neumorphic-outset bg-background border-transparent max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create a New Habit</DialogTitle>
-            <DialogDescription>Personalize your new habit to make it yours.</DialogDescription>
+            <DialogDescription>Personalize your new habit. Get suggestions from your AI Coach.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-4">
+          
+          <Separator />
+
+          <div className="space-y-4">
+            <Label className="flex items-center gap-2 text-accent"><Sparkles size={16}/>AI Coach Suggestions</Label>
+            <div className="min-h-[40px]">
+              {isAiLoading ? <AiLoadingSkeleton/> : (
+                proactiveSuggestions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {proactiveSuggestions.map((suggestion, i) => (
+                      <SuggestionPill key={i} suggestion={suggestion} onClick={() => handleSuggestionClick(suggestion)}/>
+                    ))}
+                  </div>
+                ) : <p className="text-xs text-muted-foreground">Write in your journal to get personalized suggestions.</p>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+          
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="habit-name">Habit Name</Label>
-              <Input id="habit-name" name="habit-name" autoComplete="off" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)} placeholder="e.g. Read for 20 minutes" disabled={isSaving}/>
+              <Controller
+                name="name"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => <Input id="habit-name" autoComplete="off" placeholder="e.g. Read for 20 minutes" {...field} disabled={isSaving}/>}
+              />
+               {interactiveSuggestion && (
+                  <div className="pt-2">
+                    <SuggestionPill suggestion={interactiveSuggestion} onClick={() => handleSuggestionClick(interactiveSuggestion)} />
+                  </div>
+                )}
             </div>
+            
             <div className="space-y-2">
                <Label>Icon</Label>
-               <div className="grid grid-cols-8 gap-2">
-                  {Object.keys(habitIcons).map((iconName) => (
-                    <Button key={iconName} variant="outline" size="icon" className={cn("h-10 w-10", selectedIcon === iconName && "ring-2 ring-ring bg-accent/20")} onClick={() => setSelectedIcon(iconName as IconName)} disabled={isSaving}>
-                       <Icon name={iconName as IconName} className="h-5 w-5"/>
-                    </Button>
-                  ))}
-               </div>
+                <Controller
+                    name="icon"
+                    control={control}
+                    render={({ field }) => (
+                        <div className="grid grid-cols-8 gap-2">
+                        {Object.keys(habitIcons).map((iconName) => (
+                            <Button key={iconName} type="button" variant="outline" size="icon" className={cn("h-10 w-10", field.value === iconName && "ring-2 ring-ring bg-accent/20")} onClick={() => field.onChange(iconName as IconName)} disabled={isSaving}>
+                               <Icon name={iconName as IconName} className="h-5 w-5"/>
+                            </Button>
+                        ))}
+                        </div>
+                    )}
+                />
             </div>
-             <div className="space-y-2">
-               <Label>Color</Label>
-               <div className="flex flex-wrap gap-2">
-                  {habitColors.map((color) => (
-                     <Button key={color} style={{backgroundColor: color}} className={cn("h-8 w-8 rounded-full border-2 border-transparent", selectedColor === color && "border-ring")} onClick={() => setSelectedColor(color)} disabled={isSaving}></Button>
-                  ))}
-               </div>
-            </div>
+             
             <div className="space-y-2">
-              <Label>Frequency</Label>
-              <Select onValueChange={(value: 'daily' | 'weekly') => setFrequency({ ...frequency, type: value, days: [] })} defaultValue={frequency.type} disabled={isSaving}>
-                  <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
-                  <SelectContent>
-                     <SelectItem value="daily">Daily</SelectItem>
-                     <SelectItem value="weekly">Weekly</SelectItem>
-                  </SelectContent>
-               </Select>
+                <Label>Color</Label>
+                <Controller
+                    name="color"
+                    control={control}
+                    render={({ field }) => (
+                        <div className="flex flex-wrap gap-2">
+                        {habitColors.map((color) => (
+                            <Button key={color} type="button" style={{backgroundColor: color}} className={cn("h-8 w-8 rounded-full border-2 border-transparent", field.value === color && "border-ring")} onClick={() => field.onChange(color)} disabled={isSaving}></Button>
+                        ))}
+                        </div>
+                    )}
+                />
             </div>
-            {frequency.type === 'weekly' && (
-              <div className="space-y-2">
-                <Label>Repeat on</Label>
-                <ToggleGroup type="multiple" variant="outline" value={frequency.days.map(String)} onValueChange={(days) => setFrequency({...frequency, days: days.map(Number)})} className="justify-start gap-1" disabled={isSaving}>
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                    <ToggleGroupItem key={index} value={String(index)} aria-label={`Toggle ${day}`} className="h-9 w-9 rounded-full">{day}</ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-            )}
-            {modalError && <p className="text-destructive text-sm text-center">{modalError}</p>}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button></DialogClose>
-            <Button onClick={handleAddHabit} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSaveDisabled}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSaving ? 'Saving...' : 'Save Habit'}
-            </Button>
-          </DialogFooter>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Frequency</Label>
+                    <Controller
+                        name="frequency.type"
+                        control={control}
+                        render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="daily">Daily</SelectItem>
+                                    <SelectItem value="weekly">Weekly</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                </div>
+                {watchFrequency.type === 'weekly' && (
+                  <div className="space-y-2">
+                    <Label>Repeat on</Label>
+                     <Controller
+                        name="frequency.days"
+                        control={control}
+                        render={({ field }) => (
+                             <ToggleGroup type="multiple" variant="outline" value={field.value.map(String)} onValueChange={(days) => field.onChange(days.map(Number))} className="justify-start gap-1" disabled={isSaving}>
+                              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                                <ToggleGroupItem key={index} value={String(index)} aria-label={`Toggle ${day}`} className="h-9 w-9 rounded-full">{day}</ToggleGroupItem>
+                              ))}
+                            </ToggleGroup>
+                        )}
+                     />
+                  </div>
+                )}
+            </div>
+
+            <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button></DialogClose>
+                <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSaving || !watchName}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>}
+                  {isSaving ? 'Saving...' : 'Save Habit'}
+                </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-    
