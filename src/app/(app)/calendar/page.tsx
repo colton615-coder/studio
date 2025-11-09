@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 type CalendarEvent = {
   id: string;
@@ -32,12 +33,14 @@ type CalendarEvent = {
 export default function CalendarPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventDescription, setNewEventDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const eventsCollection = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -53,9 +56,12 @@ export default function CalendarPage() {
     );
   }, [date, events]);
 
-  const handleAddEvent = () => {
-    if (newEventTitle && date && user && eventsCollection) {
-      addDocumentNonBlocking(eventsCollection, {
+  const handleAddEvent = async () => {
+    if (!newEventTitle || !date || !user || !eventsCollection) return;
+    
+    setIsSaving(true);
+    try {
+      await addDocumentNonBlocking(eventsCollection, {
         userProfileId: user.uid,
         title: newEventTitle,
         description: newEventDescription,
@@ -64,18 +70,31 @@ export default function CalendarPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      toast({ title: 'Event Created', description: `"${newEventTitle}" has been added to your calendar.` });
       setNewEventTitle('');
       setNewEventDescription('');
       setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to add event:", error);
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your event. Please try again.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDeleteEvent = (eventId: string) => {
+  const handleDeleteEvent = async (eventId: string) => {
     if (!eventsCollection || !eventId) return;
-    const docRef = doc(eventsCollection, eventId);
-    deleteDocumentNonBlocking(docRef);
-    setIsDetailDialogOpen(false);
-    setSelectedEvent(null);
+    
+    try {
+      const docRef = doc(eventsCollection, eventId);
+      await deleteDocumentNonBlocking(docRef);
+      toast({ title: 'Event Deleted', description: 'The event has been removed from your calendar.' });
+      setIsDetailDialogOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete the event.' });
+    }
   };
 
   const openEventDetails = (event: CalendarEvent) => {
@@ -171,6 +190,7 @@ export default function CalendarPage() {
                 value={newEventTitle}
                 onChange={(e) => setNewEventTitle(e.target.value)}
                 className="col-span-3"
+                disabled={isSaving}
               />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
@@ -182,14 +202,17 @@ export default function CalendarPage() {
                 value={newEventDescription}
                 onChange={(e) => setNewEventDescription(e.target.value)}
                 className="col-span-3"
+                disabled={isSaving}
               />
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">Cancel</Button>
+                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button>
             </DialogClose>
-            <Button onClick={handleAddEvent} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">Add Event</Button>
+            <Button onClick={handleAddEvent} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSaving || !newEventTitle}>
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Add Event'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -206,7 +229,7 @@ export default function CalendarPage() {
               </DialogDescription>
             </DialogHeader>
             <p>{selectedEvent.description}</p>
-            <DialogFooter className="sm:justify-between">
+            <DialogFooter className="sm:justify-between mt-4">
                <Button variant="destructive" onClick={() => handleDeleteEvent(selectedEvent.id)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Event

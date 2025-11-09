@@ -107,6 +107,10 @@ export function AiKnoxClient() {
       setLastSavedEntry(journalContent);
       setJournalContent('');
       setIsConfirmationModalOpen(true);
+      toast({
+        title: 'Entry Saved',
+        description: 'Your journal entry has been secured in your vault.',
+      });
     } catch (e: any) {
       console.error("Save to Vault Failed (Full Error Object):", e);
       toast({

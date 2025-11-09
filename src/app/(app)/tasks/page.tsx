@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 type Priority = 'Low' | 'Medium' | 'High';
 
@@ -33,6 +34,7 @@ const priorityColors: Record<Priority, string> = {
 export default function TasksPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newPriority, setNewPriority] = useState<Priority>('Medium');
 
@@ -53,6 +55,10 @@ export default function TasksPage() {
             pending.push(task);
         }
     });
+    // Sort pending tasks by priority: High, Medium, Low
+    const priorityOrder: Record<Priority, number> = { High: 1, Medium: 2, Low: 3 };
+    pending.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    
     return { pendingTasks: pending, completedTasks: completed };
   }, [tasks]);
 
@@ -60,31 +66,41 @@ export default function TasksPage() {
     e.preventDefault();
     if (!newTaskDescription.trim() || !user || !tasksCollection) return;
     
-    const promise = addDocumentNonBlocking(tasksCollection, {
-      userProfileId: user.uid,
-      description: newTaskDescription,
-      completed: false,
-      priority: newPriority,
-      dueDate: serverTimestamp(), // Simplified for now
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    setNewTaskDescription('');
-    setNewPriority('Medium');
-    return promise;
+    try {
+      addDocumentNonBlocking(tasksCollection, {
+        userProfileId: user.uid,
+        description: newTaskDescription,
+        completed: false,
+        priority: newPriority,
+        dueDate: serverTimestamp(), // Simplified for now
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Task Added', description: `"${newTaskDescription}" was added.` });
+      setNewTaskDescription('');
+      setNewPriority('Medium');
+    } catch (error) {
+      console.error("Failed to add task:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
+    }
   };
 
   const toggleTask = (task: Task) => {
     if (!tasksCollection) return;
     const docRef = doc(tasksCollection, task.id);
-    return updateDocumentNonBlocking(docRef, { completed: !task.completed });
+    updateDocumentNonBlocking(docRef, { completed: !task.completed });
   };
   
-  const deleteTask = (id: string) => {
+  const deleteTask = (task: Task) => {
     if (!tasksCollection) return;
-    const docRef = doc(tasksCollection, id);
-    return deleteDocumentNonBlocking(docRef);
+    try {
+      const docRef = doc(tasksCollection, task.id);
+      deleteDocumentNonBlocking(docRef);
+      toast({ title: 'Task Removed', description: `"${task.description}" was removed.` });
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
+    }
   };
   
   const TaskItemSkeleton = () => (
@@ -133,7 +149,7 @@ export default function TasksPage() {
                 <Badge className={cn('border', priorityColors[task.priority])}>
                     {task.priority}
                 </Badge>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteTask(task.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteTask(task)}>
                     <Trash2 size={16}/>
                 </Button>
                 </div>

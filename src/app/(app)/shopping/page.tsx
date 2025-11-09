@@ -10,6 +10,7 @@ import { ShoppingCart, PlusCircle, Trash2, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 type ShoppingListItem = {
   id: string;
@@ -22,6 +23,7 @@ type ShoppingListItem = {
 export default function ShoppingListPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [newItemDescription, setNewItemDescription] = useState('');
 
   const shoppingListCollection = useMemoFirebase(() => {
@@ -48,16 +50,21 @@ export default function ShoppingListPage() {
     e.preventDefault();
     if (!newItemDescription.trim() || !user || !shoppingListCollection) return;
     
-    addDocumentNonBlocking(shoppingListCollection, {
-      userProfileId: user.uid,
-      description: newItemDescription,
-      quantity: 1, // Default quantity
-      purchased: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    setNewItemDescription('');
+    try {
+      addDocumentNonBlocking(shoppingListCollection, {
+        userProfileId: user.uid,
+        description: newItemDescription,
+        quantity: 1, // Default quantity
+        purchased: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Item Added', description: `"${newItemDescription}" was added to your list.` });
+      setNewItemDescription('');
+    } catch (error) {
+      console.error("Failed to add item:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not add item to your list.' });
+    }
   };
 
   const toggleItem = (item: ShoppingListItem) => {
@@ -66,10 +73,16 @@ export default function ShoppingListPage() {
     updateDocumentNonBlocking(docRef, { purchased: !item.purchased });
   };
   
-  const deleteItem = (id: string) => {
+  const deleteItem = (item: ShoppingListItem) => {
     if (!shoppingListCollection) return;
-    const docRef = doc(shoppingListCollection, id);
-    deleteDocumentNonBlocking(docRef);
+    try {
+      const docRef = doc(shoppingListCollection, item.id);
+      deleteDocumentNonBlocking(docRef);
+      toast({ title: 'Item Removed', description: `"${item.description}" was removed from your list.` });
+    } catch (error) {
+       console.error("Failed to delete item:", error);
+       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove item from your list.' });
+    }
   };
 
   const ListItemSkeleton = () => (
@@ -111,7 +124,7 @@ export default function ShoppingListPage() {
                     {item.description}
                 </label>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item)}>
                 <Trash2 size={16} />
                 </Button>
             </div>

@@ -1,6 +1,7 @@
 
+
 'use client';
-import { useState, useMemo, useTransition, useEffect } from 'react';
+import { useState, useMemo, useTransition, useEffect, FormEvent } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, query, getDocs, serverTimestamp, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -73,6 +74,7 @@ export default function FinancePage() {
   const [newExpenseDescription, setNewExpenseDescription] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
   const [targetBudgetId, setTargetBudgetId] = useState('');
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
 
   const [aiFeedback, setAiFeedback] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
@@ -89,10 +91,16 @@ export default function FinancePage() {
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
 
   useEffect(() => {
-    if (!budgets) return;
+    if (!budgets || !user || !firestore) {
+      // If there are no budgets, there can be no expenses.
+      if (budgets && budgets.length === 0) {
+        setExpenses([]);
+        setIsLoadingExpenses(false);
+      }
+      return;
+    };
     
     const fetchExpenses = async () => {
-        if (!user || !firestore) return;
         setIsLoadingExpenses(true);
         const allExpenses: Expense[] = [];
         if (budgets.length > 0) {
@@ -131,17 +139,24 @@ export default function FinancePage() {
   const totalRemaining = totalBudget - totalSpent;
   
 
-  const handleAddBudget = (budgetData: { name: string; amount: number; category: string; period: 'monthly' | 'weekly' | 'yearly' }) => {
+  const handleAddBudget = async (budgetData: { name: string; amount: number; category: string; period: 'monthly' | 'weekly' | 'yearly' }) => {
     if (!user || !budgetsCollection) return;
-    addDocumentNonBlocking(budgetsCollection, {
-      userProfileId: user.uid, // Contract Guardian: Matches the security rule
-      name: budgetData.name,
-      amount: budgetData.amount,
-      category: budgetData.category,
-      period: budgetData.period,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+     try {
+      await addDocumentNonBlocking(budgetsCollection, {
+        userProfileId: user.uid, 
+        name: budgetData.name,
+        amount: budgetData.amount,
+        category: budgetData.category,
+        period: budgetData.period,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: "AI Budget Created!", description: `${budgetData.name} has been added.`});
+      setAiSuggestions(s => s.filter(s => s.category !== budgetData.category));
+     } catch (error) {
+       console.error("Failed to add AI budget:", error)
+       toast({ variant: 'destructive', title: "Creation Failed", description: "Could not save the AI suggested budget." });
+     }
   };
   
   const handleManualAddBudget = async () => {
@@ -172,40 +187,53 @@ export default function FinancePage() {
     }
   };
   
-  const handleAddExpense = () => {
+  const handleAddExpense = async (e: FormEvent) => {
+    e.preventDefault();
     if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) return;
     
     const targetBudget = budgets?.find(b => b.id === targetBudgetId);
     if (!targetBudget) return;
-    
-    const expensesCollection = collection(firestore, 'users', user.uid, 'budgets', targetBudget.id, 'expenses');
-    
-    addDocumentNonBlocking(expensesCollection, {
-      id: uuidv4(),
-      userProfileId: user.uid,
-      budgetId: targetBudget.id,
-      description: newExpenseDescription,
-      amount: parseFloat(newExpenseAmount),
-      category: targetBudget.category, // Inherit category from parent budget
-      date: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    setNewExpenseDescription('');
-    setNewExpenseAmount('');
-    setTargetBudgetId('');
-    setIsExpenseDialogOpen(false);
-    toast({ title: "Expense Logged!", description: `${newExpenseDescription} has been added.`});
+
+    setIsSavingExpense(true);
+    try {
+      const expensesCollection = collection(firestore, 'users', user.uid, 'budgets', targetBudget.id, 'expenses');
+      await addDocumentNonBlocking(expensesCollection, {
+        id: uuidv4(),
+        userProfileId: user.uid,
+        budgetId: targetBudget.id,
+        description: newExpenseDescription,
+        amount: parseFloat(newExpenseAmount),
+        category: targetBudget.category, // Inherit category from parent budget
+        date: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setNewExpenseDescription('');
+      setNewExpenseAmount('');
+      setTargetBudgetId('');
+      setIsExpenseDialogOpen(false);
+      toast({ title: "Expense Logged!", description: `${newExpenseDescription} has been added.`});
+    } catch (error) {
+      console.error("Failed to add expense:", error);
+      toast({ variant: 'destructive', title: "Save Failed", description: "Could not log your expense. Please try again." });
+    } finally {
+      setIsSavingExpense(false);
+    }
   };
 
   const handleDeleteBudget = (budgetId: string) => {
     if (!firestore || !user) return;
-    const docRef = doc(firestore, 'users', user.uid, 'budgets', budgetId);
-    deleteDocumentNonBlocking(docRef);
-    toast({
-        title: "Budget Deleted",
-        description: "The budget has been successfully removed.",
-    });
+    try {
+      const docRef = doc(firestore, 'users', user.uid, 'budgets', budgetId);
+      deleteDocumentNonBlocking(docRef);
+      toast({
+          title: "Budget Deleted",
+          description: "The budget has been successfully removed.",
+      });
+    } catch (error) {
+      console.error("Failed to delete budget:", error);
+      toast({ variant: 'destructive', title: "Delete Failed", description: "Could not delete the budget." });
+    }
   };
 
   const handleAiAnalysis = () => {
@@ -253,7 +281,7 @@ export default function FinancePage() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold font-headline text-foreground">Finance 2.0</h1>
+          <h1 className="text-4xl font-bold font-headline text-foreground">Finance</h1>
           <p className="text-muted-foreground mt-2">Your AI-powered financial dashboard.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -375,11 +403,7 @@ export default function FinancePage() {
                         {aiSuggestions.length > 0 && <Separator />}
                         <div className="flex flex-wrap gap-2">
                             {aiSuggestions.map(suggestion => (
-                                <Button key={suggestion.category} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" onClick={() => {
-                                    handleAddBudget(suggestion);
-                                    toast({ title: "AI Budget Created!", description: `${suggestion.name} has been added.`});
-                                    setAiSuggestions(s => s.filter(s => s.category !== suggestion.category));
-                                }}>
+                                <Button key={suggestion.category} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" onClick={() => handleAddBudget(suggestion)}>
                                     <PlusCircle className="mr-2 h-4 w-4"/> Create '{suggestion.name}' (${suggestion.amount})
                                 </Button>
                             ))}
@@ -485,35 +509,37 @@ export default function FinancePage() {
               Log a new expense against one of your budgets.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="expense-budget" className="text-right">Budget</Label>
-                <Select onValueChange={setTargetBudgetId} value={targetBudgetId}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectTrigger>
-                    <SelectContent>
-                        {budgets?.map(b => (
-                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="expense-desc" className="text-right">Description</Label>
-              <Input id="expense-desc" value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} className="col-span-3" placeholder="e.g., Coffee shop" />
+          <form onSubmit={handleAddExpense}>
+            <div className="grid gap-4 py-4">
+               <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="expense-budget" className="text-right">Budget</Label>
+                  <Select onValueChange={setTargetBudgetId} value={targetBudgetId} required>
+                      <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectTrigger>
+                      <SelectContent>
+                          {budgets?.map(b => (
+                              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-desc" className="text-right">Description</Label>
+                <Input id="expense-desc" value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} className="col-span-3" placeholder="e.g., Coffee shop" required />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-amount" className="text-right">Amount ($)</Label>
+                <Input id="expense-amount" type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} className="col-span-3" placeholder="e.g., 5.50" required />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="expense-amount" className="text-right">Amount ($)</Label>
-              <Input id="expense-amount" type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} className="col-span-3" placeholder="e.g., 5.50" />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">Cancel</Button></DialogClose>
-            <Button onClick={handleAddExpense} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">Save Expense</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSavingExpense}>Cancel</Button></DialogClose>
+              <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSavingExpense || !targetBudgetId || !newExpenseAmount || !newExpenseDescription}>
+                {isSavingExpense ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Expense'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-    
