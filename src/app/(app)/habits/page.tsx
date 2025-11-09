@@ -495,12 +495,24 @@ export default function HabitsPage() {
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="habit-name">Habit Name</Label>
+              <Label htmlFor="habit-name-input">Habit Name</Label>
               <Controller
                 name="name"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) => <Input id="habit-name" autoComplete="off" placeholder="e.g. Read for 20 minutes" {...field} disabled={isSaving}/>}
+                render={({ field }) => (
+                  <Input 
+                    id="habit-name-input"
+                    name="habit-name"
+                    placeholder="e.g. Read for 20 minutes" 
+                    disabled={isSaving}
+                    autoComplete="off"
+                    autoCapitalize="sentences"
+                    spellCheck="true"
+                    autoCorrect="true"
+                    {...field} 
+                  />
+                )}
               />
                {interactiveSuggestion && (
                   <div className="pt-2">
