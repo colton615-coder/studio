@@ -28,7 +28,7 @@
 //     always add a habit manually even if the AI is unavailable.
 
 'use client';
-import React, { useState, useEffect, useTransition, useMemo } from 'react';
+import React, { useState, useEffect, useTransition, useMemo, useRef } from 'react';
 import {
   useUser,
   useFirestore,
@@ -135,6 +135,9 @@ export default function HabitsPage() {
   const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // Ref for the habit name input for programmatic focus
+  const habitNameInputRef = useRef<HTMLInputElement>(null);
+
 
   const { control, handleSubmit, watch, setValue, reset } = useForm<HabitFormData>({
     defaultValues: {
@@ -236,11 +239,10 @@ export default function HabitsPage() {
       const querySnapshot = await getDocs(q);
       const journalEntries = querySnapshot.docs.map(doc => doc.data().content as string);
       
-      if (journalEntries.length > 0) {
-        const existingHabits = habits.map(h => h.name);
-        const result = await fetchProactiveSuggestions({ journalEntries, existingHabits });
-        setProactiveSuggestions(result.suggestions);
-      }
+      const existingHabits = habits.map(h => h.name);
+      const result = await fetchProactiveSuggestions({ journalEntries, existingHabits });
+      setProactiveSuggestions(result.suggestions);
+      
     } catch (error) {
       console.error("Proactive AI suggestion failed:", error);
       // Fails silently as per requirements
@@ -300,6 +302,23 @@ export default function HabitsPage() {
       setInteractiveSuggestion(null);
     }
   };
+
+  // Effect for "graceful" programmatic focus
+  useEffect(() => {
+    if (isDialogOpen) {
+      // CASE 2: AI is done loading AND there are no suggestions.
+      if (!isAiLoading && proactiveSuggestions.length === 0) {
+        // Set a timeout to allow the modal animation to finish
+        const timer = setTimeout(() => {
+          habitNameInputRef.current?.focus();
+        }, 400); // 400ms delay, adjust as needed for modal animation
+        
+        return () => clearTimeout(timer);
+      }
+    }
+    // CASE 1 (implicit): If AI is loading or there are suggestions, do nothing.
+  }, [isDialogOpen, isAiLoading, proactiveSuggestions]);
+
 
   const onSubmit = async (data: HabitFormData) => {
     if (!habitsCollection || !user) {
@@ -502,6 +521,7 @@ export default function HabitsPage() {
                 rules={{ required: true }}
                 render={({ field }) => (
                   <Input 
+                    ref={habitNameInputRef}
                     id="habit-name-input"
                     name="habit-name"
                     placeholder="e.g. Read for 20 minutes" 
