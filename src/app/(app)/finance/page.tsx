@@ -1,18 +1,19 @@
 
 'use client';
 import { useState, useMemo, useTransition, useEffect } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, getDocs, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, getDocs, serverTimestamp, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { getBudgetSuggestions } from './actions';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, PiggyBank, Receipt, PlusCircle, Loader2, Wand2, BrainCircuit, Lightbulb } from 'lucide-react';
+import { DollarSign, PiggyBank, Receipt, PlusCircle, Loader2, Wand2, BrainCircuit, Lightbulb, MoreVertical, Trash2 } from 'lucide-react';
 import { FinanceChart } from './FinanceChart';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,6 +67,8 @@ export default function FinancePage() {
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [newBudgetCategory, setNewBudgetCategory] = useState<string>('');
+  const [isSavingBudget, setIsSavingBudget] = useState(false);
+
 
   const [newExpenseDescription, setNewExpenseDescription] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
@@ -86,22 +89,25 @@ export default function FinancePage() {
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
 
   useEffect(() => {
-    if (!budgets || budgets.length === 0) {
-        setExpenses([]);
-        setIsLoadingExpenses(false);
-        return;
-    }
+    if (!budgets) return;
     
     const fetchExpenses = async () => {
         if (!user || !firestore) return;
         setIsLoadingExpenses(true);
         const allExpenses: Expense[] = [];
-        for (const budget of budgets) {
-            const expensesColRef = collection(firestore, 'users', user.uid, 'budgets', budget.id, 'expenses');
-            const expensesSnapshot = await getDocs(expensesColRef);
-            expensesSnapshot.forEach(doc => {
-                allExpenses.push({ id: doc.id, ...doc.data() } as Expense);
-            });
+        // Only fetch expenses if there are budgets to fetch for
+        if (budgets.length > 0) {
+            for (const budget of budgets) {
+                const expensesColRef = collection(firestore, 'users', user.uid, 'budgets', budget.id, 'expenses');
+                try {
+                    const expensesSnapshot = await getDocs(expensesColRef);
+                    expensesSnapshot.forEach(doc => {
+                        allExpenses.push({ id: doc.id, ...doc.data() } as Expense);
+                    });
+                } catch (error) {
+                    console.error(`Failed to fetch expenses for budget ${budget.id}:`, error);
+                }
+            }
         }
         setExpenses(allExpenses);
         setIsLoadingExpenses(false);
@@ -109,6 +115,7 @@ export default function FinancePage() {
 
     fetchExpenses();
   }, [budgets, user, firestore]);
+
 
   const budgetsWithSpending: BudgetWithSpending[] = useMemo(() => {
     return budgets?.map(budget => {
@@ -128,8 +135,7 @@ export default function FinancePage() {
   const handleAddBudget = (budgetData: { name: string; amount: number; category: string; period: 'monthly' | 'weekly' | 'yearly' }) => {
     if (!user || !budgetsCollection) return;
     addDocumentNonBlocking(budgetsCollection, {
-      id: uuidv4(),
-      userProfileId: user.uid,
+      userProfileId: user.uid, // Contract Guardian: Matches the security rule
       name: budgetData.name,
       amount: budgetData.amount,
       category: budgetData.category,
@@ -138,20 +144,32 @@ export default function FinancePage() {
       updatedAt: serverTimestamp(),
     });
   };
+  
+  const handleManualAddBudget = async () => {
+    if(!newBudgetName.trim() || !newBudgetAmount || !newBudgetCategory || !user || !budgetsCollection) return;
 
-  const handleManualAddBudget = () => {
-    if(newBudgetName.trim() && newBudgetAmount && newBudgetCategory && user) {
-        handleAddBudget({
+    setIsSavingBudget(true);
+    try {
+        await addDocumentNonBlocking(budgetsCollection, {
+            userProfileId: user.uid,
             name: newBudgetName,
             amount: parseFloat(newBudgetAmount),
             category: newBudgetCategory,
-            period: 'monthly' // Default for manual add
+            period: 'monthly',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
         });
+        
+        toast({ title: "Budget Created!", description: `${newBudgetName} has been added.`});
         setNewBudgetName('');
         setNewBudgetAmount('');
         setNewBudgetCategory('');
         setIsBudgetDialogOpen(false);
-        toast({ title: "Budget Created!", description: `${newBudgetName} has been added.`});
+    } catch (error) {
+        console.error("Failed to save budget:", error);
+        toast({ variant: 'destructive', title: "Save Failed", description: "Could not save your budget. Please try again." });
+    } finally {
+        setIsSavingBudget(false);
     }
   }
   
@@ -179,6 +197,16 @@ export default function FinancePage() {
     setTargetBudgetId('');
     setIsExpenseDialogOpen(false);
     toast({ title: "Expense Logged!", description: `${newExpenseDescription} has been added.`});
+  };
+
+  const handleDeleteBudget = (budgetId: string) => {
+    if (!firestore || !user) return;
+    const docRef = doc(firestore, 'users', user.uid, 'budgets', budgetId);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "Budget Deleted",
+        description: "The budget has been successfully removed.",
+    });
   };
 
   const handleAiAnalysis = () => {
@@ -241,7 +269,7 @@ export default function FinancePage() {
         </div>
       </header>
       
-      {isLoading ? (
+      {isLoadingBudgets ? (
         <div className="flex justify-center items-center h-64">
            <Loader2 className="h-12 w-12 animate-spin text-accent" />
         </div>
@@ -332,7 +360,7 @@ export default function FinancePage() {
                 ) : null}
             </CardContent>
             <CardFooter>
-                 <Button onClick={handleAiAnalysis} variant="ghost" className="text-accent" disabled={isAnalyzing}>
+                 <Button onClick={handleAiAnalysis} variant="ghost" className="text-accent" disabled={isAnalyzing || isLoadingExpenses}>
                     {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4" />}
                     {isAnalyzing ? 'Analyzing Spending...' : 'Analyze Spending & Suggest Budgets'}
                  </Button>
@@ -341,24 +369,42 @@ export default function FinancePage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-                {budgetsWithSpending.map(budget => (
-                    <Card key={budget.id} className="shadow-neumorphic-outset">
-                        <CardHeader>
-                            <CardTitle className="flex justify-between items-center">
-                                <span>{budget.name}</span>
-                                <span className="text-lg font-semibold">${budget.amount}</span>
-                            </CardTitle>
-                            <CardDescription>Category: {budget.category}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Progress value={budget.progress} indicatorClassName="bg-accent" />
-                            <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
-                                <span>Spent: ${budget.spent.toLocaleString()}</span>
-                                <span>Remaining: ${budget.remaining.toLocaleString()}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+                {isLoading ? (
+                    [...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)
+                ) : (
+                    budgetsWithSpending.map(budget => (
+                        <Card key={budget.id} className="shadow-neumorphic-outset">
+                            <CardHeader>
+                                <CardTitle className="flex justify-between items-start">
+                                    <span>{budget.name}</span>
+                                     <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                <MoreVertical size={16} />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleDeleteBudget(budget.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                <Trash2 className="mr-2" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </CardTitle>
+                                <CardDescription>
+                                    ${budget.amount.toLocaleString()} / {budget.period}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Progress value={budget.progress} indicatorClassName="bg-accent" />
+                                <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                                    <span>Spent: ${budget.spent.toLocaleString()}</span>
+                                    <span>Remaining: ${budget.remaining.toLocaleString()}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                )}
             </div>
             <FinanceChart data={monthlySpending} />
         </div>
@@ -376,15 +422,15 @@ export default function FinancePage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-name" className="text-right">Name</Label>
-              <Input id="budget-name" value={newBudgetName} onChange={(e) => setNewBudgetName(e.target.value)} className="col-span-3" placeholder="e.g., Monthly Groceries" />
+              <Input id="budget-name" value={newBudgetName} onChange={(e) => setNewBudgetName(e.target.value)} className="col-span-3" placeholder="e.g., Monthly Groceries" disabled={isSavingBudget} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-amount" className="text-right">Amount ($)</Label>
-              <Input id="budget-amount" type="number" value={newBudgetAmount} onChange={(e) => setNewBudgetAmount(e.target.value)} className="col-span-3" placeholder="e.g., 500" />
+              <Input id="budget-amount" type="number" value={newBudgetAmount} onChange={(e) => setNewBudgetAmount(e.target.value)} className="col-span-3" placeholder="e.g., 500" disabled={isSavingBudget} />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-category" className="text-right">Category</Label>
-              <Select onValueChange={setNewBudgetCategory} value={newBudgetCategory}>
+              <Select onValueChange={setNewBudgetCategory} value={newBudgetCategory} disabled={isSavingBudget}>
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectTrigger>
                 <SelectContent>
                     {SPENDING_CATEGORIES.map(cat => (
@@ -395,8 +441,10 @@ export default function FinancePage() {
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">Cancel</Button></DialogClose>
-            <Button onClick={handleManualAddBudget} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">Save Budget</Button>
+            <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSavingBudget}>Cancel</Button></DialogClose>
+            <Button onClick={handleManualAddBudget} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSavingBudget || !newBudgetName || !newBudgetAmount || !newBudgetCategory}>
+              {isSavingBudget ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Budget'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
