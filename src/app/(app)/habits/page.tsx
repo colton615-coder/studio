@@ -8,7 +8,6 @@ import {
   setDocumentNonBlocking,
   deleteDocumentNonBlocking,
   addDocumentNonBlocking,
-  useDoc,
 } from '@/firebase';
 import { collection, doc, serverTimestamp, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { format, isToday, subDays } from 'date-fns';
@@ -30,6 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { HabitCoachInput } from '@/ai/flows/habit-coach';
+import { useToast } from '@/hooks/use-toast';
 
 type Habit = {
   id: string;
@@ -40,8 +40,6 @@ type Habit = {
   streak: number;
 };
 
-// This represents the structure of a document in the 'habitLogs' collection.
-// The document ID is the date string 'YYYY-MM-DD'.
 type HabitCompletionLog = {
   [habitId: string]: boolean;
 };
@@ -54,8 +52,18 @@ type DailyLog = {
 export default function HabitsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  // --- Modal Control State ---
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // --- Local State for the "Add New Habit" Modal ---
+  // This state is now fully controlled by the modal itself.
   const [newHabitName, setNewHabitName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // --- AI Coach State ---
   const [feedback, setFeedback] = useState('Analyzing your weekly performance...');
   const [isAnalyzing, startTransition] = useTransition();
 
@@ -71,14 +79,13 @@ export default function HabitsPage() {
     return collection(firestore, 'users', user.uid, 'habitLogs');
   }, [user, firestore]);
 
-  // This hook fetches the user's habits.
+  // This hook fetches the user's habits and updates reactively from Firestore.
+  // This is now the single source of truth for the habit list.
   const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollection);
   
-  // This state stores the completion history for the last 7 days.
   const [habitHistory, setHabitHistory] = useState<DailyLog[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   
-  // This state stores only today's log for quick UI updates.
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
   const [isLoadingLog, setIsLoadingLog] = useState(true);
 
@@ -95,12 +102,17 @@ export default function HabitsPage() {
       try {
         const querySnapshot = await getDocs(q);
         const history: DailyLog[] = [];
+        let foundToday = false;
         querySnapshot.forEach((doc) => {
           history.push({ id: doc.id, log: doc.data().log });
           if(doc.id === todayStr) {
             setTodayLog({ id: doc.id, log: doc.data().log });
+            foundToday = true;
           }
         });
+        if (!foundToday) {
+            setTodayLog(null); // Reset if no log for today is found
+        }
         setHabitHistory(history);
       } catch (e) {
         console.error("Error fetching habit history:", e);
@@ -114,10 +126,10 @@ export default function HabitsPage() {
   }, [habitLogsCollection, todayStr]);
 
 
-  const combinedHabits = habits?.map(habit => ({
+  const combinedHabits = useMemo(() => habits?.map(habit => ({
     ...habit,
     done: todayLog?.log?.[habit.id] ?? false
-  }));
+  })), [habits, todayLog]);
 
   // Effect to fetch AI feedback. This runs when habits or their history change.
   useEffect(() => {
@@ -158,42 +170,80 @@ export default function HabitsPage() {
       if (!lastCompletedDate || !isToday(lastCompletedDate)) {
         newStreak = newStreak + 1;
       }
-      // Update the habit document with the new streak and completion date.
       setDocumentNonBlocking(habitRef, { streak: newStreak, lastCompleted: serverTimestamp() }, { merge: true });
     } else {
       const lastCompletedDate = habit.lastCompleted?.toDate();
       if(lastCompletedDate && isToday(lastCompletedDate)) {
         newStreak = Math.max(0, newStreak - 1);
-        // Only update the streak, don't touch the lastCompleted date.
         setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
       }
     }
 
-    // Update the daily log document.
     const logUpdate = { log: { [habit.id]: newDoneState } };
     setDocumentNonBlocking(logRef, logUpdate, { merge: true });
   };
 
 
-  const handleAddHabit = () => {
-    if (newHabitName.trim() && habitsCollection && user) {
-      return addDocumentNonBlocking(habitsCollection, {
+  /**
+   * Task 2: Re-architect Modal State & Save Logic
+   * This function now implements a robust, non-optimistic save flow.
+   * 1. Sets a loading state (`isSaving`).
+   * 2. Disables the form to prevent multiple submissions.
+   * 3. Calls Firestore and waits for the operation to complete.
+   * 4. On success, it closes the modal and resets the form. The UI will update via the real-time listener.
+   * 5. On failure, it shows an error message inside the modal and keeps it open.
+   * 6. `finally` block ensures the form is always re-enabled.
+   */
+  const handleAddHabit = async () => {
+    if (newHabitName.trim() === '' || !habitsCollection || !user) {
+      return;
+    }
+
+    setIsSaving(true);
+    setModalError(null);
+
+    try {
+      // The `addDocumentNonBlocking` function returns a promise which we now properly await.
+      await addDocumentNonBlocking(habitsCollection, {
         name: newHabitName,
         streak: 0,
         userProfileId: user.uid,
         createdAt: serverTimestamp(),
       });
+      
+      // On success, reset state and close the modal.
       setNewHabitName('');
       setIsDialogOpen(false);
+
+    } catch (error) {
+      console.error("Failed to add habit:", error);
+      setModalError("Could not save habit. Please try again.");
+    } finally {
+      // Always re-enable the form.
+      setIsSaving(false);
     }
   };
+
 
   const handleDeleteHabit = (id: string) => {
     if (!habitsCollection) return;
     const docRef = doc(habitsCollection, id);
-    return deleteDocumentNonBlocking(docRef);
-    // Note: This doesn't clean up historical logs, which is acceptable for now.
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "Habit Removed",
+        description: "The habit has been deleted from your list."
+    })
   };
+
+  // Resets modal state when it's opened or closed
+  const onOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+        setNewHabitName('');
+        setModalError(null);
+        setIsSaving(false);
+    }
+  }
   
   const isLoading = isLoadingHabits || isLoadingLog;
 
@@ -204,7 +254,7 @@ export default function HabitsPage() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+        <Button onClick={() => onOpenChange(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New Habit
         </Button>
@@ -245,7 +295,13 @@ export default function HabitsPage() {
               </div>
             )}
             {!isLoading && combinedHabits?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No habits yet. Add one to get started!</p>
+              <div className="text-center py-4">
+                <p className="text-muted-foreground mb-4">No habits yet. Add one to get started!</p>
+                <Button onClick={() => onOpenChange(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create First Habit
+                </Button>
+              </div>
             )}
             {combinedHabits?.map((habit) => (
               <div
@@ -280,7 +336,10 @@ export default function HabitsPage() {
           </div>
         </CardContent>
       </Card>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+
+      {/* --- Add Habit Dialog --- */}
+      {/* The open and onOpenChange props now fully control the dialog's visibility */}
+      <Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           <DialogHeader>
             <DialogTitle>Add a New Habit</DialogTitle>
@@ -290,26 +349,45 @@ export default function HabitsPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="habit-name" className="text-right">
+              {/* Task 1 Fix: Label now points to the semantic ID 'new-habit-name' */}
+              <Label htmlFor="new-habit-name" className="text-right">
                 Habit
               </Label>
+              {/* Task 1 Fix: `id`, `name`, and `autoComplete` attributes are set to prevent autofill bug. */}
               <Input
-                id="habit-name"
+                id="new-habit-name"
+                name="new-habit-name"
+                autoComplete="off"
                 value={newHabitName}
                 onChange={(e) => setNewHabitName(e.target.value)}
                 className="col-span-3"
                 placeholder="e.g. Read for 20 minutes"
+                disabled={isSaving}
               />
             </div>
+            {modalError && (
+                <p className="text-destructive text-sm text-center col-span-4">{modalError}</p>
+            )}
           </div>
           <DialogFooter>
+            {/* Task 2 Fix: Cancel button is disabled during save operation */}
             <DialogClose asChild>
-                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">Cancel</Button>
+                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button>
             </DialogClose>
-            <Button onClick={handleAddHabit} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">Save Habit</Button>
+            {/* Task 2 Fix: Save button is disabled during save and shows a loading state */}
+            <Button 
+                onClick={handleAddHabit} 
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground"
+                disabled={isSaving || newHabitName.trim() === ''}
+            >
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSaving ? 'Saving...' : 'Save Habit'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    
