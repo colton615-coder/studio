@@ -75,6 +75,8 @@ export async function saveJournalEntry(input: SaveJournalEntryInput) {
   } catch (error) {
     console.error('Server Action: Failed to save journal entry.', error);
     // Re-throw the error to be caught by the client-side try/catch block
-    throw new Error('Failed to save journal entry to the database.');
+    throw error;
   }
 }
+
+    
