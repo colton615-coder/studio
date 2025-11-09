@@ -1,5 +1,3 @@
-
-
 // This component has been significantly refactored for Step 3 to include
 // the Proactive and Interactive AI Coach features.
 //
@@ -68,6 +66,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
 
 const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2 } = LucideIcons;
@@ -472,12 +471,17 @@ export default function HabitsPage() {
             {isLoading ? (
               [...Array(3)].map((_, i) => <HabitCardSkeleton key={i} />)
             ) : !combinedHabits || combinedHabits.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">No habits yet. Add one to get started!</p>
-                <Button onClick={() => onOpenChange(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
-                  <PlusCircle className="mr-2 h-4 w-4" />Create First Habit
-                </Button>
-              </div>
+              <EmptyStateCTA
+                icon={<Target size={32} />}
+                title="Define Your Discipline"
+                message="No habits yet. Add one to start building the new you."
+                ctaElement={
+                  <Button onClick={() => onOpenChange(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Your First Habit
+                  </Button>
+                }
+              />
             ) : (
               combinedHabits.map((habit) => (
                 <div key={habit.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">

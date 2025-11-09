@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useState, useMemo, useTransition, useEffect, FormEvent } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -21,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
 const SPENDING_CATEGORIES = [
   'food', 'transport', 'housing', 'bills', 'entertainment', 'shopping', 'health', 'other'
@@ -330,24 +329,17 @@ export default function FinancePage() {
           </Card>
         </div>
       ) : !budgets || budgets.length === 0 ? (
-         <Card className="shadow-neumorphic-outset text-center py-12">
-            <CardHeader>
-               <CardTitle>No Budgets Found</CardTitle>
-               <CardDescription>Create a budget manually, or let your AI coach help you out.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button onClick={() => setIsBudgetDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Manually
-                    </Button>
-                     <Button onClick={handleAiAnalysis} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
-                       {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <BrainCircuit className="mr-2 h-4 w-4 text-accent" />}
-                       {isAnalyzing ? 'Analyzing...' : 'Ask AI Coach'}
-                    </Button>
-                </div>
-            </CardContent>
-         </Card>
+         <EmptyStateCTA
+            icon={<PiggyBank size={32}/>}
+            title="Start Your Financial Journey"
+            message="Create a budget to start tracking your spending and get insights from your AI coach."
+            ctaElement={
+              <Button onClick={() => setIsBudgetDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Your First Budget
+              </Button>
+            }
+         />
       ) : (
       <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

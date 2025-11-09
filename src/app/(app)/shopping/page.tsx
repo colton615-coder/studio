@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
 type ShoppingListItem = {
   id: string;
@@ -95,7 +96,7 @@ export default function ShoppingListPage() {
     </div>
   );
 
-  const renderShoppingList = (title: string, list: ShoppingListItem[], icon: React.ReactNode) => (
+  const renderShoppingList = (title: string, list: ShoppingListItem[], icon: React.ReactNode, type: 'needed' | 'purchased') => (
      <div>
         <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-4">
             {icon}
@@ -128,7 +129,11 @@ export default function ShoppingListPage() {
                 <Trash2 size={16} />
                 </Button>
             </div>
-            )) : <p className="text-muted-foreground text-center py-4 text-sm">Nothing here!</p>}
+            )) : type === 'needed' ? (
+                <p className="text-muted-foreground text-center py-4 text-sm">Your list is empty. Add an item above to get started!</p>
+            ) : (
+                <p className="text-muted-foreground text-center py-4 text-sm">Move items here by checking them off your list.</p>
+            )}
         </div>
      </div>
   );
@@ -139,67 +144,69 @@ export default function ShoppingListPage() {
         <h1 className="text-4xl font-bold font-headline text-foreground">Shopping List</h1>
         <p className="text-muted-foreground mt-2">Track groceries and other essentials to restock.</p>
       </header>
-
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle>Add New Item</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex items-center gap-4">
-            <Input
-              value={newItemDescription}
-              onChange={(e) => setNewItemDescription(e.target.value)}
-              placeholder="e.g., Organic milk"
-              className="flex-grow"
-            />
-            <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="text-accent" />
-            Your List
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-8">
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-4">
-                  <ShoppingCart size={20} />
-                  Needed
-                </h3>
-                <div className="space-y-4">
-                  <ListItemSkeleton />
-                  <ListItemSkeleton />
+      {isLoading ? (
+        <>
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-64 w-full" />
+        </>
+      ) : items && items.length > 0 ? (
+        <>
+          <Card className="shadow-neumorphic-outset">
+            <CardHeader>
+              <CardTitle>Add New Item</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="flex items-center gap-4">
+                <Input
+                  value={newItemDescription}
+                  onChange={(e) => setNewItemDescription(e.target.value)}
+                  placeholder="e.g., Organic milk"
+                  className="flex-grow"
+                />
+                <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Item
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+          <Card className="shadow-neumorphic-outset">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="text-accent" />
+                Your List
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-8">
+                {renderShoppingList('Needed', neededItems, <ShoppingCart size={20} />, 'needed')}
+                {purchasedItems.length > 0 && <Separator />}
+                {renderShoppingList('In Cart', purchasedItems, <Tags size={20} />, 'purchased')}
                 </div>
-              </div>
-              <Separator />
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-4">
-                  <Tags size={20} />
-                  In Cart
-                </h3>
-                 <div className="space-y-4">
-                  <ListItemSkeleton />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {renderShoppingList('Needed', neededItems, <ShoppingCart size={20} />)}
-              {purchasedItems.length > 0 && <Separator />}
-              {renderShoppingList('In Cart', purchasedItems, <Tags size={20} />)}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <EmptyStateCTA
+            icon={<ShoppingCart size={32} />}
+            title="Start Your Shopping List"
+            message="Add your first item to keep track of what you need."
+            ctaElement={
+                <form onSubmit={handleSubmit} className="flex items-center gap-4 w-full max-w-sm mx-auto">
+                    <Input
+                    value={newItemDescription}
+                    onChange={(e) => setNewItemDescription(e.target.value)}
+                    placeholder="e.g., Organic milk"
+                    className="flex-grow"
+                    />
+                    <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add
+                    </Button>
+                </form>
+            }
+        />
+      )}
     </div>
   );
 }

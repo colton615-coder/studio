@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
 type Priority = 'Low' | 'Medium' | 'High';
 
@@ -167,59 +168,90 @@ export default function TasksPage() {
         <p className="text-muted-foreground mt-2">Log daily objectives and set priorities.</p>
       </header>
 
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle>Add New Task</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4">
-            <Input
-              value={newTaskDescription}
-              onChange={(e) => setNewTaskDescription(e.target.value)}
-              placeholder="What needs to be done?"
-              className="flex-grow"
-            />
-            <Select onValueChange={(value: Priority) => setNewPriority(value)} defaultValue={newPriority}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button type="submit" className="w-full sm:w-auto shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
-              <PlusCircle className="mr-2 h-4 w-4"/>
-              Add Task
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+       {isLoading ? (
+        <>
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-64 w-full" />
+        </>
+       ) : tasks && tasks.length > 0 ? (
+        <>
+            <Card className="shadow-neumorphic-outset">
+                <CardHeader>
+                <CardTitle>Add New Task</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4">
+                    <Input
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    placeholder="What needs to be done?"
+                    className="flex-grow"
+                    />
+                    <Select onValueChange={(value: Priority) => setNewPriority(value)} defaultValue={newPriority}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <Button type="submit" className="w-full sm:w-auto shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                    <PlusCircle className="mr-2 h-4 w-4"/>
+                    Add Task
+                    </Button>
+                </form>
+                </CardContent>
+            </Card>
 
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ListTodo className="text-accent" />
-            Your To-Do List
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-        {isLoading ? (
-             <div className="space-y-4">
-                <TaskItemSkeleton />
-                <TaskItemSkeleton />
-                <TaskItemSkeleton />
-             </div>
-        ) : (
-          <div className="space-y-8">
-            {renderTaskList('Pending', pendingTasks, <ListTodo size={20} />)}
-            {completedTasks.length > 0 && <Separator />}
-            {renderTaskList('Completed', completedTasks, <Check size={20} />)}
-          </div>
-        )}
-        </CardContent>
-      </Card>
+            <Card className="shadow-neumorphic-outset">
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <ListTodo className="text-accent" />
+                    Your To-Do List
+                </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-8">
+                        {renderTaskList('Pending', pendingTasks, <ListTodo size={20} />)}
+                        {completedTasks.length > 0 && <Separator />}
+                        {renderTaskList('Completed', completedTasks, <Check size={20} />)}
+                    </div>
+                </CardContent>
+            </Card>
+        </>
+       ) : (
+            <EmptyStateCTA
+                icon={<ListTodo size={32} />}
+                title="Get Organized"
+                message="Your to-do list is empty. Add a task to get started."
+                ctaElement={
+                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg mx-auto">
+                        <Input
+                        value={newTaskDescription}
+                        onChange={(e) => setNewTaskDescription(e.target.value)}
+                        placeholder="e.g., Finish Q2 report"
+                        className="flex-grow"
+                        />
+                        <Select onValueChange={(value: Priority) => setNewPriority(value)} defaultValue={newPriority}>
+                        <SelectTrigger className="w-full sm:w-[140px]">
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <Button type="submit" className="w-full sm:w-auto shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                        <PlusCircle className="mr-2 h-4 w-4"/>
+                        Add
+                        </Button>
+                    </form>
+                }
+            />
+       )}
     </div>
   );
 }

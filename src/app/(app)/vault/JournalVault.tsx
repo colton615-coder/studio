@@ -3,9 +3,12 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2 } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type JournalEntry = {
     id: string;
@@ -52,9 +55,16 @@ export function JournalVault() {
                     {isLoading ? (
                         <VaultSkeleton />
                     ) : !sortedEntries || sortedEntries.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-10">
-                            Your vault is empty. Go to the AI Companion to write your first entry.
-                        </p>
+                        <EmptyStateCTA
+                            icon={<Lock size={32} />}
+                            title="Your Vault is Empty"
+                            message="Your private journal entries are saved here after you write them in the AI Companion."
+                            ctaElement={
+                                <Button asChild variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                                    <Link href="/ai-knox">Write Your First Entry</Link>
+                                </Button>
+                            }
+                        />
                     ) : (
                         <Accordion type="single" collapsible className="w-full">
                             {sortedEntries.map((entry) => (

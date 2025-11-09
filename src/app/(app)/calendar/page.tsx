@@ -5,7 +5,7 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { PlusCircle, Dot, Loader2, Trash2 } from 'lucide-react';
+import { PlusCircle, Dot, Loader2, Trash2, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
 type CalendarEvent = {
   id: string;
@@ -164,7 +165,17 @@ export default function CalendarPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-4">No events for this day.</p>
+                <EmptyStateCTA
+                  icon={<CalendarDays size={32} />}
+                  title="No Events Scheduled"
+                  message="This day is wide open. Add an event to get started."
+                  ctaElement={
+                    <Button onClick={() => setIsAddDialogOpen(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Event
+                    </Button>
+                  }
+                />
               )}
             </div>
           </CardContent>
