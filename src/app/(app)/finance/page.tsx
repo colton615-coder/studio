@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -96,7 +95,6 @@ export default function FinancePage() {
         if (!user || !firestore) return;
         setIsLoadingExpenses(true);
         const allExpenses: Expense[] = [];
-        // Only fetch expenses if there are budgets to fetch for
         if (budgets.length > 0) {
             for (const budget of budgets) {
                 const expensesColRef = collection(firestore, 'users', user.uid, 'budgets', budget.id, 'expenses');
@@ -172,7 +170,7 @@ export default function FinancePage() {
     } finally {
         setIsSavingBudget(false);
     }
-  }
+  };
   
   const handleAddExpense = () => {
     if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) return;
@@ -235,7 +233,7 @@ export default function FinancePage() {
         setAiSuggestions(result.suggestions);
       }
     });
-  }
+  };
   
   const isLoading = isLoadingBudgets || isLoadingExpenses;
 
@@ -461,7 +459,7 @@ export default function FinancePage() {
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-category" className="text-right">Category</Label>
               <Select onValueChange={setNewBudgetCategory} value={newBudgetCategory} disabled={isSavingBudget}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectValue>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectTrigger>
                 <SelectContent>
                     {SPENDING_CATEGORIES.map(cat => (
                         <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
@@ -491,7 +489,7 @@ export default function FinancePage() {
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-budget" className="text-right">Budget</Label>
                 <Select onValueChange={setTargetBudgetId} value={targetBudgetId}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectValue>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectTrigger>
                     <SelectContent>
                         {budgets?.map(b => (
                             <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
@@ -517,3 +515,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
+    
