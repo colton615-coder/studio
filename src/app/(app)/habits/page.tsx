@@ -1,4 +1,5 @@
 
+
 // This component has been significantly refactored for Step 3 to include
 // the Proactive and Interactive AI Coach features.
 //
@@ -85,7 +86,7 @@ type Frequency = {
 type Habit = {
   id: string;
   name: string;
-  userId: string;
+  userProfileId: string;
   icon: IconName;
   color: string;
   frequency: Frequency;
@@ -96,7 +97,7 @@ type Habit = {
 
 // This type represents the AI-suggested habit object.
 // It's a partial habit, as it doesn't have an ID, userId, etc.
-type HabitSuggestion = Omit<Habit, 'id' | 'userId' | 'streak' | 'lastCompleted' | 'createdAt'>;
+type HabitSuggestion = Omit<Habit, 'id' | 'userProfileId' | 'streak' | 'lastCompleted' | 'createdAt'>;
 
 type JournalEntry = {
   id: string;
@@ -335,7 +336,7 @@ export default function HabitsPage() {
       await addDocumentNonBlocking(habitsCollection, {
         ...data,
         streak: 0,
-        userId: user.uid,
+        userProfileId: user.uid,
         createdAt: serverTimestamp(),
       });
       toast({
@@ -528,9 +529,9 @@ export default function HabitsPage() {
                     placeholder="e.g. Read for 20 minutes" 
                     disabled={isSaving}
                     autoComplete="off"
-                    autoCapitalize="sentences"
+                    autoCapitalize="on"
                     spellCheck="true"
-                    autoCorrect="true"
+                    autoCorrect="on"
                     {...field} 
                   />
                 )}
