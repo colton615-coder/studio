@@ -93,7 +93,7 @@ export function AiKnoxClient() {
       setJournalContent('');
       setIsConfirmationModalOpen(true);
     } catch (e: any) {
-      console.error("Save to Vault Failed:", e.message, "Code:", e.code);
+      console.error("Save to Vault Failed (Full Error Object):", e);
       toast({
         variant: 'destructive',
         title: 'Error',
