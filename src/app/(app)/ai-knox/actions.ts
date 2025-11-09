@@ -47,10 +47,12 @@ type SaveJournalEntryInput = {
 export async function saveJournalEntry(input: SaveJournalEntryInput) {
   const { firestore } = getSdks();
   if (!firestore) {
+    console.error("Save to Vault Failed: Firestore is not initialized.");
     throw new Error("Firestore is not initialized");
   }
 
   const journalEntriesCollection = collection(firestore, 'users', input.userId, 'journalEntries');
+  console.log("Saving to path:", journalEntriesCollection.path);
   
   return addDocumentNonBlocking(journalEntriesCollection, {
     content: input.content,

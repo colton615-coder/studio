@@ -87,12 +87,14 @@ export function AiKnoxClient() {
     }
     
     setIsSaving(true);
+    console.log("Checking save parameters - User ID:", firebaseUser.uid);
     try {
       await saveJournalEntry({ content: journalContent, userId: firebaseUser.uid });
       setLastSavedEntry(journalContent);
       setJournalContent('');
       setIsConfirmationModalOpen(true);
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Save to Vault Failed:", e.message, "Code:", e.code);
       toast({
         variant: 'destructive',
         title: 'Error',
