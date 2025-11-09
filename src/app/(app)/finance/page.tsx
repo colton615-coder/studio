@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { getBudgetSuggestions } from './actions';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { DollarSign, PiggyBank, Receipt, PlusCircle, Loader2, Wand2, BrainCircuit, Lightbulb, MoreVertical, Trash2 } from 'lucide-react';
 import { FinanceChart } from './FinanceChart';
@@ -488,4 +488,3 @@ export default function FinancePage() {
   );
 }
 
-    
