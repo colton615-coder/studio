@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -270,8 +271,37 @@ export default function FinancePage() {
       </header>
       
       {isLoadingBudgets ? (
-        <div className="flex justify-center items-center h-64">
-           <Loader2 className="h-12 w-12 animate-spin text-accent" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="shadow-neumorphic-outset">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+              <PiggyBank className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-4 w-1/3 mt-2" />
+            </CardContent>
+          </Card>
+           <Card className="shadow-neumorphic-outset">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+              <Receipt className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+               <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-4 w-1/3 mt-2" />
+            </CardContent>
+          </Card>
+           <Card className="shadow-neumorphic-outset">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Remaining</CardTitle>
+              <DollarSign className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-4 w-1/3 mt-2" />
+            </CardContent>
+          </Card>
         </div>
       ) : !budgets || budgets.length === 0 ? (
          <Card className="shadow-neumorphic-outset text-center py-12">
@@ -431,7 +461,7 @@ export default function FinancePage() {
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-category" className="text-right">Category</Label>
               <Select onValueChange={setNewBudgetCategory} value={newBudgetCategory} disabled={isSavingBudget}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectTrigger>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectValue>
                 <SelectContent>
                     {SPENDING_CATEGORIES.map(cat => (
                         <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
@@ -461,7 +491,7 @@ export default function FinancePage() {
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-budget" className="text-right">Budget</Label>
                 <Select onValueChange={setTargetBudgetId} value={targetBudgetId}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectValue>
                     <SelectContent>
                         {budgets?.map(b => (
                             <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
@@ -487,4 +517,3 @@ export default function FinancePage() {
     </div>
   );
 }
-

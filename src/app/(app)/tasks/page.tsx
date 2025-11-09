@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ListTodo, PlusCircle, Trash2, Loader2, Check } from 'lucide-react';
+import { ListTodo, PlusCircle, Trash2, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Priority = 'Low' | 'Medium' | 'High';
 
@@ -85,6 +86,19 @@ export default function TasksPage() {
     const docRef = doc(tasksCollection, id);
     return deleteDocumentNonBlocking(docRef);
   };
+  
+  const TaskItemSkeleton = () => (
+    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-5 w-5 rounded-sm" />
+        <Skeleton className="h-5 w-48" />
+      </div>
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-8 w-8" />
+      </div>
+    </div>
+  );
   
   const renderTaskList = (title: string, list: Task[], icon: React.ReactNode) => (
     <div>
@@ -176,8 +190,10 @@ export default function TasksPage() {
         </CardHeader>
         <CardContent>
         {isLoading ? (
-             <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+             <div className="space-y-4">
+                <TaskItemSkeleton />
+                <TaskItemSkeleton />
+                <TaskItemSkeleton />
              </div>
         ) : (
           <div className="space-y-8">

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type CalendarEvent = {
   id: string;
@@ -92,8 +93,8 @@ export default function CalendarPage() {
         <Card className="shadow-neumorphic-outset md:col-span-2">
           <CardContent className="p-2 sm:p-4">
             {isLoading ? (
-               <div className="flex justify-center items-center h-[300px]">
-                 <Loader2 className="h-8 w-8 animate-spin text-accent" />
+               <div className="p-4">
+                 <Skeleton className="h-[300px] w-full" />
                </div>
             ) : (
             <Calendar
@@ -133,8 +134,9 @@ export default function CalendarPage() {
             </Button>
             <div className="space-y-4">
               {isLoading ? (
-                 <div className="flex justify-center items-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                 <div className="space-y-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
                  </div>
               ): selectedDayEvents.length > 0 ? (
                 selectedDayEvents.map((event) => (

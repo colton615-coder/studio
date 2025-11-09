@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ShoppingCart, PlusCircle, Trash2, Loader2, Tags } from 'lucide-react';
+import { ShoppingCart, PlusCircle, Trash2, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ShoppingListItem = {
   id: string;
@@ -70,6 +71,16 @@ export default function ShoppingListPage() {
     const docRef = doc(shoppingListCollection, id);
     deleteDocumentNonBlocking(docRef);
   };
+
+  const ListItemSkeleton = () => (
+    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-5 w-5 rounded-sm" />
+        <Skeleton className="h-5 w-40" />
+      </div>
+      <Skeleton className="h-8 w-8" />
+    </div>
+  );
 
   const renderShoppingList = (title: string, list: ShoppingListItem[], icon: React.ReactNode) => (
      <div>
@@ -145,8 +156,27 @@ export default function ShoppingListPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            <div className="space-y-8">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-4">
+                  <ShoppingCart size={20} />
+                  Needed
+                </h3>
+                <div className="space-y-4">
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                </div>
+              </div>
+              <Separator />
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-4">
+                  <Tags size={20} />
+                  In Cart
+                </h3>
+                 <div className="space-y-4">
+                  <ListItemSkeleton />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-8">

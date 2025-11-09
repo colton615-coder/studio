@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type JournalEntry = {
     id: string;
@@ -27,6 +28,14 @@ export function JournalVault() {
 
     const sortedEntries = entries?.sort((a,b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
 
+    const VaultSkeleton = () => (
+      <div className="space-y-2">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+
     return (
         <div className="flex flex-col gap-8">
             <header>
@@ -41,9 +50,7 @@ export function JournalVault() {
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <div className="flex justify-center items-center h-40">
-                            <Loader2 className="h-8 w-8 animate-spin text-accent" />
-                        </div>
+                        <VaultSkeleton />
                     ) : !sortedEntries || sortedEntries.length === 0 ? (
                         <p className="text-muted-foreground text-center py-10">
                             Your vault is empty. Go to the AI Companion to write your first entry.

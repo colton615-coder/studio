@@ -421,6 +421,25 @@ export default function HabitsPage() {
     </div>
   )
 
+  const HabitCardSkeleton = () => (
+    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-6 w-6 rounded-sm" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <div>
+            <Skeleton className="h-5 w-32 mb-1" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-8 w-12" />
+        <Skeleton className="h-8 w-8" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -450,40 +469,42 @@ export default function HabitsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {isLoading && <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>}
-            {!isLoading && combinedHabits?.length === 0 && (
+            {isLoading ? (
+              [...Array(3)].map((_, i) => <HabitCardSkeleton key={i} />)
+            ) : !combinedHabits || combinedHabits.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-muted-foreground mb-4">No habits yet. Add one to get started!</p>
                 <Button onClick={() => onOpenChange(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
                   <PlusCircle className="mr-2 h-4 w-4" />Create First Habit
                 </Button>
               </div>
+            ) : (
+              combinedHabits.map((habit) => (
+                <div key={habit.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
+                  <div className="flex items-center gap-4">
+                    <Checkbox id={habit.id} checked={habit.done} onCheckedChange={() => handleHabitToggle(habit)} className="h-6 w-6 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"/>
+                    <div className="flex items-center gap-3">
+                       <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${habit.color}33`, color: habit.color, border: `1px solid ${habit.color}50` }}>
+                          <Icon name={habit.icon} className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <label htmlFor={habit.id} className="text-md font-medium leading-none">{habit.name}</label>
+                          <p className="text-sm text-muted-foreground">{getFrequencyText(habit.frequency)}</p>
+                        </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-accent">
+                      <Flame className="h-5 w-5" />
+                      <span className="font-semibold text-lg">{habit.streak}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit.id)}>
+                      <Trash2 size={16}/>
+                    </Button>
+                  </div>
+                </div>
+              ))
             )}
-            {combinedHabits?.map((habit) => (
-              <div key={habit.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
-                <div className="flex items-center gap-4">
-                  <Checkbox id={habit.id} checked={habit.done} onCheckedChange={() => handleHabitToggle(habit)} className="h-6 w-6 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"/>
-                  <div className="flex items-center gap-3">
-                     <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${habit.color}33`, color: habit.color, border: `1px solid ${habit.color}50` }}>
-                        <Icon name={habit.icon} className="h-6 w-6" />
-                     </div>
-                     <div>
-                        <label htmlFor={habit.id} className="text-md font-medium leading-none">{habit.name}</label>
-                        <p className="text-sm text-muted-foreground">{getFrequencyText(habit.frequency)}</p>
-                      </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-accent">
-                    <Flame className="h-5 w-5" />
-                    <span className="font-semibold text-lg">{habit.streak}</span>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit.id)}>
-                    <Trash2 size={16}/>
-                  </Button>
-                </div>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
