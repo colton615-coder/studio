@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
@@ -438,3 +439,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
+    
