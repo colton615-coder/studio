@@ -48,7 +48,7 @@
           "type": "string",
           "description": "Unique identifier for the habit."
         },
-        "userProfileId": {
+        "userId": {
           "type": "string",
           "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Habit)"
         },
@@ -56,33 +56,60 @@
           "type": "string",
           "description": "Name of the habit."
         },
-        "description": {
+        "icon": {
           "type": "string",
-          "description": "Description of the habit."
+          "description": "Name of the lucide-react icon for the habit."
         },
-        "reminderTime": {
+        "color": {
           "type": "string",
-          "description": "Time of day to send a reminder for the habit."
+          "description": "Hex color code or Tailwind CSS class for the habit."
+        },
+        "frequency": {
+          "type": "object",
+          "description": "How often the habit should be performed.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "daily",
+                "weekly"
+              ]
+            },
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Days of the week (0=Sun, 1=Mon, ...), empty if type is 'daily'."
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "streak": {
+          "type": "number",
+          "description": "Current streak for the habit."
+        },
+        "lastCompleted": {
+          "type": "string",
+          "description": "Timestamp indicating when the habit was last completed.",
+          "format": "date-time"
         },
         "createdAt": {
           "type": "string",
           "description": "Timestamp indicating when the habit was created.",
           "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the habit was last updated.",
-          "format": "date-time"
         }
       },
       "required": [
         "id",
-        "userProfileId",
+        "userId",
         "name",
-        "description",
-        "reminderTime",
-        "createdAt",
-        "updatedAt"
+        "icon",
+        "color",
+        "frequency",
+        "createdAt"
       ]
     },
     "HabitLog": {
@@ -766,3 +793,5 @@
     "reasoning": "The Firestore data structure is designed to provide a secure, scalable, and easily maintainable backend for the LiFE-iN-SYNC application, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.\n\n**Authorization Independence:** Each subcollection related to a user profile (Habits, HabitLogs, JournalEntries, Budgets, Expenses, WorkoutTemplates, Exercises, Tasks, ShoppingListItems, CalendarEvents) is nested under the `/users/{userId}` path. This eliminates the need for `get()` calls in security rules, ensuring atomic operations and easier debugging.  The `userProfileId` field within each document ensures that the document is always associated with a specific user.\n\n**Clarity of Intent (Debuggability):** The path structure clearly indicates ownership and relationships.  For example, `/users/{userId}/habits/{habitId}` explicitly shows that a habit belongs to a specific user.\n\n**DBAC (No Custom Claims):**  The application relies solely on `request.auth.uid` for authentication. There are no custom claims used for authorization.\n\n**QAPs (Rules are not Filters):** Data segregation is used to enforce secure `list` operations.  All data related to a user is stored under their specific user ID, preventing unintended access to other users' data.  There are no collections containing mixed data with different access requirements.\n\n**Invariants:** The structure supports the integrity of ownership by clearly defining parent-child relationships through path-based ownership. Timestamps (`createdAt`, `updatedAt`) are included in each document to track creation and modification times.  Data that might be needed in multiple places is duplicated (denormalized) to avoid complex queries and ensure data availability for authorization.\n\nThe structure is designed to scale efficiently by leveraging Firestore's document model. It allows for easy querying and filtering of data based on user IDs and other relevant fields."
   }
 }
+
+    
