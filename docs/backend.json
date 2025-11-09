@@ -207,7 +207,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Budget",
       "type": "object",
-      "description": "Represents a user's budget settings.",
+      "description": "Represents a user's budget for a specific category and time period.",
       "properties": {
         "id": {
           "type": "string",
@@ -219,21 +219,20 @@
         },
         "name": {
           "type": "string",
-          "description": "Name of the budget (e.g., 'Monthly Expenses')."
+          "description": "Name of the budget (e.g., 'Monthly Groceries')."
         },
         "amount": {
           "type": "number",
           "description": "Budget amount."
         },
-        "startDate": {
+        "category": {
           "type": "string",
-          "description": "The date the budget takes effect.",
-          "format": "date-time"
+          "description": "The spending category for this budget (e.g., 'food', 'transport', 'housing')."
         },
-        "endDate": {
+        "period": {
           "type": "string",
-          "description": "The last date the budget is in effect.",
-          "format": "date-time"
+          "description": "The time period for the budget.",
+          "enum": ["monthly", "weekly", "yearly"]
         },
         "createdAt": {
           "type": "string",
@@ -251,8 +250,8 @@
         "userProfileId",
         "name",
         "amount",
-        "startDate",
-        "endDate",
+        "category",
+        "period",
         "createdAt",
         "updatedAt"
       ]
@@ -261,7 +260,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Expense",
       "type": "object",
-      "description": "Represents a single expense.",
+      "description": "Represents a single expense, which is always associated with a parent budget.",
       "properties": {
         "id": {
           "type": "string",
@@ -269,11 +268,11 @@
         },
         "userProfileId": {
           "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Expense)"
+          "description": "Reference to UserProfile for ownership verification."
         },
         "budgetId": {
           "type": "string",
-          "description": "Reference to Budget. (Relationship: Budget 1:N Expense)"
+          "description": "Reference to the parent Budget. (Relationship: Budget 1:N Expense)"
         },
         "description": {
           "type": "string",
@@ -282,6 +281,10 @@
         "amount": {
           "type": "number",
           "description": "Amount of the expense."
+        },
+        "category": {
+          "type": "string",
+          "description": "The spending category, inherited from the parent budget. Denormalized for easier AI analysis."
         },
         "date": {
           "type": "string",
@@ -305,6 +308,7 @@
         "budgetId",
         "description",
         "amount",
+        "category",
         "date",
         "createdAt",
         "updatedAt"
@@ -668,7 +672,7 @@
           "schema": {
             "$ref": "#/backend/entities/Expense"
           },
-          "description": "Collection of expenses for a specific user's budget. The `userProfileId` and `budgetId` could be denormalized here if granular access control is needed on specific expenses. Includes `userProfileId` for authorization independence.",
+          "description": "Subcollection of expenses for a specific budget. The `userProfileId` and `budgetId` are denormalized for security and query efficiency. Path-based ownership ensures a user can only access expenses under their own budgets.",
           "params": [
             {
               "name": "userId",
@@ -676,7 +680,7 @@
             },
             {
               "name": "budgetId",
-              "description": "The unique ID of the budget."
+              "description": "The unique ID of the parent budget."
             },
             {
               "name": "expenseId",
