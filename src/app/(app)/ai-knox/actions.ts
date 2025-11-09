@@ -61,12 +61,12 @@ export async function saveJournalEntry(input: SaveJournalEntryInput) {
   const journalEntriesCollection = collection(firestore, 'users', input.userId, 'journalEntries');
   
   const docData = {
-    content: input.content,
-    createdAt: serverTimestamp(),
-    userProfileId: input.userId,
     id: uuidv4(),
+    userProfileId: input.userId,
+    content: input.content,
     date: new Date().toISOString(),
     aiInsight: '',
+    createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
 
