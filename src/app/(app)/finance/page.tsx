@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, getDocs, serverTimestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -155,7 +155,7 @@ export default function FinancePage() {
   }
   
   const handleAddExpense = () => {
-    if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user) return;
+    if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) return;
     
     const targetBudget = budgets?.find(b => b.id === targetBudgetId);
     if (!targetBudget) return;
@@ -438,5 +438,3 @@ export default function FinancePage() {
     </div>
   );
 }
-
-    
