@@ -10,12 +10,13 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Define a new type for a single day's log
+// This new schema defines the structure for a single day's log of habit completions.
 const DailyLogSchema = z.object({
   date: z.string().describe('The date of the log in YYYY-MM-DD format.'),
   completions: z.record(z.boolean()).describe('A map where keys are habit IDs and values are their completion status.'),
 });
 
+// The input schema is updated to accept an array of habits and a 7-day history of logs.
 const HabitCoachInputSchema = z.object({
   habits: z
     .array(
@@ -45,6 +46,9 @@ export async function getHabitCoaching(
   return habitCoachFlow(input);
 }
 
+// The AI prompt is now much more sophisticated.
+// It instructs the AI to act as a "Weekly Strategist," analyzing trends and patterns
+// from the historical data provided, rather than just reacting to a single day.
 const prompt = ai.definePrompt({
   name: 'habitCoachPrompt',
   input: { schema: HabitCoachInputSchema },
@@ -75,6 +79,8 @@ const habitCoachFlow = ai.defineFlow(
     outputSchema: HabitCoachOutputSchema,
   },
   async (input) => {
+    // This logic handles edge cases where the user has no habits or no history,
+    // providing specific, actionable feedback for those scenarios.
     if (!input.habits || input.habits.length === 0) {
       return {
         feedback:

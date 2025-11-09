@@ -40,6 +40,8 @@ type Habit = {
   streak: number;
 };
 
+// This represents the structure of a document in the 'habitLogs' collection.
+// The document ID is the date string 'YYYY-MM-DD'.
 type HabitCompletionLog = {
   [habitId: string]: boolean;
 };
@@ -64,28 +66,29 @@ export default function HabitsPage() {
     return collection(firestore, 'users', user.uid, 'habits');
   }, [user, firestore]);
 
-  const habitLogDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return doc(firestore, 'users', user.uid, 'habitLogs', todayStr);
-  }, [user, firestore, todayStr]);
-
   const habitLogsCollection = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'habitLogs');
   }, [user, firestore]);
 
+  // This hook fetches the user's habits.
   const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollection);
-  const { data: todayLog, isLoading: isLoadingLog } = useDoc<DailyLog>(habitLogDocRef);
   
+  // This state stores the completion history for the last 7 days.
   const [habitHistory, setHabitHistory] = useState<DailyLog[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  
+  // This state stores only today's log for quick UI updates.
+  const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
+  const [isLoadingLog, setIsLoadingLog] = useState(true);
 
-  // Effect to fetch last 7 days of history
+  // Effect to fetch last 7 days of history, including today.
   useEffect(() => {
     if (!habitLogsCollection) return;
 
     const fetchHistory = async () => {
       setIsLoadingHistory(true);
+      setIsLoadingLog(true);
       const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd');
       const q = query(habitLogsCollection, where('__name__', '>=', sevenDaysAgo));
       
@@ -94,17 +97,21 @@ export default function HabitsPage() {
         const history: DailyLog[] = [];
         querySnapshot.forEach((doc) => {
           history.push({ id: doc.id, log: doc.data().log });
+          if(doc.id === todayStr) {
+            setTodayLog({ id: doc.id, log: doc.data().log });
+          }
         });
         setHabitHistory(history);
       } catch (e) {
         console.error("Error fetching habit history:", e);
       } finally {
         setIsLoadingHistory(false);
+        setIsLoadingLog(false);
       }
     };
 
     fetchHistory();
-  }, [habitLogsCollection]);
+  }, [habitLogsCollection, todayStr]);
 
 
   const combinedHabits = habits?.map(habit => ({
@@ -112,7 +119,7 @@ export default function HabitsPage() {
     done: todayLog?.log?.[habit.id] ?? false
   }));
 
-  // Effect to fetch AI feedback
+  // Effect to fetch AI feedback. This runs when habits or their history change.
   useEffect(() => {
     if (habits && !isLoadingHistory) {
       startTransition(async () => {
@@ -140,29 +147,37 @@ export default function HabitsPage() {
 
     const newDoneState = !habit.done;
     let newStreak = habit.streak;
+    
+    // Optimistically update the UI for a faster user experience.
+    const newTodayLog = {...(todayLog?.log || {}), [habit.id]: newDoneState };
+    setTodayLog({id: todayStr, log: newTodayLog });
 
+    // Update streak logic.
     if (newDoneState) {
       const lastCompletedDate = habit.lastCompleted?.toDate();
       if (!lastCompletedDate || !isToday(lastCompletedDate)) {
         newStreak = newStreak + 1;
       }
+      // Update the habit document with the new streak and completion date.
       setDocumentNonBlocking(habitRef, { streak: newStreak, lastCompleted: serverTimestamp() }, { merge: true });
     } else {
       const lastCompletedDate = habit.lastCompleted?.toDate();
       if(lastCompletedDate && isToday(lastCompletedDate)) {
         newStreak = Math.max(0, newStreak - 1);
+        // Only update the streak, don't touch the lastCompleted date.
         setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
       }
     }
 
-    const logUpdate = { [`log.${habit.id}`]: newDoneState };
+    // Update the daily log document.
+    const logUpdate = { log: { [habit.id]: newDoneState } };
     setDocumentNonBlocking(logRef, logUpdate, { merge: true });
   };
 
 
   const handleAddHabit = () => {
     if (newHabitName.trim() && habitsCollection && user) {
-      addDocumentNonBlocking(habitsCollection, {
+      return addDocumentNonBlocking(habitsCollection, {
         name: newHabitName,
         streak: 0,
         userProfileId: user.uid,
@@ -176,11 +191,11 @@ export default function HabitsPage() {
   const handleDeleteHabit = (id: string) => {
     if (!habitsCollection) return;
     const docRef = doc(habitsCollection, id);
-    deleteDocumentNonBlocking(docRef);
+    return deleteDocumentNonBlocking(docRef);
     // Note: This doesn't clean up historical logs, which is acceptable for now.
   };
   
-  const isLoading = isLoadingHabits || isLoadingLog || isLoadingHistory;
+  const isLoading = isLoadingHabits || isLoadingLog;
 
   return (
     <div className="flex flex-col gap-8">
@@ -203,7 +218,7 @@ export default function HabitsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isAnalyzing ? (
+          {isAnalyzing || isLoadingHistory ? (
              <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin"/>
               {feedback}

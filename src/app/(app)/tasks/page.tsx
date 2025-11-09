@@ -59,7 +59,7 @@ export default function TasksPage() {
     e.preventDefault();
     if (!newTaskDescription.trim() || !user || !tasksCollection) return;
     
-    addDocumentNonBlocking(tasksCollection, {
+    const promise = addDocumentNonBlocking(tasksCollection, {
       userProfileId: user.uid,
       description: newTaskDescription,
       completed: false,
@@ -71,18 +71,19 @@ export default function TasksPage() {
 
     setNewTaskDescription('');
     setNewPriority('Medium');
+    return promise;
   };
 
   const toggleTask = (task: Task) => {
     if (!tasksCollection) return;
     const docRef = doc(tasksCollection, task.id);
-    updateDocumentNonBlocking(docRef, { completed: !task.completed });
+    return updateDocumentNonBlocking(docRef, { completed: !task.completed });
   };
   
   const deleteTask = (id: string) => {
     if (!tasksCollection) return;
     const docRef = doc(tasksCollection, id);
-    deleteDocumentNonBlocking(docRef);
+    return deleteDocumentNonBlocking(docRef);
   };
   
   const renderTaskList = (title: string, list: Task[], icon: React.ReactNode) => (

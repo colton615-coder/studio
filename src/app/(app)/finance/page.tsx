@@ -81,7 +81,7 @@ export default function FinancePage() {
 
   const handleAddBudget = () => {
     if (newBudgetName.trim() && newBudgetAmount && user && budgetsCollection) {
-      addDocumentNonBlocking(budgetsCollection, {
+      const promise = addDocumentNonBlocking(budgetsCollection, {
         userProfileId: user.uid,
         name: newBudgetName,
         amount: parseFloat(newBudgetAmount),
@@ -92,12 +92,13 @@ export default function FinancePage() {
       setNewBudgetName('');
       setNewBudgetAmount('');
       setIsBudgetDialogOpen(false);
+      return promise;
     }
   };
 
   const handleAddExpense = () => {
     if (newExpenseDescription.trim() && newExpenseAmount && user && expensesCollection && activeBudget) {
-      addDocumentNonBlocking(expensesCollection, {
+      const promise = addDocumentNonBlocking(expensesCollection, {
         userProfileId: user.uid,
         budgetId: activeBudget.id,
         description: newExpenseDescription,
@@ -108,6 +109,7 @@ export default function FinancePage() {
       setNewExpenseDescription('');
       setNewExpenseAmount('');
       setIsExpenseDialogOpen(false);
+      return promise;
     }
   };
   
