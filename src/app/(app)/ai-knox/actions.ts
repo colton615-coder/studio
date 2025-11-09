@@ -4,6 +4,21 @@ import {
   aiKnoxTherapy,
   AiKnoxTherapyOutput,
 } from '@/ai/flows/ai-knox-therapy';
+import {
+  generateJournalPrompt,
+  JournalPromptOutput,
+} from '@/ai/flows/journal-insight-prompt';
+
+
+export async function getDailyPrompt(): Promise<JournalPromptOutput> {
+  try {
+    const result = await generateJournalPrompt({});
+    return result;
+  } catch (error) {
+    console.error('Error generating journal prompt:', error);
+    return { prompt: 'What are you grateful for today?' };
+  }
+}
 
 export async function getAiKnoxResponse(
   userInput: string

@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import { 
   LayoutDashboard, 
   CheckCircle, 
-  BookHeart, 
   Wallet, 
   Bot, 
   Dumbbell, 
@@ -20,9 +19,8 @@ export type NavLink = {
 export const navLinks: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/habits", label: "Habit Tracker", icon: CheckCircle },
-  { href: "/journal", label: "AI Journal", icon: BookHeart },
   { href: "/finance", label: "Finance", icon: Wallet },
-  { href: "/ai-knox", label: "AI Knox", icon: Bot },
+  { href: "/ai-knox", label: "AI Companion", icon: Bot },
   { href: "/workouts", label: "Workouts", icon: Dumbbell },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/shopping", label: "Shopping List", icon: ShoppingCart },
