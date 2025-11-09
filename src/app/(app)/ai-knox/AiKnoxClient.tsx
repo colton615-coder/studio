@@ -1,7 +1,7 @@
 'use client';
 import { useState, useTransition, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAiKnoxResponse, getDailyPrompt, saveJournalEntry } from './actions';
+import { getAiKnoxResponse, getDailyPrompt } from './actions';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useUser as useFirebaseUser } from '@/firebase';
+import { useUser as useFirebaseUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +21,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 
 type Message = {
   sender: 'user' | 'ai';
@@ -28,6 +29,7 @@ type Message = {
 
 export function AiKnoxClient() {
   const { user: firebaseUser } = useFirebaseUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,18 +79,31 @@ export function AiKnoxClient() {
   }, [messages]);
   
   const handleSaveToVault = async () => {
-    if (!journalContent.trim() || !firebaseUser) {
+    if (!journalContent.trim() || !firebaseUser || !firestore) {
       toast({
         variant: 'destructive',
-        title: 'Journal is Empty',
-        description: "You can't save an empty journal entry.",
+        title: 'Save Error',
+        description: "Cannot save entry. Missing user or database connection.",
       });
       return;
     }
     
     setIsSaving(true);
     try {
-      await saveJournalEntry({ content: journalContent, userId: firebaseUser.uid });
+      const journalEntriesCollection = collection(firestore, 'users', firebaseUser.uid, 'journalEntries');
+      const docData = {
+        id: uuidv4(),
+        userProfileId: firebaseUser.uid,
+        content: journalContent,
+        date: new Date().toISOString(),
+        aiInsight: '', // Required by schema
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      // Use non-blocking write from the client
+      await addDocumentNonBlocking(journalEntriesCollection, docData);
+
       setLastSavedEntry(journalContent);
       setJournalContent('');
       setIsConfirmationModalOpen(true);
@@ -240,11 +255,12 @@ export function AiKnoxClient() {
           </CardContent>
           <CardFooter>
             <form onSubmit={handleSubmit} className="flex w-full items-center gap-2">
-              <Input
+              <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Or start a new conversation..."
                 autoComplete="off"
+                rows={1}
               />
               <Button type="submit" size="icon" disabled={isPending} className="shadow-neumorphic-outset active:shadow-neumorphic-inset aspect-square bg-primary/80 hover:bg-primary">
                 <Send className="h-4 w-4" />
@@ -280,5 +296,3 @@ export function AiKnoxClient() {
     </>
   );
 }
-
-    
