@@ -102,8 +102,8 @@ export default function WorkoutsPage() {
           </CardHeader>
           <CardContent className="flex-grow">
             <ul className="space-y-2">
-              {workout.exercises.map(ex => (
-                <li key={ex.name} className="text-sm p-3 rounded-md bg-background shadow-neumorphic-inset flex justify-between">
+              {workout.exercises.map((ex, index) => (
+                <li key={`${ex.name}-${index}`} className="text-sm p-3 rounded-md bg-background shadow-neumorphic-inset flex justify-between">
                   <div>
                     <p className="font-semibold">{ex.name}</p>
                     <p className="text-xs text-muted-foreground">{ex.description}</p>
