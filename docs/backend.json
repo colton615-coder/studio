@@ -397,13 +397,23 @@
         "rest": {
           "type": "number",
           "description": "Rest time between sets in seconds."
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL to a looping video/GIF of the exercise."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the exercise (e.g., 'Warm-up', 'Work', 'Cool-down')."
         }
       },
       "required": [
         "id",
         "workoutTemplateId",
         "name",
-        "duration"
+        "duration",
+        "videoUrl",
+        "category"
       ]
     },
     "Task": {
