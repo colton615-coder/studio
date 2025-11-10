@@ -3,6 +3,7 @@ import { useState, useMemo, FormEvent } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ type ShoppingListItem = {
   description: string;
   quantity: number;
   purchased: boolean;
+  isOptimistic?: boolean;
 };
 
 export default function ShoppingListPage() {
@@ -34,7 +36,7 @@ export default function ShoppingListPage() {
     return collection(firestore, 'users', user.uid, 'shoppingListItems');
   }, [user, firestore]);
 
-  const { data: items, isLoading } = useCollection<ShoppingListItem>(shoppingListCollection);
+  const { data: items, isLoading, setData: setItems } = useCollection<ShoppingListItem>(shoppingListCollection);
 
   const { neededItems, purchasedItems } = useMemo(() => {
     const needed: ShoppingListItem[] = [];
@@ -51,22 +53,41 @@ export default function ShoppingListPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newItemDescription.trim() || !user || !shoppingListCollection) return;
+    if (!newItemDescription.trim() || !user || !shoppingListCollection || !items || !setItems) return;
     
+    const description = newItemDescription;
+    setNewItemDescription('');
+
+    const optimisticId = uuidv4();
+    const optimisticItem: ShoppingListItem = {
+      id: optimisticId,
+      userProfileId: user.uid,
+      description: description,
+      quantity: 1,
+      purchased: false,
+      isOptimistic: true,
+    };
+
+    // 1. Optimistic UI update
+    setItems([...items, optimisticItem]);
+
     try {
-      addDocumentNonBlocking(shoppingListCollection, {
+      // 2. Background Firestore write
+      const docRef = doc(shoppingListCollection, optimisticId);
+      setDocumentNonBlocking(docRef, {
+        id: optimisticId,
         userProfileId: user.uid,
-        description: newItemDescription,
-        quantity: 1, // Default quantity
+        description: description,
+        quantity: 1,
         purchased: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: 'Item Added', description: `"${newItemDescription}" was added to your list.` });
-      setNewItemDescription('');
+      toast({ title: 'Item Added', description: `"${description}" was added to your list.` });
     } catch (error) {
-      console.error("Failed to add item:", error);
+      // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add item to your list.' });
+      setItems(items.filter(item => item.id !== optimisticId));
     }
   };
 
@@ -76,15 +97,22 @@ export default function ShoppingListPage() {
     updateDocumentNonBlocking(docRef, { purchased: !item.purchased });
   };
   
-  const deleteItem = (item: ShoppingListItem) => {
-    if (!shoppingListCollection) return;
+  const deleteItem = (itemToDelete: ShoppingListItem) => {
+    if (!shoppingListCollection || !items || !setItems) return;
+
+    const originalItems = items;
+    // 1. Optimistic UI Update
+    setItems(originalItems.filter(item => item.id !== itemToDelete.id));
+
     try {
-      const docRef = doc(shoppingListCollection, item.id);
+      // 2. Background Firestore delete
+      const docRef = doc(shoppingListCollection, itemToDelete.id);
       deleteDocumentNonBlocking(docRef);
-      toast({ title: 'Item Removed', description: `"${item.description}" was removed from your list.` });
+      toast({ title: 'Item Removed', description: `"${itemToDelete.description}" was removed from your list.` });
     } catch (error) {
-       console.error("Failed to delete item:", error);
+       // 3. Rollback on failure
        toast({ variant: 'destructive', title: 'Error', description: 'Could not remove item from your list.' });
+       setItems(originalItems);
     }
   };
 
@@ -114,28 +142,30 @@ export default function ShoppingListPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset"
+                className={cn(item.isOptimistic && 'opacity-50 pointer-events-none')}
             >
-                <div className="flex items-center gap-4">
-                <Checkbox
-                    id={`item-${item.id}`}
-                    checked={item.purchased}
-                    onCheckedChange={() => toggleItem(item)}
-                    className="h-5 w-5 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"
-                />
-                <label
-                    htmlFor={`item-${item.id}`}
-                    className={cn(
-                    'text-md font-medium',
-                    item.purchased && 'line-through text-muted-foreground'
-                    )}
-                >
-                    {item.description}
-                </label>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item)}>
-                <Trash2 size={16} />
-                </Button>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
+                  <div className="flex items-center gap-4">
+                  <Checkbox
+                      id={`item-${item.id}`}
+                      checked={item.purchased}
+                      onCheckedChange={() => toggleItem(item)}
+                      className="h-5 w-5 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"
+                  />
+                  <label
+                      htmlFor={`item-${item.id}`}
+                      className={cn(
+                      'text-md font-medium',
+                      item.purchased && 'line-through text-muted-foreground'
+                      )}
+                  >
+                      {item.description}
+                  </label>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item)}>
+                  <Trash2 size={16} />
+                  </Button>
+              </div>
             </motion.div>
             ))}
             </AnimatePresence>

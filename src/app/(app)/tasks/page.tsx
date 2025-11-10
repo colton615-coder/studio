@@ -1,8 +1,9 @@
 'use client';
 import { useState, useMemo, FormEvent } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ type Task = {
   description: string;
   completed: boolean;
   priority: Priority;
+  isOptimistic?: boolean;
 };
 
 const priorityColors: Record<Priority, string> = {
@@ -45,7 +47,7 @@ export default function TasksPage() {
     return collection(firestore, 'users', user.uid, 'tasks');
   }, [user, firestore]);
 
-  const { data: tasks, isLoading } = useCollection<Task>(tasksCollection);
+  const { data: tasks, isLoading, setData: setTasks } = useCollection<Task>(tasksCollection);
   
   const { pendingTasks, completedTasks } = useMemo(() => {
     const pending: Task[] = [];
@@ -66,24 +68,44 @@ export default function TasksPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newTaskDescription.trim() || !user || !tasksCollection) return;
+    if (!newTaskDescription.trim() || !user || !tasksCollection || !tasks || !setTasks) return;
     
+    const description = newTaskDescription;
+    const priority = newPriority;
+    setNewTaskDescription('');
+    setNewPriority('Medium');
+
+    const optimisticId = uuidv4();
+    const optimisticTask: Task = {
+      id: optimisticId,
+      userProfileId: user.uid,
+      description: description,
+      completed: false,
+      priority: priority,
+      isOptimistic: true,
+    };
+
+    // 1. Optimistic UI update
+    setTasks([...tasks, optimisticTask]);
+
     try {
-      addDocumentNonBlocking(tasksCollection, {
+      // 2. Background Firestore write
+      const docRef = doc(tasksCollection, optimisticId);
+      setDocumentNonBlocking(docRef, {
+        id: optimisticId,
         userProfileId: user.uid,
-        description: newTaskDescription,
+        description: description,
         completed: false,
-        priority: newPriority,
-        dueDate: serverTimestamp(), // Simplified for now
+        priority: priority,
+        dueDate: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: 'Task Added', description: `"${newTaskDescription}" was added.` });
-      setNewTaskDescription('');
-      setNewPriority('Medium');
+      toast({ title: 'Task Added', description: `"${description}" was added.` });
     } catch (error) {
-      console.error("Failed to add task:", error);
+      // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
+      setTasks(tasks.filter(t => t.id !== optimisticId));
     }
   };
 
@@ -93,15 +115,22 @@ export default function TasksPage() {
     updateDocumentNonBlocking(docRef, { completed: !task.completed });
   };
   
-  const deleteTask = (task: Task) => {
-    if (!tasksCollection) return;
+  const deleteTask = (taskToDelete: Task) => {
+    if (!tasksCollection || !tasks || !setTasks) return;
+
+    const originalTasks = tasks;
+    // 1. Optimistic UI update
+    setTasks(originalTasks.filter(t => t.id !== taskToDelete.id));
+
     try {
-      const docRef = doc(tasksCollection, task.id);
+      // 2. Background Firestore delete
+      const docRef = doc(tasksCollection, taskToDelete.id);
       deleteDocumentNonBlocking(docRef);
-      toast({ title: 'Task Removed', description: `"${task.description}" was removed.` });
+      toast({ title: 'Task Removed', description: `"${taskToDelete.description}" was removed.` });
     } catch (error) {
-      console.error("Failed to delete task:", error);
+      // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
+      setTasks(originalTasks);
     }
   };
   
@@ -134,7 +163,7 @@ export default function TasksPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset"
+                className={cn("flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset", task.isOptimistic && "opacity-50 pointer-events-none")}
             >
                 <div className="flex items-center gap-4">
                 <Checkbox

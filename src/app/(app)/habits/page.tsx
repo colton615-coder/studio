@@ -10,12 +10,13 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase';
 import { collection, doc, serverTimestamp, query, limit, orderBy } from 'firebase/firestore';
-import { format, isToday, subDays } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { getHabitFeedback, fetchProactiveSuggestions, fetchInteractiveSuggestion } from './actions';
 import * as LucideIcons from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useDebouncedCallback } from 'use-debounce';
 import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -64,6 +65,7 @@ type Habit = {
   streak: number;
   lastCompleted?: any;
   createdAt: any;
+  isOptimistic?: boolean;
 };
 
 // This type represents the AI-suggested habit object.
@@ -111,7 +113,6 @@ export default function HabitsPage() {
   // Ref for the habit name input for programmatic focus
   const habitNameInputRef = useRef<HTMLInputElement>(null);
 
-
   const { control, handleSubmit, watch, setValue, reset } = useForm<HabitFormData>({
     defaultValues: {
       name: '',
@@ -142,7 +143,7 @@ export default function HabitsPage() {
     return query(collection(firestore, 'users', user.uid, 'journalEntries'), orderBy('createdAt', 'desc'), limit(5));
   }, [user, firestore]);
 
-  const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollection);
+  const { data: habits, isLoading: isLoadingHabits, setData: setHabits } = useCollection<Habit>(habitsCollection);
   const { data: recentJournalEntries } = useCollection<JournalEntry>(journalEntriesQuery);
   
   const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection);
@@ -263,34 +264,41 @@ export default function HabitsPage() {
 
 
   const onSubmit = async (data: HabitFormData) => {
-    if (!habitsCollection || !user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not save habit. User not found.",
-      });
+    if (!habitsCollection || !user || !habits || !setHabits) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save habit. User or data source not found." });
       return;
     }
     setIsSaving(true);
+    onOpenChange(false); // Close dialog immediately
+
+    const optimisticId = uuidv4();
+    const optimisticHabit: Habit = {
+      ...data,
+      id: optimisticId,
+      streak: 0,
+      userProfileId: user.uid,
+      createdAt: new Date(), // Use local date for optimistic item
+      isOptimistic: true,
+    };
+    
+    // 1. Optimistically update local state
+    setHabits([...habits, optimisticHabit]);
+
     try {
-      await addDocumentNonBlocking(habitsCollection, {
+      // 2. Asynchronously write to Firestore
+      const docRef = doc(habitsCollection, optimisticId);
+      await setDocumentNonBlocking(docRef, {
         ...data,
+        id: optimisticId,
         streak: 0,
         userProfileId: user.uid,
         createdAt: serverTimestamp(),
       });
-      toast({
-        title: "Habit Created!",
-        description: `${data.name} has been added to your list.`
-      })
-      onOpenChange(false);
+      toast({ title: "Habit Created!", description: `"${data.name}" has been added.` });
     } catch (error) {
-      console.error("Failed to add habit:", error);
-      toast({
-        variant: "destructive",
-        title: "Save Failed",
-        description: "Could not save habit. Please try again.",
-      });
+      // 3. Rollback on failure
+      toast({ variant: "destructive", title: "Save Failed", description: "Could not save habit. Please try again." });
+      setHabits(habits.filter(h => h.id !== optimisticId));
     } finally {
       setIsSaving(false);
     }
@@ -325,11 +333,24 @@ export default function HabitsPage() {
     setDocumentNonBlocking(logRef, logUpdate, { merge: true });
   };
 
-  const handleDeleteHabit = (id: string) => {
-    if (!habitsCollection) return;
-    const docRef = doc(habitsCollection, id);
-    deleteDocumentNonBlocking(docRef);
-    toast({ title: "Habit Removed", description: "The habit has been deleted from your list." });
+  const handleDeleteHabit = (habitToDelete: Habit) => {
+    if (!habitsCollection || !habits || !setHabits) return;
+    
+    const originalHabits = habits;
+
+    // 1. Optimistically remove from local state
+    setHabits(originalHabits.filter(h => h.id !== habitToDelete.id));
+
+    // 2. Asynchronously delete from Firestore
+    try {
+      const docRef = doc(habitsCollection, habitToDelete.id);
+      deleteDocumentNonBlocking(docRef);
+      toast({ title: "Habit Removed", description: `"${habitToDelete.name}" has been deleted.` });
+    } catch (error) {
+      // 3. Rollback on failure
+      toast({ variant: "destructive", title: "Delete Failed", description: "Could not remove habit." });
+      setHabits(originalHabits); // Restore the original list
+    }
   };
 
   const getFrequencyText = (freq: Frequency) => {
@@ -435,6 +456,7 @@ export default function HabitsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
+                  className={cn(habit.isOptimistic && "opacity-50 pointer-events-none")}
                 >
                   <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
                     <div className="flex items-center gap-4">
@@ -454,7 +476,7 @@ export default function HabitsPage() {
                         <Flame className="h-5 w-5" />
                         <span className="font-semibold text-lg">{habit.streak}</span>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit)}>
                         <Trash2 size={16}/>
                       </Button>
                     </div>
