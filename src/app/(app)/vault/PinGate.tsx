@@ -97,11 +97,15 @@ export function PinGate({ children }: PinGateProps) {
     }
   }, [pin, isPinSet, isAuthenticated, storedPin]);
   
-  const handleForgotPin = () => {
-    localStorage.removeItem('user_pin');
-    // Assuming you have a sign out function available
-    // For now, we'll just redirect to login as a simple "logout"
-    router.push('/login'); 
+  const handleForgotPin = async () => {
+    try {
+      localStorage.clear(); // Clear all localStorage data
+      const { auth } = await import('firebase/auth');
+      await auth().signOut(); // Firebase auth signOut
+      router.push('/login');
+    } catch (error) {
+      setError('Failed to reset PIN. Please try again.');
+    }
   };
 
 

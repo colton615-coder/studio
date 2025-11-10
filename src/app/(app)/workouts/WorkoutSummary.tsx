@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { CheckCircle, CalendarPlus, BookHeart, PartyPopper } from 'lucide-react';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 import { collection, serverTimestamp } from 'firebase/firestore';
 
 interface WorkoutSummaryProps {
@@ -22,26 +23,55 @@ export function WorkoutSummary({ workout, completedCount, onDone }: WorkoutSumma
   const totalTime = workout.exercises.reduce((acc, ex) => acc + ex.duration, 0);
   const estimatedCalories = Math.round((totalTime / 60) * 8); // Simple estimation
 
-  const handleAddToCalendar = () => {
-    if (!user || !firestore) return;
-    const eventsCollection = collection(firestore, 'users', user.uid, 'calendarEvents');
-    addDocumentNonBlocking(eventsCollection, {
-      userProfileId: user.uid,
-      title: `Workout: ${workout.name}`,
-      description: `Completed ${completedCount}/${totalExercises} exercises.`,
-      startDate: new Date(),
-      endDate: new Date(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    // Consider adding a toast notification here
-    router.push('/calendar');
+  const { toast } = useToast();
+
+  const handleAddToCalendar = async () => {
+    if (!user || !firestore) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add events to calendar",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const eventsCollection = collection(firestore, 'users', user.uid, 'calendarEvents');
+      await addDocumentNonBlocking(eventsCollection, {
+        userProfileId: user.uid,
+        title: `Workout: ${workout.name}`,
+        description: `Completed ${completedCount}/${totalExercises} exercises.`,
+        startDate: new Date(),
+        endDate: new Date(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      
+      toast({
+        title: "Success",
+        description: "Workout added to calendar"
+      });
+      
+      router.push('/calendar');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add workout to calendar",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleJournal = () => {
-    // This assumes you have a way to pass a prompt or context to the journal/vault page.
-    // For now, we just navigate. A more advanced implementation might use query params.
-    router.push('/ai-knox');
+    const workoutSummary = {
+      name: workout.name,
+      completed: completedCount,
+      total: totalExercises,
+      duration: totalTime,
+      calories: estimatedCalories,
+      date: new Date().toISOString()
+    };
+    router.push(`/ai-knox?context=${encodeURIComponent(JSON.stringify(workoutSummary))}`);
   };
 
   return (
