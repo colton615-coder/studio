@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useTransition, useEffect, FormEvent } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, query, getDocs, serverTimestamp, doc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, serverTimestamp, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { getBudgetSuggestions } from './actions';
@@ -86,46 +86,19 @@ export default function FinancePage() {
 
   const { data: budgets, isLoading: isLoadingBudgets } = useCollection<Budget>(budgetsCollection);
 
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+  const expensesCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    // NOTE: This query gets ALL expenses across ALL budgets.
+    // For larger apps, querying expenses per budget might be more performant.
+    return collection(firestore, 'users', user.uid, 'expenses');
+  }, [user, firestore]);
 
-  useEffect(() => {
-    if (!budgets || !user || !firestore) {
-      // If there are no budgets, there can be no expenses.
-      if (budgets && budgets.length === 0) {
-        setExpenses([]);
-        setIsLoadingExpenses(false);
-      }
-      return;
-    };
-    
-    const fetchExpenses = async () => {
-        setIsLoadingExpenses(true);
-        const allExpenses: Expense[] = [];
-        if (budgets.length > 0) {
-            for (const budget of budgets) {
-                const expensesColRef = collection(firestore, 'users', user.uid, 'budgets', budget.id, 'expenses');
-                try {
-                    const expensesSnapshot = await getDocs(expensesColRef);
-                    expensesSnapshot.forEach(doc => {
-                        allExpenses.push({ id: doc.id, ...doc.data() } as Expense);
-                    });
-                } catch (error) {
-                    console.error(`Failed to fetch expenses for budget ${budget.id}:`, error);
-                }
-            }
-        }
-        setExpenses(allExpenses);
-        setIsLoadingExpenses(false);
-    };
-
-    fetchExpenses();
-  }, [budgets, user, firestore]);
+  const { data: expenses, isLoading: isLoadingExpenses } = useCollection<Expense>(expensesCollection);
 
 
   const budgetsWithSpending: BudgetWithSpending[] = useMemo(() => {
     return budgets?.map(budget => {
-      const budgetExpenses = expenses.filter(e => e.budgetId === budget.id);
+      const budgetExpenses = expenses?.filter(e => e.budgetId === budget.id) ?? [];
       const spent = budgetExpenses.reduce((acc, expense) => acc + expense.amount, 0);
       const remaining = budget.amount - spent;
       const progress = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
@@ -134,7 +107,7 @@ export default function FinancePage() {
   }, [budgets, expenses]);
   
   const totalBudget = useMemo(() => budgets?.reduce((acc, b) => acc + b.amount, 0) ?? 0, [budgets]);
-  const totalSpent = useMemo(() => expenses.reduce((acc, e) => acc + e.amount, 0), [expenses]);
+  const totalSpent = useMemo(() => expenses?.reduce((acc, e) => acc + e.amount, 0) ?? 0, [expenses]);
   const totalRemaining = totalBudget - totalSpent;
   
 
@@ -195,8 +168,9 @@ export default function FinancePage() {
 
     setIsSavingExpense(true);
     try {
-      const expensesCollection = collection(firestore, 'users', user.uid, 'budgets', targetBudget.id, 'expenses');
-      await addDocumentNonBlocking(expensesCollection, {
+      // We now need a reference to the main expenses collection, not a subcollection
+      const mainExpensesCollection = collection(firestore, 'users', user.uid, 'expenses');
+      await addDocumentNonBlocking(mainExpensesCollection, {
         id: uuidv4(),
         userProfileId: user.uid,
         budgetId: targetBudget.id,
@@ -237,12 +211,12 @@ export default function FinancePage() {
 
   const handleAiAnalysis = () => {
     startAiTransition(async () => {
-      const formattedExpenses = expenses.map(e => ({
+      const formattedExpenses = expenses?.map(e => ({
         description: e.description,
         amount: e.amount,
         category: e.category,
         date: e.date?.toDate ? format(e.date.toDate(), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-      }));
+      })) ?? [];
 
       const existingCategories = budgets?.map(b => b.category) ?? [];
 
@@ -266,7 +240,7 @@ export default function FinancePage() {
 
   const monthlySpending = useMemo(() => {
     const spendingByMonth: {[key: string]: number} = {};
-    expenses.forEach(expense => {
+    expenses?.forEach(expense => {
       if (expense.date?.toDate) {
         const month = format(expense.date.toDate(), 'MMM');
         spendingByMonth[month] = (spendingByMonth[month] || 0) + expense.amount;
@@ -535,3 +509,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
+    

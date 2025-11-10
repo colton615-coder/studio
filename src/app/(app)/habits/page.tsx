@@ -143,40 +143,17 @@ export default function HabitsPage() {
 
   const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollection);
   
-  const [habitHistory, setHabitHistory] = useState<DailyLog[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  
-  const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
-  const [isLoadingLog, setIsLoadingLog] = useState(true);
+  const sevenDaysAgo = useMemo(() => format(subDays(new Date(), 7), 'yyyy-MM-dd'), []);
+  const habitHistoryQuery = useMemoFirebase(() => {
+    if (!habitLogsCollection) return null;
+    return query(habitLogsCollection, where('__name__', '>=', sevenDaysAgo));
+  }, [habitLogsCollection, sevenDaysAgo]);
 
-  useEffect(() => {
-    if (!habitLogsCollection) return;
-    const fetchHistory = async () => {
-      setIsLoadingHistory(true);
-      setIsLoadingLog(true);
-      const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd');
-      const q = query(habitLogsCollection, where('__name__', '>=', sevenDaysAgo));
-      try {
-        const querySnapshot = await getDocs(q);
-        const history: DailyLog[] = [];
-        let foundToday = false;
-        querySnapshot.forEach((doc) => {
-          history.push({ id: doc.id, log: doc.data().log });
-          if(doc.id === todayStr) {
-            setTodayLog({ id: doc.id, log: doc.data().log });
-            foundToday = true;
-          }
-        });
-        if (!foundToday) setTodayLog(null);
-        setHabitHistory(history);
-      } catch (e) { console.error("Error fetching habit history:", e); }
-      finally {
-        setIsLoadingHistory(false);
-        setIsLoadingLog(false);
-      }
-    };
-    fetchHistory();
-  }, [habitLogsCollection, todayStr]);
+  const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitHistoryQuery);
+  
+  const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
+  const isLoadingLog = isLoadingHistory;
+
 
   const combinedHabits = useMemo(() => habits?.map(habit => ({
     ...habit,
@@ -184,7 +161,7 @@ export default function HabitsPage() {
   })), [habits, todayLog]);
 
   useEffect(() => {
-    if (habits && !isLoadingHistory) {
+    if (habits && habitHistory) {
       startTransition(async () => {
         const coachInput = {
           habits: habits.map(h => ({ id: h.id, name: h.name, streak: h.streak })),
@@ -195,7 +172,7 @@ export default function HabitsPage() {
         else setFeedback(result.feedback);
       });
     }
-  }, [habits, habitHistory, isLoadingHistory]);
+  }, [habits, habitHistory]);
 
 
   // --- AI Suggestion Logic ---
@@ -619,3 +596,5 @@ export default function HabitsPage() {
     </div>
   );
 }
+
+    

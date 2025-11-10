@@ -676,21 +676,17 @@
         }
       },
       {
-        "path": "/users/{userId}/budgets/{budgetId}/expenses/{expenseId}",
+        "path": "/users/{userId}/expenses/{expenseId}",
         "definition": {
           "entityName": "Expense",
           "schema": {
             "$ref": "#/backend/entities/Expense"
           },
-          "description": "Subcollection of expenses for a specific budget. The `userProfileId` and `budgetId` are denormalized for security and query efficiency. Path-based ownership ensures a user can only access expenses under their own budgets.",
+          "description": "Collection of expenses for a specific user. This is a top-level collection for simpler querying, with security rules ensuring a user can only access their own expenses.",
           "params": [
             {
               "name": "userId",
               "description": "The unique ID of the user."
-            },
-            {
-              "name": "budgetId",
-              "description": "The unique ID of the parent budget."
             },
             {
               "name": "expenseId",

@@ -5,315 +5,96 @@
  * This ruleset enforces a strict user-ownership model, where each user has complete control over their own data.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, ensuring data isolation and clear ownership.
- * - /users/{userId}: User profile information.
- * - /users/{userId}/habits/{habitId}: User-defined habits.
- * - /users/{userId}/habitLogs/{habitLogId}: Daily habit logs.
- * - /users/{userId}/journalEntries/{journalEntryId}: User's journal entries.
- * - /users/{userId}/budgets/{budgetId}: User's budget settings.
- * - /users/{userId}/budgets/{budgetId}/expenses/{expenseId}: User's expenses within a budget.
- * - /users/{userId}/workoutTemplates/{workoutTemplateId}: User's workout templates.
- * - /users/{userId}/workoutTemplates/{workoutTemplateId}/exercises/{exerciseId}: Exercises within a workout template.
- * - /users/{userId}/tasks/{taskId}: User's tasks or reminders.
- * - /users/{userId}/shoppingListItems/{shoppingListItemId}: User's shopping list items.
- * - /users/{userId}/calendarEvents/{calendarEventId}: User's calendar events.
+ * All user-specific data is nested under /users/{userId} to ensure data isolation. A top-level /expenses
+ * collection is used for simplified querying, with rules enforcing ownership via a `userProfileId` field.
  *
  * Key Security Decisions:
  * - User data is strictly private; listing all users is disallowed.
  * - All write operations require the user to be authenticated and the owner of the data.
- * - Data consistency between document IDs and the userId path parameter is enforced on creation and updates.
- *
- * Denormalization for Authorization:
- * The `userProfileId` field is included in each document within a user's subcollections to avoid costly `get()` operations and to allow for authorization independence.
+ * - Data consistency between the `userProfileId` field and the authenticated `uid` is enforced.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description: Enforces user-level access control for user profiles. Only the authenticated user can read and write their own profile.
-     * @path: /users/{userId}
-     * @allow: (create) - User with UID 'user_abc' can create their profile if request.auth.uid == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their profile.
-     * @allow: (update) - User with UID 'user_abc' can update their profile.
-     * @allow: (delete) - User with UID 'user_abc' can delete their profile.
-     * @deny: (create) - User with UID 'user_def' cannot create a profile with ID 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
+     * @description Enforces ownership for a resource.
+     * @param userId The UID of the user from the path.
+     * @returns boolean True if the requester is the owner.
+     */
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Enforces ownership and validates that the resource exists.
+     * @param userId The UID of the user from the path.
+     * @returns boolean True if the requester is the owner of an existing document.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Validates that the incoming data's `userProfileId` matches the user's UID.
+     * @param userId The UID of the user from the path.
+     * @returns boolean True if the `userProfileId` is correct.
+     */
+    function isDataOwner(userId) {
+      return request.resource.data.userProfileId == userId;
+    }
+
+    /**
+     * @description Ensures the `userProfileId` field cannot be changed on update.
+     * @returns boolean True if the `userProfileId` is unchanged.
+     */
+    function isOwnershipImmutable() {
+      return request.resource.data.userProfileId == resource.data.userProfileId;
+    }
+
+    /**
+     * /users/{userId}
+     * - Users can only read, update, or delete their own profile.
+     * - Creating a profile requires the document ID to match the user's UID.
+     * - Listing all users is disallowed.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+      allow get, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.id == userId;
+      allow list: if false;
+
+      /**
+       * Subcollections under a user's profile.
+       * These rules apply to habits, journalEntries, budgets, etc.
+       */
+      match /{collection}/{docId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isDataOwner(userId);
+        allow update: if isOwner(userId) && isOwnershipImmutable();
+        allow delete: if isOwner(userId);
       }
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing all users is not permitted.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      /**
+       * Special case for nested exercises, inheriting the workout template's ownership.
+       * This is an example of deeper nesting if required.
+       */
+       match /workoutTemplates/{workoutTemplateId}/exercises/{exerciseId} {
+          allow list, get, create, update, delete: if isOwner(userId);
+       }
     }
-
+    
     /**
-     * @description: Enforces user-level access control for habits. Only the authenticated user can read and write their own habits.
-     * @path: /users/{userId}/habits/{habitId}
-     * @allow: (create) - User with UID 'user_abc' can create a habit if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their habit.
-     * @allow: (update) - User with UID 'user_abc' can update their habit.
-     * @allow: (delete) - User with UID 'user_abc' can delete their habit.
-     * @deny: (create) - User with UID 'user_def' cannot create a habit for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
+     * /expenses/{expenseId}
+     * - This is a root collection for easier querying.
+     * - Ownership is enforced by checking the `userProfileId` field in the document data.
+     * - This allows querying all of a user's expenses without needing to know the budget.
      */
-    match /users/{userId}/habits/{habitId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for habit logs. Only the authenticated user can read and write their own habit logs.
-     * @path: /users/{userId}/habitLogs/{habitLogId}
-     * @allow: (create) - User with UID 'user_abc' can create a habit log if request.auth.uid == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their habit log.
-     * @allow: (update) - User with UID 'user_abc' can update their habit log.
-     * @allow: (delete) - User with UID 'user_abc' can delete their habit log.
-     * @deny: (create) - User with UID 'user_def' cannot create a habit log for user 'user_abc'.
-     * @principle: Enforces document ownership and restricts access to a user's own data tree.
-     */
-    match /users/{userId}/habitLogs/{habitLogId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for journal entries. Only the authenticated user can read and write their own journal entries.
-     * @path: /users/{userId}/journalEntries/{journalEntryId}
-     * @allow: (create) - User with UID 'user_abc' can create a journal entry if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their journal entry.
-     * @allow: (update) - User with UID 'user_abc' can update their journal entry.
-     * @allow: (delete) - User with UID 'user_abc' can delete their journal entry.
-     * @deny: (create) - User with UID 'user_def' cannot create a journal entry for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/journalEntries/{journalEntryId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for budgets. Only the authenticated user can read and write their own budgets.
-     * @path: /users/{userId}/budgets/{budgetId}
-     * @allow: (create) - User with UID 'user_abc' can create a budget if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their budget.
-     * @allow: (update) - User with UID 'user_abc' can update their budget.
-     * @allow: (delete) - User with UID 'user_abc' can delete their budget.
-     * @deny: (create) - User with UID 'user_def' cannot create a budget for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/budgets/{budgetId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for expenses. Only the authenticated user can read and write their own expenses within their budgets.
-     * @path: /users/{userId}/budgets/{budgetId}/expenses/{expenseId}
-     * @allow: (create) - User with UID 'user_abc' can create an expense if request.auth.uid == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their expense.
-     * @allow: (update) - User with UID 'user_abc' can update their expense.
-     * @allow: (delete) - User with UID 'user_abc' can delete their expense.
-     * @deny: (create) - User with UID 'user_def' cannot create an expense for user 'user_abc'.
-     * @principle: Enforces document ownership and restricts access to a user's own data tree.
-     */
-    match /users/{userId}/budgets/{budgetId}/expenses/{expenseId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for workout templates. Only the authenticated user can read and write their own workout templates.
-     * @path: /users/{userId}/workoutTemplates/{workoutTemplateId}
-     * @allow: (create) - User with UID 'user_abc' can create a workout template if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their workout template.
-     * @allow: (update) - User with UID 'user_abc' can update their workout template.
-     * @allow: (delete) - User with UID 'user_abc' can delete their workout template.
-     * @deny: (create) - User with UID 'user_def' cannot create a workout template for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/workoutTemplates/{workoutTemplateId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for exercises. Only the authenticated user can read and write their own exercises within their workout templates.
-     * @path: /users/{userId}/workoutTemplates/{workoutTemplateId}/exercises/{exerciseId}
-     * @allow: (create) - User with UID 'user_abc' can create an exercise if request.auth.uid == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their exercise.
-     * @allow: (update) - User with UID 'user_abc' can update their exercise.
-     * @allow: (delete) - User with UID 'user_abc' can delete their exercise.
-     * @deny: (create) - User with UID 'user_def' cannot create an exercise for user 'user_abc'.
-     * @principle: Enforces document ownership and restricts access to a user's own data tree.
-     */
-    match /users/{userId}/workoutTemplates/{workoutTemplateId}/exercises/{exerciseId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for tasks. Only the authenticated user can read and write their own tasks.
-     * @path: /users/{userId}/tasks/{taskId}
-     * @allow: (create) - User with UID 'user_abc' can create a task if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their task.
-     * @allow: (update) - User with UID 'user_abc' can update their task.
-     * @allow: (delete) - User with UID 'user_abc' can delete their task.
-     * @deny: (create) - User with UID 'user_def' cannot create a task for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/tasks/{taskId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for shopping list items. Only the authenticated user can read and write their own shopping list items.
-     * @path: /users/{userId}/shoppingListItems/{shoppingListItemId}
-     * @allow: (create) - User with UID 'user_abc' can create a shopping list item if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their shopping list item.
-     * @allow: (update) - User with UID 'user_abc' can update their shopping list item.
-     * @allow: (delete) - User with UID 'user_abc' can delete their shopping list item.
-     * @deny: (create) - User with UID 'user_def' cannot create a shopping list item for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/shoppingListItems/{shoppingListItemId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description: Enforces user-level access control for calendar events. Only the authenticated user can read and write their own calendar events.
-     * @path: /users/{userId}/calendarEvents/{calendarEventId}
-     * @allow: (create) - User with UID 'user_abc' can create a calendar event if request.auth.uid == 'user_abc' and request.resource.data.userProfileId == 'user_abc'.
-     * @allow: (get) - User with UID 'user_abc' can read their calendar event.
-     * @allow: (update) - User with UID 'user_abc' can update their calendar event.
-     * @allow: (delete) - User with UID 'user_abc' can delete their calendar event.
-     * @deny: (create) - User with UID 'user_def' cannot create a calendar event for user 'user_abc'.
-     * @principle: Enforces document ownership, restricts access to a user's own data tree, and validates relational integrity between documents.
-     */
-    match /users/{userId}/calendarEvents/{calendarEventId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
-      allow delete: if isExistingOwner(userId);
+    match /expenses/{expenseId} {
+        allow get, update, delete: if isExistingOwner(resource.data.userProfileId);
+        allow list: if request.auth != null && request.query.where.size() > 0 && request.query.where[0][1] == 'userProfileId'; // Allow list only when filtering by userProfileId
+        allow create: if isOwner(request.resource.data.userProfileId);
     }
   }
 }
+
+    
