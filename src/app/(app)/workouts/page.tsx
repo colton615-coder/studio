@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -10,8 +11,18 @@ import { useToast } from '@/hooks/use-toast';
 import { ActiveWorkout } from './ActiveWorkout';
 import { WorkoutSummary } from './WorkoutSummary';
 import { ExerciseImage } from '@/components/ui/ExerciseImage';
+import { AICoPilotThinking } from '@/components/ui/ai-copilot-thinking';
 
 type WorkoutScreen = 'generator' | 'lobby' | 'active' | 'summary';
+
+const AI_WORKOUT_STEPS = [
+  "Analyzing your request...",
+  "Selecting optimal warm-up exercises...",
+  "Constructing main workout sets...",
+  "Integrating rest periods...",
+  "Choosing cool-down stretches...",
+  "Finalizing your personalized plan..."
+];
 
 export default function WorkoutsPage() {
   const [prompt, setPrompt] = useState('');
@@ -26,7 +37,6 @@ export default function WorkoutsPage() {
     if (!prompt.trim()) return;
 
     startTransition(async () => {
-      setWorkout(null);
       const result = await getWorkoutPlan(prompt);
       if ('error' in result) {
         toast({
@@ -34,12 +44,18 @@ export default function WorkoutsPage() {
           title: 'Error Generating Workout',
           description: result.error,
         });
+        setWorkout(null);
       } else {
         setWorkout(result);
-        setScreen('lobby');
       }
     });
   };
+
+  const handleAiComplete = () => {
+      if (workout) {
+          setScreen('lobby');
+      }
+  }
 
   const handleFinishWorkout = (completed: boolean) => {
     setCompletedExercises(completed ? workout?.exercises.length ?? 0 : 0); // Simplified for now
@@ -54,7 +70,8 @@ export default function WorkoutsPage() {
 
   const calculateTotalTime = (exercises: WorkoutPlan['exercises'] | undefined) => {
     if (!exercises) return 0;
-    const totalSeconds = exercises.reduce((acc, ex) => acc + ex.duration, 0);
+    // We filter out rep-based exercises from the total time calculation
+    const totalSeconds = exercises.reduce((acc, ex) => acc + (ex.type === 'time' ? ex.duration || 0 : 0), 0);
     return Math.ceil(totalSeconds / 60);
   };
   
@@ -82,6 +99,7 @@ export default function WorkoutsPage() {
       </header>
 
       {screen === 'generator' && (
+        <>
         <Card className="shadow-neumorphic-outset">
           <CardHeader>
             <CardTitle>Workout Prompt</CardTitle>
@@ -96,8 +114,9 @@ export default function WorkoutsPage() {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Tell the AI what workout you need..."
                 className="flex-grow"
+                disabled={isPending}
               />
-              <Button type="submit" className="w-full sm:w-auto shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isPending}>
+              <Button type="submit" className="w-full sm:w-auto shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isPending || !prompt.trim()}>
                 {isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -108,14 +127,13 @@ export default function WorkoutsPage() {
             </form>
           </CardContent>
         </Card>
+        
+        {isPending && (
+            <AICoPilotThinking steps={AI_WORKOUT_STEPS} onComplete={handleAiComplete} durationPerStep={1500}/>
+        )}
+        </>
       )}
       
-      {isPending && (
-         <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-accent" />
-         </div>
-      )}
-
       {screen === 'lobby' && workout && (
         <Card className="shadow-neumorphic-outset flex flex-col">
           <CardHeader>
@@ -132,9 +150,9 @@ export default function WorkoutsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow">
-            <div className="space-y-4">
+             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
               {workout.exercises.map((ex, index) => (
-                <Card key={`${ex.name}-${index}`} className="flex items-center gap-4 p-3 bg-background shadow-neumorphic-inset">
+                <Card key={`${ex.id}-${index}`} className="flex items-center gap-4 p-3 bg-background shadow-neumorphic-inset">
                   <div className="w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                     <ExerciseImage
                       asset={ex.asset}
@@ -145,10 +163,10 @@ export default function WorkoutsPage() {
                   </div>
                   <div className="flex-grow">
                     <p className="font-semibold">{ex.name}</p>
-                    <p className="text-xs text-muted-foreground">{ex.category}</p>
+                    <p className="text-xs text-muted-foreground">{ex.category}{ex.sets ? ` - Set ${ex.sets}` : ''}</p>
                   </div>
                   <span className="text-lg font-semibold text-muted-foreground">
-                    {ex.duration}s
+                    {ex.type === 'time' ? `${ex.duration}s` : `${ex.reps} reps`}
                   </span>
                 </Card>
               ))}

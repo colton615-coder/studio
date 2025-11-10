@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo, useTransition, useEffect, FormEvent } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
@@ -21,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
+import { AICoPilotThinking } from '@/components/ui/ai-copilot-thinking';
 
 const SPENDING_CATEGORIES = [
   'food', 'transport', 'housing', 'bills', 'entertainment', 'shopping', 'health', 'other'
@@ -58,6 +60,13 @@ type AISuggestion = {
   period: 'monthly' | 'weekly' | 'yearly';
 }
 
+const AI_ANALYSIS_STEPS = [
+    "Analyzing spending patterns...",
+    "Identifying high-spending areas...",
+    "Cross-referencing existing budgets...",
+    "Formulating actionable suggestions...",
+];
+
 export default function FinancePage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -79,6 +88,7 @@ export default function FinancePage() {
   const [aiFeedback, setAiFeedback] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const [isAnalyzing, startAiTransition] = useTransition();
+  const [showAiThinking, setShowAiThinking] = useState(false);
 
   const budgetsCollection = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -208,6 +218,7 @@ export default function FinancePage() {
   };
 
   const handleAiAnalysis = () => {
+    setShowAiThinking(true);
     startAiTransition(async () => {
       const formattedExpenses = expenses?.map(e => ({
         description: e.description,
@@ -222,6 +233,8 @@ export default function FinancePage() {
         expenses: formattedExpenses,
         existingBudgets: existingCategories,
       });
+      
+      setShowAiThinking(false);
 
       if ('error' in result) {
         toast({ variant: 'destructive', title: 'AI Analysis Failed', description: result.error });
@@ -353,14 +366,12 @@ export default function FinancePage() {
                 <CardDescription>Analyze your spending and get personalized budget suggestions.</CardDescription>
             </CardHeader>
             <CardContent>
-                {isAnalyzing ? (
-                    <div className="space-y-4">
-                        <Skeleton className="h-5 w-3/4" />
-                        <div className="flex gap-4">
-                           <Skeleton className="h-10 w-48 rounded-lg" />
-                           <Skeleton className="h-10 w-48 rounded-lg" />
-                        </div>
-                    </div>
+                {showAiThinking ? (
+                    <AICoPilotThinking 
+                        steps={AI_ANALYSIS_STEPS}
+                        onComplete={() => {}} // The transition handles moving to the next state
+                        durationPerStep={1200}
+                    />
                 ) : aiFeedback ? (
                     <div className="space-y-4">
                         <p className="text-foreground italic "><Lightbulb className="inline-block mr-2 h-4 w-4 text-accent"/>{aiFeedback}</p>
@@ -376,9 +387,9 @@ export default function FinancePage() {
                 ) : null}
             </CardContent>
             <CardFooter>
-                 <Button onClick={handleAiAnalysis} variant="ghost" className="text-accent" disabled={isAnalyzing || isLoadingExpenses}>
+                 <Button onClick={handleAiAnalysis} variant="ghost" className="text-accent" disabled={isAnalyzing || isLoadingExpenses || showAiThinking}>
                     {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4" />}
-                    {isAnalyzing ? 'Analyzing Spending...' : 'Analyze Spending & Suggest Budgets'}
+                    {isAnalyzing ? 'Analyzing...' : 'Analyze & Suggest Budgets'}
                  </Button>
             </CardFooter>
         </Card>
