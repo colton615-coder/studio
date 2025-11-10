@@ -196,7 +196,17 @@ export default function CalendarPage() {
       </div>
 
       {/* Add Event Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog 
+        open={isAddDialogOpen} 
+        onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            // Reset form state when dialog closes
+            setNewEventTitle('');
+            setNewEventDescription('');
+          }
+        }}
+      >
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           <DialogHeader>
             <DialogTitle>Add Event for {date ? format(date, 'MMMM d') : ''}</DialogTitle>
@@ -204,63 +214,110 @@ export default function CalendarPage() {
               Enter details for your new event.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-title" className="text-right">
-                Title
-              </Label>
-              <Input
-                id="event-title"
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-                className="col-span-3"
-                disabled={isSaving}
-              />
+          <form onSubmit={(e) => { e.preventDefault(); handleAddEvent(); }}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="event-title" className="text-right">
+                  Title
+                </Label>
+                <Input
+                  id="event-title"
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  className="col-span-3"
+                  disabled={isSaving}
+                  required
+                  placeholder="Event title"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="event-desc" className="text-right">
+                  Description
+                </Label>
+                <Input
+                  id="event-desc"
+                  value={newEventDescription}
+                  onChange={(e) => setNewEventDescription(e.target.value)}
+                  className="col-span-3"
+                  disabled={isSaving}
+                  placeholder="Optional description"
+                />
+              </div>
             </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-desc" className="text-right">
-                Description
-              </Label>
-              <Input
-                id="event-desc"
-                value={newEventDescription}
-                onChange={(e) => setNewEventDescription(e.target.value)}
-                className="col-span-3"
-                disabled={isSaving}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleAddEvent} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSaving || !newEventTitle}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Add Event'}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset" 
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button 
+                type="submit" 
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
+                disabled={isSaving || !newEventTitle}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Event
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
       
       {/* Event Detail Dialog */}
-       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+      <Dialog 
+        open={isDetailDialogOpen} 
+        onOpenChange={setIsDetailDialogOpen}
+      >
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           {selectedEvent && (
             <>
-            <DialogHeader>
-              <DialogTitle>{selectedEvent.title}</DialogTitle>
-              <DialogDescription>
-                {format(selectedEvent.startDate.toDate(), 'MMMM d, yyyy')}
-              </DialogDescription>
-            </DialogHeader>
-            <p>{selectedEvent.description}</p>
-            <DialogFooter className="sm:justify-between mt-4">
-               <Button variant="destructive" onClick={() => handleDeleteEvent(selectedEvent.id)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+              <DialogHeader>
+                <DialogTitle>{selectedEvent.title}</DialogTitle>
+                <DialogDescription>
+                  {format(selectedEvent.startDate.toDate(), 'MMMM d, yyyy')}
+                </DialogDescription>
+              </DialogHeader>
+              {selectedEvent.description && (
+                <div className="py-4">
+                  <p className="text-muted-foreground">{selectedEvent.description}</p>
+                </div>
+              )}
+              <DialogFooter className="sm:justify-between mt-4">
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this event?')) {
+                      handleDeleteEvent(selectedEvent.id);
+                    }
+                  }} 
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Event
-               </Button>
-               <DialogClose asChild>
-                <Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">Close</Button>
-               </DialogClose>
+                </Button>
+                <DialogClose asChild>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="shadow-neumorphic-outset active:shadow-neumorphic-inset"
+                  >
+                    Close
+                  </Button>
+                </DialogClose>
             </DialogFooter>
             </>
           )}

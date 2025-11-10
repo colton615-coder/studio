@@ -625,10 +625,32 @@ export default function HabitsPage() {
             </div>
 
             <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSaving}>Cancel</Button></DialogClose>
-                <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSaving || !watchName}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>}
-                  {isSaving ? 'Saving...' : 'Save Habit'}
+                <DialogClose asChild>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="shadow-neumorphic-outset active:shadow-neumorphic-inset" 
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button 
+                  type="submit" 
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
+                  disabled={isSaving || !watchName || !selectedFrequency.length}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="mr-2 h-4 w-4"/>
+                      Create Habit
+                    </>
+                  )}
                 </Button>
             </DialogFooter>
           </form>

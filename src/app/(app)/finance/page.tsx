@@ -71,12 +71,22 @@ export default function FinancePage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
+  // Dialog states
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
+
+  // Budget form states
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [newBudgetCategory, setNewBudgetCategory] = useState<string>('');
   const [isSavingBudget, setIsSavingBudget] = useState(false);
+
+  // Expense form states
+  const [newExpenseAmount, setNewExpenseAmount] = useState('');
+  const [newExpenseDescription, setNewExpenseDescription] = useState('');
+  const [newExpenseCategory, setNewExpenseCategory] = useState('other');
+  const [targetBudgetId, setTargetBudgetId] = useState('');
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
 
 
   const [newExpenseDescription, setNewExpenseDescription] = useState('');
@@ -449,7 +459,10 @@ export default function FinancePage() {
       </>
       )}
 
-       <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
+
+
+      {/* Budget Dialog */}
+      <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           <DialogHeader>
             <DialogTitle>Create a New Budget</DialogTitle>
@@ -457,36 +470,88 @@ export default function FinancePage() {
               Define a new budget to track your spending.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="budget-name" className="text-right">Name</Label>
-              <Input id="budget-name" value={newBudgetName} onChange={(e) => setNewBudgetName(e.target.value)} className="col-span-3" placeholder="e.g., Monthly Groceries" disabled={isSavingBudget} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="budget-amount" className="text-right">Amount ($)</Label>
-              <Input id="budget-amount" type="number" value={newBudgetAmount} onChange={(e) => setNewBudgetAmount(e.target.value)} className="col-span-3" placeholder="e.g., 500" disabled={isSavingBudget} />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="budget-category" className="text-right">Category</Label>
-              <Select onValueChange={setNewBudgetCategory} value={newBudgetCategory} disabled={isSavingBudget}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a category..." /></SelectTrigger>
-                <SelectContent>
+          <form onSubmit={(e) => { e.preventDefault(); handleManualAddBudget(); }}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="budget-name" className="text-right">Name</Label>
+                <Input 
+                  id="budget-name" 
+                  value={newBudgetName} 
+                  onChange={(e) => setNewBudgetName(e.target.value)} 
+                  className="col-span-3" 
+                  placeholder="e.g., Monthly Groceries" 
+                  disabled={isSavingBudget}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="budget-amount" className="text-right">Amount ($)</Label>
+                <Input 
+                  id="budget-amount" 
+                  type="number" 
+                  value={newBudgetAmount} 
+                  onChange={(e) => setNewBudgetAmount(e.target.value)} 
+                  className="col-span-3" 
+                  placeholder="e.g., 500" 
+                  disabled={isSavingBudget}
+                  required 
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="budget-category" className="text-right">Category</Label>
+                <Select 
+                  onValueChange={setNewBudgetCategory} 
+                  value={newBudgetCategory} 
+                  disabled={isSavingBudget}
+                  required
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a category..." />
+                  </SelectTrigger>
+                  <SelectContent>
                     {SPENDING_CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
                     ))}
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSavingBudget}>Cancel</Button></DialogClose>
-            <Button onClick={handleManualAddBudget} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSavingBudget || !newBudgetName || !newBudgetAmount || !newBudgetCategory}>
-              {isSavingBudget ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Budget'}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset" 
+                  disabled={isSavingBudget}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button 
+                type="submit" 
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
+                disabled={isSavingBudget || !newBudgetName || !newBudgetAmount || !newBudgetCategory}
+              >
+                {isSavingBudget ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Save Budget
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
+      {/* Expense Dialog */}
       <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           <DialogHeader>
@@ -495,32 +560,76 @@ export default function FinancePage() {
               Log a new expense against one of your budgets.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddExpense}>
+          <form onSubmit={(e) => { e.preventDefault(); handleAddExpense(); }}>
             <div className="grid gap-4 py-4">
-               <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="expense-budget" className="text-right">Budget</Label>
-                  <Select onValueChange={setTargetBudgetId} value={targetBudgetId} required>
-                      <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a budget..." /></SelectTrigger>
-                      <SelectContent>
-                          {budgets?.map(b => (
-                              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                          ))}
-                      </SelectContent>
-                  </Select>
-               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-budget" className="text-right">Budget</Label>
+                <Select 
+                  onValueChange={setTargetBudgetId} 
+                  value={targetBudgetId} 
+                  required
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a budget..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {budgets?.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-desc" className="text-right">Description</Label>
-                <Input id="expense-desc" value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} className="col-span-3" placeholder="e.g., Coffee shop" required />
+                <Input 
+                  id="expense-desc" 
+                  value={newExpenseDescription} 
+                  onChange={(e) => setNewExpenseDescription(e.target.value)} 
+                  className="col-span-3" 
+                  placeholder="e.g., Coffee shop" 
+                  required 
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-amount" className="text-right">Amount ($)</Label>
-                <Input id="expense-amount" type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} className="col-span-3" placeholder="e.g., 5.50" required />
+                <Input 
+                  id="expense-amount" 
+                  type="number" 
+                  value={newExpenseAmount} 
+                  onChange={(e) => setNewExpenseAmount(e.target.value)} 
+                  className="col-span-3" 
+                  placeholder="e.g., 5.50" 
+                  required 
+                />
               </div>
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button type="button" variant="secondary" className="shadow-neumorphic-outset active:shadow-neumorphic-inset" disabled={isSavingExpense}>Cancel</Button></DialogClose>
-              <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" disabled={isSavingExpense || !targetBudgetId || !newExpenseAmount || !newExpenseDescription}>
-                {isSavingExpense ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Expense'}
+              <DialogClose asChild>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset" 
+                  disabled={isSavingExpense}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button 
+                type="submit" 
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
+                disabled={isSavingExpense || !targetBudgetId || !newExpenseAmount || !newExpenseDescription}
+              >
+                {isSavingExpense ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Save Expense
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>

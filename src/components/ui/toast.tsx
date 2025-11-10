@@ -4,8 +4,8 @@ import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
-
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 const ToastProvider = ToastPrimitives.Provider
 
@@ -29,9 +29,12 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
+        default: "border bg-background",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
+        success: "border-green-500 bg-green-500/10 text-green-700",
+        warning: "border-yellow-500 bg-yellow-500/10 text-yellow-700",
+        info: "border-blue-500 bg-blue-500/10 text-blue-700",
       },
     },
     defaultVariants: {
@@ -44,13 +47,30 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+>(({ className, variant, children, ...props }, ref) => {
+  // Respect prefers-reduced-motion via framer-motion if needed
+  const shouldReduce = useReducedMotion()
+
   return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    />
+    <AnimatePresence>
+      {props.open && (
+        <ToastPrimitives.Root
+          ref={ref}
+          className={cn(toastVariants({ variant }), className)}
+          {...props}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={shouldReduce ? { duration: 0.08 } : { type: "spring", stiffness: 500, damping: 40 }}
+            className="w-full"
+          >
+            {children}
+          </motion.div>
+        </ToastPrimitives.Root>
+      )}
+    </AnimatePresence>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
