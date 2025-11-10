@@ -66,7 +66,7 @@ export function AiKnoxClient() {
         setMessages([aiMessage]);
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, []);
 
   useEffect(() => {

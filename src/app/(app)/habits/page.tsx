@@ -227,7 +227,7 @@ export default function HabitsPage() {
 
   useEffect(() => {
     handleInteractiveSuggestion(watchName);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [watchName]);
 
 

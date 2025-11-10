@@ -45,7 +45,7 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [timeLeft, isPaused, isPauseModalOpen, currentExercise.type, currentExerciseIndex]);
 
   // When exercise changes, reset the state for the new one.
