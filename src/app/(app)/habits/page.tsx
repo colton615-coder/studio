@@ -148,7 +148,7 @@ export default function HabitsPage() {
   
   const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection);
   
-  const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
+  todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
   const isLoadingLog = isLoadingHistory;
 
 
@@ -237,17 +237,18 @@ export default function HabitsPage() {
     setInteractiveSuggestion(null); // Clear interactive suggestion after applying
   };
 
-
-  const onOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (open) {
+  useEffect(() => {
+    if (isDialogOpen) {
       handleProactiveSuggestions(); // Trigger proactive suggestions when modal opens
     } else {
-      reset(); // Reset form on close
-      setProactiveSuggestions([]);
-      setInteractiveSuggestion(null);
+      // Use a timeout to avoid clearing the form while the dialog is closing
+      setTimeout(() => {
+        reset(); 
+        setProactiveSuggestions([]);
+        setInteractiveSuggestion(null);
+      }, 300);
     }
-  };
+  }, [isDialogOpen, reset]);
 
   // Effect for "graceful" programmatic focus
   useEffect(() => {
@@ -272,7 +273,7 @@ export default function HabitsPage() {
       return;
     }
     setIsSaving(true);
-    onOpenChange(false);
+    setIsDialogOpen(false);
 
     const optimisticId = uuidv4();
     const newHabit: Habit = {
@@ -289,8 +290,10 @@ export default function HabitsPage() {
 
     try {
       // 2. Asynchronously write to Firestore
+      // Note: The original implementation used addDocumentNonBlocking here, which would
+      // cause a mismatch with the client-generated ID. Switched to setDocumentNonBlocking.
       const docRef = doc(habitsCollection, optimisticId);
-      await addDocumentNonBlocking(docRef, {
+      await setDocumentNonBlocking(docRef, {
         ...data,
         id: optimisticId,
         streak: 0,
@@ -420,7 +423,7 @@ export default function HabitsPage() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
         </div>
-        <Button onClick={() => onOpenChange(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+        <Button onClick={() => setIsDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New Habit
         </Button>
@@ -450,7 +453,7 @@ export default function HabitsPage() {
                 title="Define Your Discipline"
                 message="No habits yet. Add one to start building the new you."
                 ctaElement={
-                  <Button onClick={() => onOpenChange(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                  <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Your First Habit
                   </Button>
@@ -499,7 +502,7 @@ export default function HabitsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="shadow-neumorphic-outset bg-background border-transparent max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create a New Habit</DialogTitle>
@@ -634,3 +637,5 @@ export default function HabitsPage() {
     </div>
   );
 }
+
+    
