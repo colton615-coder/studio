@@ -119,20 +119,20 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
 
         {isRepBased ? (
             <div className="relative flex flex-col items-center justify-center my-8">
-                <div className="font-mono text-7xl sm:text-8xl font-bold text-shadow-lg">
+                <div className="font-mono text-9xl font-bold text-shadow-lg">
                     {currentExercise.reps}
-                    <span className="text-4xl sm:text-5xl ml-2 text-muted-foreground">Reps</span>
                 </div>
+                 <span className="text-5xl ml-2 text-muted-foreground font-bold text-shadow-lg">Reps</span>
             </div>
         ) : (
             <div className="relative flex items-center justify-center my-8">
-                <svg className="w-64 h-64 sm:w-72 sm:h-72 transform -rotate-90">
-                    <circle cx="50%" cy="50%" r="120" stroke="hsl(var(--muted) / 0.2)" strokeWidth="10" fill="transparent" className="sm:r-[136px]" />
-                    <circle cx="50%" cy="50%" r="120" stroke="hsl(var(--accent))" strokeWidth="10" fill="transparent"
-                        strokeDasharray={2 * Math.PI * 120} strokeDashoffset={(2 * Math.PI * 120) * (1 - (timerProgress / 100))}
-                        className="transition-all duration-1000 ease-linear sm:r-[136px]" style={{ strokeLinecap: 'round' }} />
+                <svg className="w-72 h-72 sm:w-96 sm:h-96 transform -rotate-90">
+                    <circle cx="50%" cy="50%" r="140" stroke="hsl(var(--muted) / 0.2)" strokeWidth="12" fill="transparent" className="sm:r-[180px]" />
+                    <circle cx="50%" cy="50%" r="140" stroke="hsl(var(--accent))" strokeWidth="12" fill="transparent"
+                        strokeDasharray={2 * Math.PI * 140} strokeDashoffset={(2 * Math.PI * 140) * (1 - (timerProgress / 100))}
+                        className="transition-all duration-1000 ease-linear sm:r-[180px]" style={{ strokeLinecap: 'round' }} />
                 </svg>
-                <div className="absolute font-mono text-7xl sm:text-8xl font-bold text-shadow-lg">{timeLeft}</div>
+                <div className="absolute font-mono text-9xl font-bold text-shadow-lg">{timeLeft}</div>
             </div>
         )}
 
@@ -148,13 +148,13 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
                   )}
                 </div>
                 <div>
-                    <CardTitle className="text-sm text-left text-muted-foreground">Next Up</CardTitle>
-                    <CardDescription className="text-lg text-left font-semibold text-foreground">
+                    <CardTitle className="text-sm text-left text-muted-foreground text-shadow">Next Up</CardTitle>
+                    <CardDescription className="text-lg text-left font-semibold text-foreground text-shadow">
                         {nextExercise ? nextExercise.name : 'Final Exercise!'}
                     </CardDescription>
                 </div>
               </div>
-               {nextExercise && <span className="text-2xl font-semibold text-muted-foreground">{nextExercise.duration ? `${nextExercise.duration}s` : `${nextExercise.reps} reps`}</span>}
+               {nextExercise && <span className="text-2xl font-semibold text-muted-foreground text-shadow">{nextExercise.duration ? `${nextExercise.duration}s` : `${nextExercise.reps} reps`}</span>}
             </CardHeader>
           </Card>
           
