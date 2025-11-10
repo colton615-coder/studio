@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { motion } from "framer-motion"
-const MotionDiv: any = motion.div
+import { MotionDiv } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<

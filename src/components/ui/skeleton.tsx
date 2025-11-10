@@ -1,8 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { motion, useReducedMotion } from "framer-motion"
-const MotionDiv: any = motion.div
+import { useReducedMotion } from "framer-motion"
+import { MotionDiv } from "@/lib/motion"
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   shimmer?: boolean
