@@ -325,16 +325,9 @@ export default function HabitsPage() {
     const newDoneState = !habit.done;
     let newStreak = habit.streak;
     
-    // Optimistic update
-    if (combinedHabits) {
-      const updatedHabits = combinedHabits.map(h => 
-        h.id === habit.id ? { ...h, done: newDoneState } : h
-      )
-      // This part is tricky because useCollection's setData isn't exposed.
-      // For a visual toggle, this local change is usually sufficient if the backend call is fast.
-      // A more robust solution might involve a more complex state management.
-    }
-
+    // Immediately write to Firestore (non-blocking) so the checkbox updates quickly
+    const logUpdate = { log: { [habit.id]: newDoneState } };
+    setDocumentNonBlocking(logRef, logUpdate, { merge: true });
 
     if (newDoneState) {
       const lastCompletedDate = habit.lastCompleted?.toDate();
@@ -349,8 +342,6 @@ export default function HabitsPage() {
         setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
       }
     }
-    const logUpdate = { log: { [habit.id]: newDoneState } };
-    setDocumentNonBlocking(logRef, logUpdate, { merge: true });
   };
 
   const handleDeleteHabit = (habitToDelete: Habit) => {
