@@ -25,9 +25,9 @@
 # Set longer timeout for AI endpoints (up to 26s on paid plan, 10s free)
 [functions]
   node_bundler = "esbuild"
-  timeout = 26
 
 # Environment variables for Edge Functions (optional, for faster AI routes)
+[functions."api/ai/*"]
 [functions."api/ai/*"]
   node_bundler = "esbuild"
   timeout = 26
