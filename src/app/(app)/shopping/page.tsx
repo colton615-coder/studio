@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, FormEvent } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -100,7 +100,7 @@ export default function ShoppingListPage() {
   const deleteItem = (itemToDelete: ShoppingListItem) => {
     if (!shoppingListCollection || !items || !setItems) return;
 
-    const originalItems = items;
+    const originalItems = [...items];
     // 1. Optimistic UI Update
     setItems(originalItems.filter(item => item.id !== itemToDelete.id));
 

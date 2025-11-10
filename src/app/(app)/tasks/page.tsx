@@ -118,7 +118,7 @@ export default function TasksPage() {
   const deleteTask = (taskToDelete: Task) => {
     if (!tasksCollection || !tasks || !setTasks) return;
 
-    const originalTasks = tasks;
+    const originalTasks = [...tasks];
     // 1. Optimistic UI update
     setTasks(originalTasks.filter(t => t.id !== taskToDelete.id));
 

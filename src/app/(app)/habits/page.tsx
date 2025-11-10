@@ -152,10 +152,13 @@ export default function HabitsPage() {
   const isLoadingLog = isLoadingHistory;
 
 
-  const combinedHabits = useMemo(() => habits?.map(habit => ({
-    ...habit,
-    done: todayLog?.log?.[habit.id] ?? false
-  })), [habits, todayLog]);
+  const combinedHabits = useMemo(() => {
+    const sortedHabits = habits?.sort((a,b) => (a.createdAt?.toDate?.() || 0) > (b.createdAt?.toDate?.() || 0) ? 1 : -1)
+    return sortedHabits?.map(habit => ({
+      ...habit,
+      done: todayLog?.log?.[habit.id] ?? false
+    }))
+  }, [habits, todayLog]);
 
   useEffect(() => {
     if (habits && habitHistory) {
@@ -269,30 +272,31 @@ export default function HabitsPage() {
       return;
     }
     setIsSaving(true);
-    onOpenChange(false); // Close dialog immediately
+    onOpenChange(false);
 
     const optimisticId = uuidv4();
-    const optimisticHabit: Habit = {
+    const newHabit: Habit = {
       ...data,
       id: optimisticId,
       streak: 0,
       userProfileId: user.uid,
-      createdAt: new Date(), // Use local date for optimistic item
+      createdAt: new Date(), 
       isOptimistic: true,
     };
     
     // 1. Optimistically update local state
-    setHabits([...habits, optimisticHabit]);
+    setHabits([...habits, newHabit]);
 
     try {
       // 2. Asynchronously write to Firestore
       const docRef = doc(habitsCollection, optimisticId);
-      await setDocumentNonBlocking(docRef, {
+      await addDocumentNonBlocking(docRef, {
         ...data,
         id: optimisticId,
         streak: 0,
         userProfileId: user.uid,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       toast({ title: "Habit Created!", description: `"${data.name}" has been added.` });
     } catch (error) {
@@ -312,9 +316,15 @@ export default function HabitsPage() {
     let newStreak = habit.streak;
     
     // Optimistic update
-    const updatedHabits = combinedHabits?.map(h => 
-      h.id === habit.id ? { ...h, done: newDoneState } : h
-    ) ?? [];
+    if (combinedHabits) {
+      const updatedHabits = combinedHabits.map(h => 
+        h.id === habit.id ? { ...h, done: newDoneState } : h
+      )
+      // This part is tricky because useCollection's setData isn't exposed.
+      // For a visual toggle, this local change is usually sufficient if the backend call is fast.
+      // A more robust solution might involve a more complex state management.
+    }
+
 
     if (newDoneState) {
       const lastCompletedDate = habit.lastCompleted?.toDate();
@@ -336,7 +346,7 @@ export default function HabitsPage() {
   const handleDeleteHabit = (habitToDelete: Habit) => {
     if (!habitsCollection || !habits || !setHabits) return;
     
-    const originalHabits = habits;
+    const originalHabits = [...habits];
 
     // 1. Optimistically remove from local state
     setHabits(originalHabits.filter(h => h.id !== habitToDelete.id));
