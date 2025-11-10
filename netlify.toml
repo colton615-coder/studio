@@ -1,33 +1,33 @@
 # Netlify configuration for Next.js 15 deployment
+
 [build]
-  command = "npm run build"
-  functions = "netlify/functions"
-  publish = ".next/public"
+command = "npm run build"
+functions = "netlify/functions"
+publish = ".next/public"
 
 [build.environment]
-  # Node version
-  NODE_VERSION = "20"
-  # Enable Next.js optimizations
-  NEXT_TELEMETRY_DISABLED = "1"
+# Node version
+NODE_VERSION = "20"
+# Enable Next.js optimizations
+NEXT_TELEMETRY_DISABLED = "1"
 
 # Rewrite rules for Next.js
 [[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/render"
-  status = 200
+from = "/*"
+to = "/.netlify/functions/render"
+status = 200
 
 # Enable ISR (Incremental Static Regeneration)
 [[headers]]
-  for = "/api/*"
-  [headers.values]
-    Cache-Control = "public, s-maxage=0, stale-while-revalidate=3600"
+for = "/api/*"
+[headers.values]
+Cache-Control = "public, s-maxage=0, stale-while-revalidate=3600"
 
 # Set longer timeout for AI endpoints (up to 26s on paid plan, 10s free)
 [functions]
-  node_bundler = "esbuild"
+node_bundler = "esbuild"
 
 # Environment variables for Edge Functions (optional, for faster AI routes)
 [functions."api/ai/*"]
-[functions."api/ai/*"]
-  node_bundler = "esbuild"
-  timeout = 26
+node_bundler = "esbuild"
+timeout = 26
