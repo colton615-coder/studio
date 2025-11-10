@@ -1,6 +1,6 @@
 'use client';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, orderBy, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Lock } from 'lucide-react';
@@ -24,12 +24,11 @@ export function JournalVault() {
 
     const journalEntriesCollection = useMemoFirebase(() => {
         if (!user || !firestore) return null;
-        return collection(firestore, 'users', user.uid, 'journalEntries');
+        // Query to order entries by creation date, descending
+        return query(collection(firestore, 'users', user.uid, 'journalEntries'), orderBy('createdAt', 'desc'));
     }, [user, firestore]);
 
     const { data: entries, isLoading } = useCollection<JournalEntry>(journalEntriesCollection);
-
-    const sortedEntries = entries?.sort((a,b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
 
     const VaultSkeleton = () => (
       <div className="space-y-2">
@@ -54,7 +53,7 @@ export function JournalVault() {
                 <CardContent>
                     {isLoading ? (
                         <VaultSkeleton />
-                    ) : !sortedEntries || sortedEntries.length === 0 ? (
+                    ) : !entries || entries.length === 0 ? (
                         <EmptyStateCTA
                             icon={<Lock size={32} />}
                             title="Your Vault is Empty"
@@ -67,7 +66,7 @@ export function JournalVault() {
                         />
                     ) : (
                         <Accordion type="single" collapsible className="w-full">
-                            {sortedEntries.map((entry) => (
+                            {entries.map((entry) => (
                                 <AccordionItem value={entry.id} key={entry.id}>
                                     <AccordionTrigger className="hover:no-underline">
                                         <div className="flex justify-between items-center w-full pr-4">

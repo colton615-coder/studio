@@ -1,32 +1,3 @@
-// This component has been significantly refactored for Step 3 to include
-// the Proactive and Interactive AI Coach features.
-//
-// Key Architectural Changes:
-// 1.  State Management: New state variables `proactiveSuggestions`, `interactiveSuggestion`,
-//     and `isAiLoading` are introduced to manage the AI-generated data and loading states.
-// 2.  AI Integration Hooks:
-//     - A `useEffect` hook is added to the `Dialog` component's `onOpenChange` handler. When the
-//       modal opens, it triggers `handleProactiveSuggestions` to fetch suggestions based on the
-//       user's journal.
-//     - The `useDebouncedCallback` hook from `use-debounce` is used to trigger
-//       `handleInteractiveSuggestion` as the user types, providing real-time refinement.
-// 3.  Component Logic:
-//     - `handleProactiveSuggestions`: Fetches recent journal entries from Firestore, calls the
-//       `fetchProactiveSuggestions` server action, and populates the state.
-//     - `handleInteractiveSuggestion`: Takes the current input value, calls the
-//       `fetchInteractiveSuggestion` server action, and updates the state.
-//     - `handleSuggestionClick`: A new handler that takes a suggested habit object and uses
-//       the form's `setValue` function to pre-fill the entire "Add Habit" form, connecting
-//       the AI suggestion directly to the user's workflow.
-// 4.  UI Enhancements in Modal:
-//     - A dedicated section for "AI Suggestions" is added.
-//     - It displays a loading skeleton (`AiLoadingSkeleton`) while the proactive suggestions are being fetched.
-//     - Proactive suggestions are rendered as clickable `SuggestionPill` components.
-//     - The interactive suggestion is rendered as a `SuggestionPill` directly below the input field.
-// 5.  Silent Error Handling: All AI-related fetch calls are wrapped in try/catch blocks that
-//     fail silently (by not setting state or showing an error toast), ensuring the user can
-//     always add a habit manually even if the AI is unavailable.
-
 'use client';
 import React, { useState, useEffect, useTransition, useMemo, useRef } from 'react';
 import {
