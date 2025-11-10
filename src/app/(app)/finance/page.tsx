@@ -88,12 +88,6 @@ export default function FinancePage() {
   const [targetBudgetId, setTargetBudgetId] = useState('');
   const [isSavingExpense, setIsSavingExpense] = useState(false);
 
-
-  const [newExpenseDescription, setNewExpenseDescription] = useState('');
-  const [newExpenseAmount, setNewExpenseAmount] = useState('');
-  const [targetBudgetId, setTargetBudgetId] = useState('');
-  const [isSavingExpense, setIsSavingExpense] = useState(false);
-
   const [aiFeedback, setAiFeedback] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const [isAnalyzing, startAiTransition] = useTransition();
@@ -177,8 +171,8 @@ export default function FinancePage() {
     }
   };
   
-  const handleAddExpense = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleAddExpense = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) return;
     
     const targetBudget = budgets?.find(b => b.id === targetBudgetId);
@@ -560,7 +554,7 @@ export default function FinancePage() {
               Log a new expense against one of your budgets.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); handleAddExpense(); }}>
+          <form onSubmit={handleAddExpense}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-budget" className="text-right">Budget</Label>

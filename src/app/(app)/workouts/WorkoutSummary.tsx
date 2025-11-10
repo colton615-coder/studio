@@ -20,7 +20,7 @@ export function WorkoutSummary({ workout, completedCount, onDone }: WorkoutSumma
   const firestore = useFirestore();
 
   const totalExercises = workout.exercises.length;
-  const totalTime = workout.exercises.reduce((acc, ex) => acc + ex.duration, 0);
+  const totalTime = workout.exercises.reduce((acc, ex) => acc + (ex.duration ?? 0), 0);
   const estimatedCalories = Math.round((totalTime / 60) * 8); // Simple estimation
 
   const { toast } = useToast();

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
+const MotionDiv: any = motion.div
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
@@ -10,7 +11,7 @@ const Card = React.forwardRef<
     animate?: boolean
   }
 >(({ className, animate = true, ...props }, ref) => {
-  const Comp = animate ? motion.div : "div"
+  const Comp: any = animate ? MotionDiv : "div"
   
   return (
     <Comp

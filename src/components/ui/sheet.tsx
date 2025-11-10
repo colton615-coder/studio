@@ -50,12 +50,14 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  open?: boolean
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => {
+>(({ side = "right", className, children, open, ...props }, ref) => {
   const variants = {
     top: { y: "-100%", x: 0 },
     bottom: { y: "100%", x: 0 },
@@ -65,7 +67,7 @@ const SheetContent = React.forwardRef<
   return (
     <SheetPortal>
        <AnimatePresence>
-         {props.open && (
+         {open && (
             <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -76,19 +78,26 @@ const SheetContent = React.forwardRef<
               <SheetOverlay />
             </motion.div>
             <SheetPrimitive.Content ref={ref} asChild {...props}>
-              <motion.div
-                initial={variants[side]}
-                animate={{ x: 0, y: 0 }}
-                exit={variants[side]}
-                transition={{ duration: 0.4, ease: [0.36, 0.66, 0.04, 1] }}
-                className={cn(sheetVariants({ side }), className)}
-              >
-                {children}
-                <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close</span>
-                </SheetPrimitive.Close>
-              </motion.div>
+              {(() => {
+                const key = (side ?? 'right') as 'top' | 'bottom' | 'left' | 'right'
+                const start = variants[key]
+                return (
+                  <motion.div
+                    initial={start}
+                    animate={{ x: 0, y: 0 }}
+                    exit={start}
+                    transition={{ duration: 0.4, ease: [0.36, 0.66, 0.04, 1] }}
+                    className={cn(sheetVariants({ side }), className)}
+                  >
+                    {children}
+                    <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close</span>
+                    </SheetPrimitive.Close>
+                  </motion.div>
+                )
+              })()}
+              
             </SheetPrimitive.Content>
             </>
          )}

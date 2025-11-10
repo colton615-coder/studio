@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { motion, useReducedMotion } from "framer-motion"
+const MotionDiv: any = motion.div
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   shimmer?: boolean
@@ -14,7 +15,7 @@ function Skeleton({
 }: SkeletonProps) {
   const shouldReduce = useReducedMotion()
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0.5 }}
       animate={shouldReduce ? undefined : { opacity: [0.5, 0.8, 0.5] }}
       transition={shouldReduce ? undefined : { duration: 1.5, repeat: Infinity, ease: "easeInOut" }}

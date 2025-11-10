@@ -187,7 +187,12 @@ export default function HabitsPage() {
       const existingHabits = habits.map(h => h.name);
       
       const result = await fetchProactiveSuggestions({ journalEntries, existingHabits });
-      setProactiveSuggestions(result.suggestions);
+      // Normalize suggestion icons to our IconName union (fallback to BrainCircuit)
+      const normalized = result.suggestions.map((s: any) => ({
+        ...s,
+        icon: Object.keys(habitIcons).includes(s.icon) ? (s.icon as IconName) : ('BrainCircuit' as IconName),
+      }));
+      setProactiveSuggestions(normalized);
       
     } catch (error) {
       console.error("Proactive AI suggestion failed:", error);
@@ -206,7 +211,11 @@ export default function HabitsPage() {
     try {
       const result = await fetchInteractiveSuggestion({ userInput: name });
       if (result.suggestion) {
-        setInteractiveSuggestion(result.suggestion);
+        const s = result.suggestion as any;
+        setInteractiveSuggestion({
+          ...s,
+          icon: Object.keys(habitIcons).includes(s.icon) ? (s.icon as IconName) : ('BrainCircuit' as IconName),
+        });
       } else {
         setInteractiveSuggestion(null);
       }
@@ -537,16 +546,15 @@ export default function HabitsPage() {
                 rules={{ required: true }}
                 render={({ field }) => (
                   <Input 
+                    {...field}
                     ref={habitNameInputRef}
                     id="habit-name-input"
-                    name="habit-name"
                     placeholder="e.g. Read for 20 minutes" 
                     disabled={isSaving}
                     autoComplete="off"
                     autoCapitalize="on"
                     spellCheck="true"
                     autoCorrect="on"
-                    {...field} 
                   />
                 )}
               />
@@ -638,7 +646,7 @@ export default function HabitsPage() {
                 <Button 
                   type="submit" 
                   className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
-                  disabled={isSaving || !watchName || !selectedFrequency.length}
+                  disabled={isSaving || !watchName || (watchFrequency.type === 'weekly' && watchFrequency.days.length === 0)}
                 >
                   {isSaving ? (
                     <>

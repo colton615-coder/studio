@@ -100,8 +100,11 @@ export function PinGate({ children }: PinGateProps) {
   const handleForgotPin = async () => {
     try {
       localStorage.clear(); // Clear all localStorage data
-      const { auth } = await import('firebase/auth');
-      await auth().signOut(); // Firebase auth signOut
+      const authModule = await import('firebase/auth');
+      // Use getAuth and signOut from firebase/auth
+      const { getAuth, signOut } = authModule as any;
+      const auth = getAuth();
+      await signOut(auth);
       router.push('/login');
     } catch (error) {
       setError('Failed to reset PIN. Please try again.');
@@ -118,7 +121,7 @@ export function PinGate({ children }: PinGateProps) {
       {value.map((digit, index) => (
         <Input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => { inputRefs.current[index] = el }}
           type="password"
           maxLength={1}
           value={digit}
