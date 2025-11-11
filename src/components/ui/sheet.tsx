@@ -4,7 +4,7 @@ import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -58,6 +58,7 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = "right", className, children, open, ...props }, ref) => {
+  const shouldReduceMotion = useReducedMotion()
   const variants = {
     top: { y: "-100%", x: 0 },
     bottom: { y: "100%", x: 0 },
@@ -86,7 +87,7 @@ const SheetContent = React.forwardRef<
                     initial={start}
                     animate={{ x: 0, y: 0 }}
                     exit={start}
-                    transition={{ duration: 0.4, ease: [0.36, 0.66, 0.04, 1] }}
+                    transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.36, 0.66, 0.04, 1] }}
                     className={cn(sheetVariants({ side }), className)}
                   >
                     {children}

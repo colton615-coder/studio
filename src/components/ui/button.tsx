@@ -53,7 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp: any = asChild ? MotionSlot : MotionButton
 
     const motionProps = shouldReduce
-      ? {}
+      ? { transition: { duration: 0.08 } }
       : {
           whileHover: { scale: 1.02 },
           whileTap: { scale: 0.98 },

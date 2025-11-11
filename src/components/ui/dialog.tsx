@@ -4,7 +4,7 @@ import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 const Dialog = DialogPrimitive.Root
 
@@ -34,34 +34,38 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideCloseButton?: boolean
     open?: boolean
+    onOpenAutoFocus?: (event: Event) => void
   }
->(({ className, children, hideCloseButton, open, ...props }, ref) => (
-  <DialogPortal>
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          >
-            <DialogOverlay />
-          </motion.div>
-          <DialogPrimitive.Content
-            ref={ref}
-            asChild
-            {...props}
-          >
+>(({ className, children, hideCloseButton, open, onOpenAutoFocus, ...props }, ref) => {
+  const shouldReduceMotion = useReducedMotion()
+  return (
+    <DialogPortal>
+      <AnimatePresence>
+        {open && (
+          <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className={cn(
-                "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
-                className
-              )}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3, ease: 'easeInOut' }}
+            >
+              <DialogOverlay />
+            </motion.div>
+            <DialogPrimitive.Content
+              ref={ref}
+              asChild
+              onOpenAutoFocus={onOpenAutoFocus}
+              {...props}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={shouldReduceMotion ? { duration: 0.08 } : { duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className={cn(
+                  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+                  className
+                )}
             >
               {children}
               {!hideCloseButton && (
@@ -70,13 +74,14 @@ const DialogContent = React.forwardRef<
                   <span className="sr-only">Close</span>
                 </DialogPrimitive.Close>
               )}
-            </motion.div>
-          </DialogPrimitive.Content>
-        </>
-      )}
-    </AnimatePresence>
-  </DialogPortal>
-))
+              </motion.div>
+            </DialogPrimitive.Content>
+          </>
+        )}
+      </AnimatePresence>
+    </DialogPortal>
+  )
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
