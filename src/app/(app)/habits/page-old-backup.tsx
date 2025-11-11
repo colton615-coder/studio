@@ -21,7 +21,7 @@ import { haptics } from '@/lib/haptics';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh-indicator';
 import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator';
-import { useSidebarStore } from '@/lib/stores/useSidebarStore';
+// Sidebar store removed in favor of SidebarProvider context
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -104,7 +104,7 @@ export default function HabitsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { toggle } = useSidebarStore();
+  // const { toggle } = useSidebarStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

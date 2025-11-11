@@ -13,7 +13,6 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
-import { useSidebarStore } from '@/lib/stores/useSidebarStore';
 import { Bot, Loader2 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -25,7 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const { isOpen, setOpen } = useSidebarStore();
+  // Sidebar state now managed internally by SidebarProvider context.
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
@@ -88,7 +87,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
-      <SidebarProvider open={isOpen} onOpenChange={setOpen}>
+      <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
