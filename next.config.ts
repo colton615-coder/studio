@@ -114,7 +114,8 @@ export default withPWA({
   dest: 'public',
   register: false,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  // Kill-switch: fully disable SW until stability verified
+  disable: true,
   buildExcludes: [/middleware-manifest\.json$/],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
 })(nextConfig);
