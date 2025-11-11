@@ -62,14 +62,8 @@ const DialogContent = React.forwardRef<
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={shouldReduceMotion ? { duration: 0.08 } : { duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                style={{
-                  position: 'fixed',
-                  left: '50%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
                 className={cn(
-                  "z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+                  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg -translate-x-[50%] -translate-y-[50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
                   className
                 )}
             >
