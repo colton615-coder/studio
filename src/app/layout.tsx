@@ -4,12 +4,14 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
+import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'LiFE-iN-SYNC',
   description: 'Your all-in-one life management dashboard.',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -17,8 +19,7 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512' },
+      { url: '/icons/apple-touch-icon-180x180.png', sizes: '180x180' },
     ],
   },
 };
@@ -43,6 +44,7 @@ export default function RootLayout({
           {children}
         </FirebaseClientProvider>
         <Toaster />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

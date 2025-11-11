@@ -1,6 +1,11 @@
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
+// Build/version identifier for cache versioning
+const buildId = process.env.COMMIT_REF || process.env.VERCEL_GIT_COMMIT_SHA || `${Date.now()}`;
+const isDev = process.env.NODE_ENV !== 'production';
+const disablePWA = isDev || process.env.NEXT_DISABLE_PWA === 'true';
+
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -18,6 +23,8 @@ const nextConfig: NextConfig = {
       ],
     },
   },
+  // Provide a consistent build id for cache versioning
+  generateBuildId: async () => buildId,
   async headers() {
     return [
       {
@@ -37,7 +44,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=600, must-revalidate',
           },
         ],
       },
@@ -112,10 +119,40 @@ const nextConfig: NextConfig = {
 
 export default withPWA({
   dest: 'public',
-  register: false,
+  register: false, // manual registration component
   skipWaiting: true,
-  // Kill-switch: fully disable SW until stability verified
-  disable: true,
+  clientsClaim: true,
+  // Disable in dev or via env kill-switch
+  disable: disablePWA,
   buildExcludes: [/middleware-manifest\.json$/],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
+  runtimeCaching: [
+    {
+      // Next.js build assets
+      urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/_next/static/'),
+      handler: 'CacheFirst',
+      options: {
+        cacheName: `static-assets-${buildId}`,
+        expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+      },
+    },
+    {
+      // App icons (immutable)
+      urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/icons/'),
+      handler: 'CacheFirst',
+      options: {
+        cacheName: `app-icons-${buildId}`,
+        expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+      },
+    },
+    {
+      // External images used by the app
+      urlPattern: ({ url }: { url: URL }) => ['images.unsplash.com', 'picsum.photos', 'placehold.co'].includes(url.hostname),
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: `remote-images-${buildId}`,
+        expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+      },
+    },
+  ],
 })(nextConfig);
