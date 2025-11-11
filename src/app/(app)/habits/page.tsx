@@ -550,35 +550,36 @@ export default function HabitsPage() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl h-[85vh] flex flex-col p-4 sm:p-6">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Create a New Habit</DialogTitle>
             <DialogDescription>Personalize your new habit. Get suggestions from your AI Coach.</DialogDescription>
           </DialogHeader>
           
-          <Separator />
+          <div className="flex-1 overflow-y-auto -mx-4 px-4 sm:-mx-6 sm:px-6">
+            <Separator className="mb-4" />
 
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2 text-accent">
-              <Sparkles size={16}/>AI Coach Suggestions
-              <InfoTooltip content="AI analyzes your journal entries and current habits to suggest personalized routines that align with your goals." />
-            </Label>
-            <div className="min-h-[40px]" role="region" aria-live="polite" aria-label="AI Coach suggestions">
-              {isAiLoading ? <AiLoadingSkeleton/> : (
-                proactiveSuggestions.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {proactiveSuggestions.map((suggestion, i) => (
-                      <SuggestionPill key={i} suggestion={suggestion} onClick={() => handleSuggestionClick(suggestion)}/>
-                    ))}
-                  </div>
-                ) : <p className="text-xs text-muted-foreground">Write in your journal to get personalized suggestions.</p>
-              )}
+            <div className="space-y-4 mb-4">
+              <Label className="flex items-center gap-2 text-accent">
+                <Sparkles size={16}/>AI Coach Suggestions
+                <InfoTooltip content="AI analyzes your journal entries and current habits to suggest personalized routines that align with your goals." />
+              </Label>
+              <div className="min-h-[40px]" role="region" aria-live="polite" aria-label="AI Coach suggestions">
+                {isAiLoading ? <AiLoadingSkeleton/> : (
+                  proactiveSuggestions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {proactiveSuggestions.map((suggestion, i) => (
+                        <SuggestionPill key={i} suggestion={suggestion} onClick={() => handleSuggestionClick(suggestion)}/>
+                      ))}
+                    </div>
+                  ) : <p className="text-xs text-muted-foreground">Write in your journal to get personalized suggestions.</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <Separator />
+            <Separator className="mb-6" />
           
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-4">
             <div className="space-y-2">
               <Label htmlFor="habit-name-input">Habit Name</Label>
               <Controller
@@ -703,7 +704,8 @@ export default function HabitsPage() {
                   )}
                 </Button>
             </DialogFooter>
-          </form>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
