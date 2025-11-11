@@ -560,7 +560,11 @@ export default function HabitsPage() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          open={isDialogOpen} 
+          className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Create a New Habit</DialogTitle>
             <DialogDescription>Build positive routines and track your progress.</DialogDescription>
