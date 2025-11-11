@@ -40,6 +40,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 
 const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2 } = LucideIcons;
@@ -510,7 +511,10 @@ export default function HabitsPage() {
           <Separator />
 
           <div className="space-y-4">
-            <Label className="flex items-center gap-2 text-accent"><Sparkles size={16}/>AI Coach Suggestions</Label>
+            <Label className="flex items-center gap-2 text-accent">
+              <Sparkles size={16}/>AI Coach Suggestions
+              <InfoTooltip content="AI analyzes your journal entries and current habits to suggest personalized routines that align with your goals." />
+            </Label>
             <div className="min-h-[40px]">
               {isAiLoading ? <AiLoadingSkeleton/> : (
                 proactiveSuggestions.length > 0 ? (

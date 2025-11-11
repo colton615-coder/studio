@@ -5,6 +5,7 @@ import { getAiKnoxResponse, getDailyPrompt } from './actions';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { Send, User, Bot, Loader2, Lightbulb, Lock, MessageSquareQuote, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -178,6 +179,7 @@ export function AiKnoxClient() {
             <CardTitle className="flex items-center gap-2">
               <Lightbulb className="text-accent" />
               Today's Journal Prompt
+              <InfoTooltip content="AI generates personalized daily prompts to help you reflect and gain clarity. Your journal is private unless you choose to discuss it with AI Knox." />
             </CardTitle>
             <CardDescription className="pt-1">{prompt}</CardDescription>
           </CardHeader>

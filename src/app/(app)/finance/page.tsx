@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 import { AICoPilotThinking } from '@/components/ui/ai-copilot-thinking';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 const SPENDING_CATEGORIES = [
   'food', 'transport', 'housing', 'bills', 'entertainment', 'shopping', 'health', 'other'
@@ -361,7 +362,11 @@ export default function FinancePage() {
 
         <Card className="shadow-neumorphic-outset">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><BrainCircuit className="text-accent" /> AI Financial Coach</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BrainCircuit className="text-accent" /> 
+                  AI Financial Coach
+                  <InfoTooltip content="AI analyzes your spending patterns, budget allocation, and financial habits to provide personalized recommendations and budget suggestions." />
+                </CardTitle>
                 <CardDescription>Analyze your spending and get personalized budget suggestions.</CardDescription>
             </CardHeader>
             <CardContent>

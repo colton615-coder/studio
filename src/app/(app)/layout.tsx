@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -15,12 +15,17 @@ import {
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
 import { Bot, Loader2 } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -28,7 +33,43 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user || !firestore) {
+        setCheckingOnboarding(false);
+        return;
+      }
+
+      try {
+        const userRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+          await setDoc(userRef, {
+            email: user.email,
+            createdAt: new Date(),
+            onboardingCompleted: false,
+          });
+          setShowOnboarding(true);
+        } else {
+          const data = userDoc.data();
+          if (!data?.onboardingCompleted) {
+            setShowOnboarding(true);
+          }
+        }
+      } catch (error) {
+        // Silently fail - user can still use the app
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+
+    if (user && firestore) {
+      checkOnboardingStatus();
+    }
+  }, [user, firestore]);
+
+  if (isUserLoading || !user || checkingOnboarding) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -37,7 +78,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
+    <>
+      <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
+      <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
@@ -88,5 +131,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">{children}</main>
       </SidebarInset>
     </SidebarProvider>
+    </>
   );
 }
