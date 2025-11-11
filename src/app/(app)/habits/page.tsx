@@ -550,7 +550,7 @@ export default function HabitsPage() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-2xl">
+        <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create a New Habit</DialogTitle>
             <DialogDescription>Personalize your new habit. Get suggestions from your AI Coach.</DialogDescription>
