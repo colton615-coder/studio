@@ -48,20 +48,13 @@ service cloud.firestore {
 
       /**
        * Subcollections under a user's profile.
-       * These rules apply to habits, journalEntries, budgets, etc.
+       * These rules apply to habits, journalEntries, budgets, tasks, etc.
        * All subcollections are accessible by the owner of the parent user document.
+       * The {document=**} syntax allows recursive matching of all nested documents.
        */
-      match /{collection}/{docId} {
+      match /{collection}/{document=**} {
         allow read, write: if isOwner(userId);
       }
-
-      /**
-       * Special case for nested exercises, inheriting the workout template's ownership.
-       * This is an example of deeper nesting if required.
-       */
-       match /workoutTemplates/{workoutTemplateId}/exercises/{exerciseId} {
-          allow read, write: if isOwner(userId);
-       }
     }
     
     /**
