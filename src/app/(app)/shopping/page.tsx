@@ -31,6 +31,11 @@ export default function ShoppingListPage() {
   const { toast } = useToast();
   const [newItemDescription, setNewItemDescription] = useState('');
 
+  const shoppingListCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'shoppingListItems');
+  }, [user, firestore]);
+
   const shoppingListQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return query(

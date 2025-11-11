@@ -48,6 +48,11 @@ export default function TasksPage() {
   const [newPriority, setNewPriority] = useState<Priority>('Medium');
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const tasksCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'tasks');
+  }, [user, firestore]);
+
   const handleRefresh = useCallback(async () => {
     setRefreshKey(prev => prev + 1);
     await new Promise(resolve => setTimeout(resolve, 1000));
