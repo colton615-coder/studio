@@ -25,10 +25,21 @@ export async function getAiKnoxResponse(
   if (!userInput.trim()) {
     return { error: 'Input cannot be empty.' };
   }
+  
+  // Check if API key is configured
+  if (!process.env.GOOGLE_GENAI_API_KEY) {
+    return { error: 'AI Knox is not configured. Please contact support.' };
+  }
+  
   try {
     const result = await aiKnoxTherapy({ userInput });
     return result;
-  } catch (_error) {
-    return { error: 'AI Knox is unavailable right now. Please try again later.' };
+  } catch (error) {
+    // Log error details in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('AI Knox error:', error);
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return { error: `AI Knox error: ${errorMessage}` };
   }
 }
