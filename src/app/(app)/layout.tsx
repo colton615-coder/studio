@@ -1,7 +1,7 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+"use client";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -11,30 +11,25 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-} from '@/components/ui/sidebar';
-import { navLinks } from '@/lib/nav-links';
-import { Bot, Loader2 } from 'lucide-react';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Header } from '@/components/Header';
+} from "@/components/ui/sidebar";
+import { navLinks } from "@/lib/nav-links";
+import { Bot, Loader2 } from "lucide-react";
+import { useUser, useFirestore } from "@/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { Header } from "@/components/Header";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-<<<<<<< HEAD
-  const { isOpen } = useSidebarStore();
-=======
-  // Sidebar state now managed internally by SidebarProvider context.
->>>>>>> b0695e9d86eef045d1eb5014bf3b65fa637b1427
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, isUserLoading, router]);
 
@@ -46,9 +41,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const userRef = doc(firestore, 'users', user.uid);
+        const userRef = doc(firestore, "users", user.uid);
         const userDoc = await getDoc(userRef);
-        
+
         if (!userDoc.exists()) {
           await setDoc(userRef, {
             email: user.email,
@@ -62,7 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             setShowOnboarding(true);
           }
         }
-      } catch (error) {
+      } catch {
         // Silently fail - user can still use the app
       } finally {
         setCheckingOnboarding(false);
@@ -84,74 +79,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <a 
-        href="#main-content" 
+      <a
+        href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-accent focus:text-accent-foreground focus:rounded-md focus:top-4 focus:left-4"
       >
         Skip to main content
       </a>
       <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
       <SidebarProvider>
-<<<<<<< HEAD
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <Link href="/dashboard">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset cursor-pointer">
-                <Bot className="h-6 w-6 text-accent" />
-              </div>
-            </Link>
-            <h1 className="text-xl font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navLinks.map((link) => (
-              <SidebarMenuItem key={link.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === link.href}
-                  className={
-                    pathname === link.href ? 'bg-accent/10 text-accent shadow-neumorphic-inset' : 'shadow-neumorphic-outset'
-                  }
-                  tooltip={{
-                    children: link.label,
-                    className: "shadow-neumorphic-outset text-foreground bg-background border-transparent"
-                  }}
-                >
-                  <Link href={link.href}>
-                    <link.icon className="h-5 w-5" />
-                    <span>{link.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center justify-between border-b border-border px-4 md:hidden">
-            <SidebarTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="shadow-neumorphic-outset active:shadow-neumorphic-inset"
-                aria-label="Toggle sidebar menu"
-              >
-                <Menu className="h-6 w-6 text-foreground" />
-              </Button>
-            </SidebarTrigger>
-            <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset">
-                    <Bot className="h-5 w-5 text-accent" />
-=======
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
               <Link href="/dashboard">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset cursor-pointer">
                   <Bot className="h-6 w-6 text-accent" />
->>>>>>> b0695e9d86eef045d1eb5014bf3b65fa637b1427
                 </div>
               </Link>
               <h1 className="text-xl font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
@@ -165,11 +106,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     asChild
                     isActive={pathname === link.href}
                     className={
-                      pathname === link.href ? 'bg-accent/10 text-accent shadow-neumorphic-inset' : 'shadow-neumorphic-outset'
+                      pathname === link.href
+                        ? "bg-accent/10 text-accent shadow-neumorphic-inset"
+                        : "shadow-neumorphic-outset"
                     }
                     tooltip={{
                       children: link.label,
-                      className: "shadow-neumorphic-outset text-foreground bg-background border-transparent"
+                      className:
+                        "shadow-neumorphic-outset text-foreground bg-background border-transparent",
                     }}
                   >
                     <Link href={link.href}>
@@ -184,10 +128,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main id="main-content" className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-            <div className="max-w-[1400px] mx-auto">
-              {children}
-            </div>
+          <main
+            id="main-content"
+            className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+          >
+            <div className="max-w-[1400px] mx-auto">{children}</div>
           </main>
         </SidebarInset>
       </SidebarProvider>
