@@ -26,7 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const { isOpen, toggle } = useSidebarStore();
+  const { isOpen } = useSidebarStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
@@ -128,15 +128,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center justify-between border-b border-border px-4 md:hidden">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggle}
-              className="shadow-neumorphic-outset active:shadow-neumorphic-inset"
-              aria-label="Toggle sidebar menu"
-            >
-              <Menu className="h-6 w-6 text-foreground" />
-            </Button>
+            <SidebarTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset"
+                aria-label="Toggle sidebar menu"
+              >
+                <Menu className="h-6 w-6 text-foreground" />
+              </Button>
+            </SidebarTrigger>
             <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset">
                     <Bot className="h-5 w-5 text-accent" />
