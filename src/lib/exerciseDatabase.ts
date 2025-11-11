@@ -1,5 +1,4 @@
-// This is the new "master schema" for a single exercise.
-// It includes all the new fields required for the dual-mode (time/reps) system and instructions.
+// Enhanced exercise schema with comprehensive metadata for 10x better experience
 export type Exercise = {
   id: string; // e.g., 'push-ups'
   name: string;
@@ -12,6 +11,14 @@ export type Exercise = {
   defaultDuration?: number; // e.g., 60 (in seconds)
   defaultReps?: number;     // e.g., 10
   defaultSets?: number;     // e.g., 3
+  // New enhanced metadata
+  muscleGroups: {
+    primary: string[];
+    secondary: string[];
+  };
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  equipment: string[];
+  category: 'strength' | 'cardio' | 'flexibility' | 'warmup' | 'cooldown' | 'rest';
 };
 
 
@@ -39,6 +46,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     },
     defaultType: 'time',
     defaultDuration: 45,
+    muscleGroups: {
+      primary: ['Full Body', 'Cardiovascular'],
+      secondary: ['Shoulders', 'Calves']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'warmup',
   },
   'push-ups': {
     id: 'push-ups',
@@ -56,6 +70,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 10,
     defaultSets: 3,
+    muscleGroups: {
+      primary: ['Chest', 'Triceps'],
+      secondary: ['Shoulders', 'Core']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'strength',
   },
   'arm-circles': {
     id: 'arm-circles',
@@ -72,6 +93,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     },
     defaultType: 'time',
     defaultDuration: 30,
+    muscleGroups: {
+      primary: ['Shoulders'],
+      secondary: ['Upper Back']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'warmup',
   },
   'dynamic-chest-stretch': {
     id: 'dynamic-chest-stretch',
@@ -88,6 +116,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     },
     defaultType: 'time',
     defaultDuration: 30,
+    muscleGroups: {
+      primary: ['Chest', 'Shoulders'],
+      secondary: ['Upper Back']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'warmup',
   },
   'scapular-retractions': {
     id: 'scapular-retractions',
@@ -105,6 +140,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 15,
     defaultSets: 2,
+    muscleGroups: {
+      primary: ['Upper Back', 'Rhomboids'],
+      secondary: ['Rear Delts']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'warmup',
   },
   squats: {
     id: 'squats',
@@ -122,6 +164,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 12,
     defaultSets: 3,
+    muscleGroups: {
+      primary: ['Quadriceps', 'Glutes'],
+      secondary: ['Hamstrings', 'Core']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)', 'Optional: Barbell, Dumbbells'],
+    category: 'strength',
   },
   lunges: {
     id: 'lunges',
@@ -139,6 +188,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 10, // Per leg
     defaultSets: 3,
+    muscleGroups: {
+      primary: ['Quadriceps', 'Glutes'],
+      secondary: ['Hamstrings', 'Calves', 'Core']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)', 'Optional: Dumbbells'],
+    category: 'strength',
   },
   plank: {
     id: 'plank',
@@ -155,6 +211,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     },
     defaultType: 'time',
     defaultDuration: 60,
+    muscleGroups: {
+      primary: ['Core', 'Abs'],
+      secondary: ['Shoulders', 'Glutes']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'strength',
   },
   crunches: {
     id: 'crunches',
@@ -172,6 +235,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 20,
     defaultSets: 3,
+    muscleGroups: {
+      primary: ['Abs', 'Core'],
+      secondary: ['Hip Flexors']
+    },
+    difficulty: 'beginner',
+    equipment: ['None (Bodyweight)'],
+    category: 'strength',
   },
   burpees: {
     id: 'burpees',
@@ -189,6 +259,13 @@ export const exerciseLibrary: Record<string, Exercise> = {
     defaultType: 'reps',
     defaultReps: 10,
     defaultSets: 3,
+    muscleGroups: {
+      primary: ['Full Body', 'Cardiovascular'],
+      secondary: ['Chest', 'Legs', 'Core']
+    },
+    difficulty: 'advanced',
+    equipment: ['None (Bodyweight)'],
+    category: 'cardio',
   },
   rest: {
     id: 'rest',
@@ -205,5 +282,12 @@ export const exerciseLibrary: Record<string, Exercise> = {
     },
     defaultType: 'time',
     defaultDuration: 60,
+    muscleGroups: {
+      primary: ['Recovery'],
+      secondary: []
+    },
+    difficulty: 'beginner',
+    equipment: ['None'],
+    category: 'rest',
   },
 };

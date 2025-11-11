@@ -7,6 +7,8 @@ import { CheckCircle, CalendarPlus, BookHeart, PartyPopper } from 'lucide-react'
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { collection, serverTimestamp } from 'firebase/firestore';
+import { saveWorkoutHistory } from './actions';
+import { useEffect, useState } from 'react';
 
 interface WorkoutSummaryProps {
   workout: WorkoutPlan;
@@ -18,12 +20,33 @@ export function WorkoutSummary({ workout, completedCount, onDone }: WorkoutSumma
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
+  const [historySaved, setHistorySaved] = useState(false);
 
   const totalExercises = workout.exercises.length;
   const totalTime = workout.exercises.reduce((acc, ex) => acc + (ex.duration ?? 0), 0);
   const estimatedCalories = Math.round((totalTime / 60) * 8); // Simple estimation
 
   const { toast } = useToast();
+
+  // Save workout history on mount
+  useEffect(() => {
+    if (user && !historySaved) {
+      saveWorkoutHistory(
+        user.uid,
+        workout.name,
+        workout.focus,
+        workout.exercises,
+        totalTime
+      )
+        .then((id) => {
+          console.log('Workout history saved with ID:', id);
+          setHistorySaved(true);
+        })
+        .catch((error) => {
+          console.error('Failed to save workout history:', error);
+        });
+    }
+  }, [user, historySaved, workout, totalTime]);
 
   const handleAddToCalendar = async () => {
     if (!user || !firestore) {

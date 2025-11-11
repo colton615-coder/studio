@@ -3,7 +3,8 @@ import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dumbbell, PlayCircle, Clock, Loader2, Wand2, ArrowLeft } from 'lucide-react';
+import { Dumbbell, PlayCircle, Clock, Loader2, Wand2, ArrowLeft, BarChart3 } from 'lucide-react';
+import Link from 'next/link';
 import { getWorkoutPlan } from './actions';
 import type { WorkoutPlan } from '@/ai/flows/workout-generator';
 import { useToast } from '@/hooks/use-toast';
@@ -92,9 +93,17 @@ export default function WorkoutsPage() {
          </Button>
       )}
 
-      <header>
-        <h1 className="text-4xl font-bold font-headline text-foreground">AI Workout Generator</h1>
-        <p className="text-muted-foreground mt-2">Describe the workout you want, and let AI build the perfect plan for you.</p>
+      <header className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold font-headline text-foreground">AI Workout Generator</h1>
+          <p className="text-muted-foreground mt-2">Describe the workout you want, and let AI build the perfect plan for you.</p>
+        </div>
+        <Link href="/workouts/stats">
+          <Button variant="outline" className="shadow-neumorphic-outset hover:shadow-glow-blue hover:scale-105 transition-all">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Stats
+          </Button>
+        </Link>
       </header>
 
       {screen === 'generator' && (

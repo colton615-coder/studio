@@ -3,8 +3,12 @@ import { useState, useEffect } from 'react';
 import type { WorkoutPlan, ClientExercise } from '@/ai/flows/workout-generator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PauseCircle, PlayCircle, SkipForward, XCircle, Info, Check } from 'lucide-react';
+import { PauseCircle, PlayCircle, SkipForward, XCircle, Info, Check, Trophy } from 'lucide-react';
 import { ExerciseImage } from '@/components/ui/ExerciseImage';
+import { CircularProgress } from '@/components/ui/circular-progress';
+import { useUser } from '@/firebase';
+import { checkAndSavePersonalRecord } from './actions';
+import confetti from 'canvas-confetti';
 import {
   Dialog,
   DialogContent,
@@ -82,12 +86,43 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
   }
   
   const handleCompleteSet = () => {
+      checkForPR(); // Check for personal record
       goToNextExercise(); // For rep-based exercises
   }
 
   const timerProgress = currentExercise.duration ? (timeLeft / currentExercise.duration) * 100 : 0;
+  const workoutProgress = ((currentExerciseIndex + 1) / workout.exercises.length) * 100;
   
   const isRepBased = currentExercise.type === 'reps';
+  const { user } = useUser();
+
+  // Check for PR on rep-based exercises
+  const checkForPR = async () => {
+    if (!user || !isRepBased || !currentExercise.reps) return;
+    
+    try {
+      const result = await checkAndSavePersonalRecord(
+        user.uid,
+        currentExercise.id,
+        currentExercise.name,
+        undefined, // weight not tracked yet
+        currentExercise.reps,
+        undefined
+      );
+
+      if (result.isNewPR) {
+        // Celebrate personal record!
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FFD700', '#FFA500', '#FF6347'],
+        });
+      }
+    } catch (error) {
+      console.error('Failed to check PR:', error);
+    }
+  };
 
   return (
     <>
@@ -102,7 +137,19 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-between h-full py-8 text-center">
-        <header className="flex flex-col items-center w-full px-4">
+        <header className="flex flex-col items-center w-full px-4 space-y-4">
+          {/* Workout Progress Ring */}
+          <div className="flex items-center justify-center gap-2">
+            <CircularProgress 
+              value={workoutProgress} 
+              size={50} 
+              strokeWidth={4}
+              className="text-blue-500"
+            >
+              <span className="text-xs font-bold">{currentExerciseIndex + 1}/{workout.exercises.length}</span>
+            </CircularProgress>
+          </div>
+
           <div className="flex justify-between items-center w-full max-w-md">
             <div className="flex-1 text-left">
                  <p className="font-semibold text-accent text-shadow">{currentExercise.category}</p>
