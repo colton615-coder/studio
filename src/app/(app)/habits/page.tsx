@@ -22,7 +22,6 @@ import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh-indicator';
 import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator';
 
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -32,19 +31,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
-import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { celebrateHabitCompletion, celebrateStreak, celebrateAllHabitsComplete } from '@/lib/celebrations';
 
 
@@ -74,25 +69,17 @@ type Habit = {
   isOptimistic?: boolean;
 };
 
-// This type represents the AI-suggested habit object.
-// It's a partial habit, as it doesn't have an ID, userId, etc.
 type HabitSuggestion = Omit<Habit, 'id' | 'userProfileId' | 'streak' | 'lastCompleted' | 'createdAt'>;
-
-type JournalEntry = {
-  id: string;
-  content: string;
-}
 
 type HabitCompletionLog = {
   [habitId: string]: boolean;
 };
 
 type DailyLog = {
-  id: string; // YYYY-MM-DD
+  id: string;
   log: HabitCompletionLog;
 };
 
-// Type for the form data
 type HabitFormData = {
   name: string;
   icon: IconName;
@@ -100,7 +87,23 @@ type HabitFormData = {
   frequency: Frequency;
 };
 
-export default function HabitsPage() {
+const Icon = ({ name, className, style }: { name: IconName; className?: string; style?: React.CSSProperties }) => {
+  const IconComponent = habitIcons[name];
+  return <IconComponent className={className} style={style} />;
+};
+
+const SuggestionPill = ({ suggestion, onClick }: { suggestion: HabitSuggestion; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 border border-accent/20 transition-colors text-sm"
+  >
+    <Sparkles className="h-3.5 w-3.5 text-accent" />
+    <span>{suggestion.name}</span>
+  </button>
+);
+
+export default function HabitsPageNew() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -108,9 +111,8 @@ export default function HabitsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const [feedback, setFeedback] = useState('Analyzing your weekly performance...');
-  const [isAnalyzing, startTransition] = useTransition();
+  const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
+  const habitNameInputRef = useRef<HTMLInputElement>(null);
 
   const handleRefresh = useCallback(async () => {
     setRefreshKey(prev => prev + 1);
@@ -122,37 +124,6 @@ export default function HabitsPage() {
     threshold: 80,
     enabled: true,
   });
-
-  // State for AI suggestions
-  const [proactiveSuggestions, setProactiveSuggestions] = useState<HabitSuggestion[]>([]);
-  const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-
-  // Ref for the habit name input for programmatic focus
-  const habitNameInputRef = useRef<HTMLInputElement>(null);
-
-  // SCROLL-LOCK MANAGEMENT: Ensure scroll is always restored when modal closes
-  // This is the single source of truth for managing document.body.overflow
-  // It executes whenever isDialogOpen changes, regardless of how the modal was closed
-  useEffect(() => {
-    if (isDialogOpen) {
-      // MODAL OPENING: Disable page scroll
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    } else {
-      // MODAL CLOSING: Restore page scroll (cleanup)
-      // This executes whether modal was submitted, dismissed, or escape-pressed
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }
-
-    // CLEANUP: Ensure overflow is restored if component unmounts while modal is open
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    };
-  }, [isDialogOpen]);
 
   const { control, handleSubmit, watch, setValue, reset } = useForm<HabitFormData>({
     defaultValues: {
@@ -166,7 +137,6 @@ export default function HabitsPage() {
   const watchName = watch('name');
   const watchFrequency = watch('frequency');
 
-
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const habitsCollection = useMemoFirebase(() => {
@@ -179,218 +149,124 @@ export default function HabitsPage() {
     return collection(firestore, 'users', user.uid, 'habitLogs');
   }, [user, firestore]);
 
-  const journalEntriesQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, 'users', user.uid, 'journalEntries'), orderBy('createdAt', 'desc'), limit(5));
-  }, [user, firestore]);
-
   const { data: habits, isLoading: isLoadingHabits, setData: setHabits } = useCollection<Habit>(habitsCollection, { mode: 'realtime' });
-  const { data: recentJournalEntries } = useCollection<JournalEntry>(journalEntriesQuery, { mode: 'once' });
-  
   const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection, { mode: 'realtime' });
   
   const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
-  const isLoadingLog = isLoadingHistory;
-
 
   const combinedHabits = useMemo(() => {
     const sortedHabits = habits?.sort((a,b) => (a.createdAt?.toDate?.() || 0) > (b.createdAt?.toDate?.() || 0) ? 1 : -1)
     return sortedHabits?.map(habit => ({
       ...habit,
       done: todayLog?.log?.[habit.id] ?? false
-    }))
+    })) ?? [];
   }, [habits, todayLog]);
 
-  useEffect(() => {
-    if (habits && habitHistory) {
-      startTransition(async () => {
-        const coachInput = {
-          habits: habits.map(h => ({ id: h.id, name: h.name, streak: h.streak })),
-          history: habitHistory.map(l => ({ date: l.id, completions: l.log })),
-        };
-        const result = await getHabitFeedback(coachInput);
-        if ('error' in result) setFeedback(result.error);
-        else setFeedback(result.feedback);
-      });
-    }
-  }, [habits, habitHistory]);
-
-
-  // --- AI Suggestion Logic ---
-  
-  // 1. Proactive suggestions based on journal entries
-  const handleProactiveSuggestions = async () => {
-    if (!recentJournalEntries || !habits) return;
-    setIsAiLoading(true);
-    setProactiveSuggestions([]);
-    try {
-      const journalEntries = recentJournalEntries.map(entry => entry.content);
-      const existingHabits = habits.map(h => h.name);
-      
-      const result = await fetchProactiveSuggestions({ journalEntries, existingHabits });
-      // Normalize suggestion icons to our IconName union (fallback to BrainCircuit)
-      const normalized = result.suggestions.map((s: any) => ({
-        ...s,
-        icon: Object.keys(habitIcons).includes(s.icon) ? (s.icon as IconName) : ('BrainCircuit' as IconName),
-      }));
-      setProactiveSuggestions(normalized);
-      
-    } catch (_error) {
-      // Fails silently as per requirements
-    } finally {
-      setIsAiLoading(false);
-    }
+  const handleSuggestionClick = (suggestion: HabitSuggestion) => {
+    setValue('name', suggestion.name);
+    setValue('icon', suggestion.icon);
+    setValue('color', suggestion.color);
+    setValue('frequency', suggestion.frequency);
+    setInteractiveSuggestion(null);
+    habitNameInputRef.current?.focus();
   };
 
-  // 2. Interactive suggestion based on user input (debounced)
-  const handleInteractiveSuggestion = useDebouncedCallback(async (name: string) => {
-    if (!name.trim() || name.length < 5) {
+  const debouncedFetchSuggestion = useDebouncedCallback(async (name: string) => {
+    if (name.length < 3) {
       setInteractiveSuggestion(null);
       return;
     }
     try {
       const result = await fetchInteractiveSuggestion({ userInput: name });
-      if (result.suggestion) {
-        const s = result.suggestion as any;
-        setInteractiveSuggestion({
-          ...s,
-          icon: Object.keys(habitIcons).includes(s.icon) ? (s.icon as IconName) : ('BrainCircuit' as IconName),
-        });
-      } else {
-        setInteractiveSuggestion(null);
+      if (result?.suggestion && result.suggestion.name !== name) {
+        setInteractiveSuggestion(result.suggestion as HabitSuggestion);
       }
-    } catch (_error) {
-      setInteractiveSuggestion(null); // Fail silently
+    } catch (error) {
+      console.warn('Interactive suggestion failed:', error);
     }
-  }, 750);
+  }, 500);
 
   useEffect(() => {
-    handleInteractiveSuggestion(watchName);
-   
-  }, [watchName]);
-
-
-  // 3. Handler to pre-fill the form when a suggestion is clicked
-  const handleSuggestionClick = (suggestion: HabitSuggestion) => {
-    setValue('name', suggestion.name);
-    // Ensure the icon exists in our list, otherwise default.
-    if (Object.keys(habitIcons).includes(suggestion.icon)) {
-      setValue('icon', suggestion.icon as IconName);
-    }
-    // Simple color validation
-    if (suggestion.color.startsWith('#')) {
-       setValue('color', suggestion.color);
-    }
-    setValue('frequency', suggestion.frequency);
-    setInteractiveSuggestion(null); // Clear interactive suggestion after applying
-  };
-
-  useEffect(() => {
-    if (isDialogOpen) {
-      handleProactiveSuggestions(); // Trigger proactive suggestions when modal opens
-    } else {
-      // Use a timeout to avoid clearing the form while the dialog is closing
-      setTimeout(() => {
-        reset(); 
-        setProactiveSuggestions([]);
-        setInteractiveSuggestion(null);
-      }, 300);
-    }
-  }, [isDialogOpen, reset]);
-
-  // Effect for "graceful" programmatic focus
-  useEffect(() => {
-    if (isDialogOpen) {
-      // CASE 2: AI is done loading AND there are no suggestions.
-      if (!isAiLoading && proactiveSuggestions.length === 0) {
-        // Set a timeout to allow the modal animation to finish
-        const timer = setTimeout(() => {
-          habitNameInputRef.current?.focus();
-        }, 400); // 400ms delay, adjust as needed for modal animation
-        
-        return () => clearTimeout(timer);
-      }
-    }
-    // CASE 1 (implicit): If AI is loading or there are suggestions, do nothing.
-  }, [isDialogOpen, isAiLoading, proactiveSuggestions]);
-
+    debouncedFetchSuggestion(watchName);
+  }, [watchName, debouncedFetchSuggestion]);
 
   const onSubmit = async (data: HabitFormData) => {
-    if (!habitsCollection || !user || !habits || !setHabits) {
-      toast({ variant: "destructive", title: "Error", description: "Could not save habit. User or data source not found." });
-      return;
-    }
-    setIsSaving(true);
-    setIsDialogOpen(false);
+    if (!user || !habitsCollection || !habits || !setHabits) return;
 
+    setIsSaving(true);
     const optimisticId = uuidv4();
-    const newHabit: Habit = {
-      ...data,
+    const optimisticHabit: Habit = {
       id: optimisticId,
-      streak: 0,
       userProfileId: user.uid,
-      createdAt: new Date(), 
+      name: data.name,
+      icon: data.icon,
+      color: data.color,
+      frequency: data.frequency,
+      streak: 0,
+      createdAt: new Date(),
       isOptimistic: true,
     };
-    
-    // 1. Optimistically update local state
-    setHabits([...habits, newHabit]);
+
+    setHabits([...habits, optimisticHabit]);
 
     try {
-      // 2. Asynchronously write to Firestore
-      // Note: The original implementation used addDocumentNonBlocking here, which would
-      // cause a mismatch with the client-generated ID. Switched to setDocumentNonBlocking.
       const docRef = doc(habitsCollection, optimisticId);
       await setDocumentNonBlocking(docRef, {
-        ...data,
         id: optimisticId,
-        streak: 0,
         userProfileId: user.uid,
+        name: data.name,
+        icon: data.icon,
+        color: data.color,
+        frequency: data.frequency,
+        streak: 0,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
-      toast({ title: "Habit Created!", description: `"${data.name}" has been added.` });
+
+      toast({ title: 'Habit Created!', description: `"${data.name}" has been added to your habits.` });
+      setIsDialogOpen(false);
+      reset();
+      setInteractiveSuggestion(null);
     } catch (error) {
-      // 3. Rollback on failure
-      toast({ variant: "destructive", title: "Save Failed", description: "Could not save habit. Please try again." });
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not create habit. Please try again.' });
       setHabits(habits.filter(h => h.id !== optimisticId));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleHabitToggle = async (habit: Habit & {done: boolean}) => {
-    if (!user || !firestore) return;
-    
-    try {
-      const habitRef = doc(firestore, 'users', user.uid, 'habits', habit.id);
-      const logRef = doc(firestore, 'users', user.uid, 'habitLogs', todayStr);
-      const newDoneState = !habit.done;
-      let newStreak = habit.streak;
-      
-      // Store original state for rollback on failure
-      const originalDone = habit.done;
-      const originalStreak = habit.streak;
-      
-      // 1. OPTIMISTIC UPDATE: Update local state immediately for responsive UI
-      if (setHabits && combinedHabits) {
-        const updatedHabits = combinedHabits.map(h => 
-          h.id === habit.id 
-            ? { ...h, done: newDoneState, streak: newStreak } 
-            : h
-        );
-        setHabits(updatedHabits);
-      }
+  const toggleHabit = async (habit: Habit & {done: boolean}) => {
+    if (!user || !habitLogsCollection) return;
 
+    const logRef = doc(habitLogsCollection, todayStr);
+    const newDoneState = !habit.done;
+    const habitRef = doc(habitsCollection!, habit.id);
+
+    let newStreak = habit.streak;
+    const originalDone = habit.done;
+    const originalStreak = habit.streak;
+
+    if (setHabits && combinedHabits) {
+      const updatedHabits = combinedHabits.map(h => 
+        h.id === habit.id ? { ...h, done: newDoneState, streak: newStreak } : h
+      );
+      setHabits(updatedHabits);
+    }
+
+    try {
       if (newDoneState) {
         const lastCompletedDate = habit.lastCompleted?.toDate();
         
-        // Calculate new streak
         if (!lastCompletedDate || !isToday(lastCompletedDate)) {
           newStreak = newStreak + 1;
+          
+          if (setHabits && combinedHabits) {
+            const updatedHabits = combinedHabits.map(h => 
+              h.id === habit.id ? { ...h, done: newDoneState, streak: newStreak } : h
+            );
+            setHabits(updatedHabits);
+          }
         }
 
-        // 2. HAPTIC FEEDBACK: Wrapped in try-catch to prevent crash
         try {
           if (newStreak > originalStreak) {
             haptics.success();
@@ -399,10 +275,8 @@ export default function HabitsPage() {
           }
         } catch (hapticError) {
           console.warn('⚠️ Haptic feedback error:', hapticError);
-          // Non-critical - don't crash app
         }
 
-        // 3. CONFETTI ANIMATION: Wrapped in try-catch to prevent crash
         try {
           if (newStreak > originalStreak) {
             celebrateStreak(newStreak);
@@ -411,44 +285,35 @@ export default function HabitsPage() {
           }
         } catch (confettiError) {
           console.warn('⚠️ Confetti animation error:', confettiError);
-          // Non-critical - don't crash app
         }
 
-        // 4. FIREBASE WRITES: Async with comprehensive error handling
         try {
-          // Update completion log
           const logUpdate = { log: { [habit.id]: newDoneState } };
-          setDocumentNonBlocking(logRef, logUpdate, { merge: true });
+          await setDocumentNonBlocking(logRef, logUpdate, { merge: true });
           
-          // Update habit with new streak and timestamp
-          setDocumentNonBlocking(habitRef, { 
+          await setDocumentNonBlocking(habitRef, { 
             streak: newStreak, 
             lastCompleted: serverTimestamp() 
           }, { merge: true });
         } catch (firebaseError) {
           console.error('❌ Firebase write error on habit completion:', firebaseError);
           
-          // ROLLBACK: Restore original state on Firebase failure
           if (setHabits && combinedHabits) {
             const rollbackHabits = combinedHabits.map(h => 
-              h.id === habit.id 
-                ? { ...h, done: originalDone, streak: originalStreak } 
-                : h
+              h.id === habit.id ? { ...h, done: originalDone, streak: originalStreak } : h
             );
             setHabits(rollbackHabits);
           }
           
-          // NOTIFY USER: Show error toast
           toast({ 
             variant: 'destructive', 
             title: 'Sync Failed', 
             description: 'Could not save habit completion. Please try again.' 
           });
           
-          throw firebaseError;
+          return;
         }
 
-        // 5. ALL HABITS COMPLETE CHECK: Wrapped in try-catch
         try {
           const allComplete = combinedHabits?.every((h: Habit & {done: boolean}) => 
             h.id === habit.id ? newDoneState : h.done
@@ -463,30 +328,19 @@ export default function HabitsPage() {
               }
             }, 300);
           }
-        } catch (completionCheckError) {
-          console.warn('⚠️ Error checking all habits completion:', completionCheckError);
+        } catch (checkError) {
+          console.warn('⚠️ All-complete check error:', checkError);
         }
       } else {
-        // UNCHECKING A HABIT
         try {
-          const lastCompletedDate = habit.lastCompleted?.toDate();
-          if (lastCompletedDate && isToday(lastCompletedDate)) {
-            newStreak = Math.max(0, newStreak - 1);
-          }
-
-          // Update completion log and streak
           const logUpdate = { log: { [habit.id]: newDoneState } };
-          setDocumentNonBlocking(logRef, logUpdate, { merge: true });
-          setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
+          await setDocumentNonBlocking(logRef, logUpdate, { merge: true });
         } catch (firebaseError) {
-          console.error('❌ Firebase write error on habit unchecking:', firebaseError);
+          console.error('❌ Firebase write error on habit un-completion:', firebaseError);
           
-          // ROLLBACK: Restore original state
           if (setHabits && combinedHabits) {
             const rollbackHabits = combinedHabits.map(h => 
-              h.id === habit.id 
-                ? { ...h, done: originalDone, streak: originalStreak } 
-                : h
+              h.id === habit.id ? { ...h, done: originalDone } : h
             );
             setHabits(rollbackHabits);
           }
@@ -494,324 +348,351 @@ export default function HabitsPage() {
           toast({ 
             variant: 'destructive', 
             title: 'Sync Failed', 
-            description: 'Could not update habit. Please try again.' 
+            description: 'Could not update habit status. Please try again.' 
           });
-          
-          throw firebaseError;
         }
       }
     } catch (error) {
-      // FINAL CATCH-ALL: Prevent unhandled promise rejection from crashing app
-      console.error('❌ Critical error in handleHabitToggle:', error);
-      
-      // Show generic error if specific error wasn't already shown
-      if (!(error instanceof Error) || !error.message.includes('Sync')) {
-        toast({ 
-          variant: 'destructive', 
-          title: 'Error', 
-          description: 'An unexpected error occurred. Please try again.' 
-        });
-      }
-      
-      // DO NOT RE-THROW - prevents app crash on white screen
-      // Error is logged for debugging, user is notified via toast
+      console.error('❌ Critical error in toggleHabit:', error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: 'An unexpected error occurred. Please try again.' 
+      });
     }
   };
 
-  const handleDeleteHabit = (habitToDelete: Habit) => {
+  const deleteHabit = async (habit: Habit) => {
     if (!habitsCollection || !habits || !setHabits) return;
-    
+
     const originalHabits = [...habits];
+    setHabits(originalHabits.filter(h => h.id !== habit.id));
 
-    // 1. Optimistically remove from local state
-    setHabits(originalHabits.filter(h => h.id !== habitToDelete.id));
-
-    // 2. Asynchronously delete from Firestore
     try {
-      const docRef = doc(habitsCollection, habitToDelete.id);
-      deleteDocumentNonBlocking(docRef);
-      toast({ title: "Habit Removed", description: `"${habitToDelete.name}" has been deleted.` });
+      const docRef = doc(habitsCollection, habit.id);
+      await deleteDocumentNonBlocking(docRef);
+      toast({ title: 'Habit Deleted', description: `"${habit.name}" has been removed.` });
     } catch (error) {
-      // 3. Rollback on failure
-      toast({ variant: "destructive", title: "Delete Failed", description: "Could not remove habit." });
-      setHabits(originalHabits); // Restore the original list
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not delete habit.' });
+      setHabits(originalHabits);
     }
   };
 
-  const getFrequencyText = (freq: Frequency) => {
-    if (freq.type === 'daily') return 'Daily';
-    if (freq.days.length >= 7) return 'Daily';
-    if (freq.days.length === 0) return 'Weekly';
-    return `${freq.days.length}x a week`;
-  };
-
-  const isLoading = isLoadingHabits || isLoadingLog;
-
-  const Icon = ({name, ...props}: {name: IconName} & React.ComponentProps<"svg">) => {
-    const LucideIcon = habitIcons[name];
-    return LucideIcon ? <LucideIcon {...props} /> : <BrainCircuit {...props} />;
-  }
-
-  const SuggestionPill = ({ suggestion, onClick }: { suggestion: HabitSuggestion, onClick: () => void }) => (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2 p-2 rounded-full bg-background shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-all text-sm text-foreground"
-      tabIndex={0}
-      aria-label={`Suggestion: ${suggestion.name}`}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-    >
-      <div
-        className="h-6 w-6 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: `${suggestion.color}80`, color: suggestion.color }}
-        aria-label={`Icon for ${suggestion.name}`}
-      >
-        <Icon name={suggestion.icon as IconName} className="h-4 w-4" />
-      </div>
-      <span>{suggestion.name}</span>
-    </button>
-  );
-
-  const AiLoadingSkeleton = () => (
-    <div className="flex flex-wrap gap-2">
-      {[...Array(3)].map((_, i) => (
-        <Skeleton key={i} className="h-10 w-40 rounded-full" />
-      ))}
-    </div>
-  )
-
-  const HabitCardSkeleton = () => (
-    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-6 w-6 rounded-sm" />
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <div>
-            <Skeleton className="h-5 w-32 mb-1" />
-            <Skeleton className="h-4 w-16" />
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-8 w-12" />
-        <Skeleton className="h-8 w-8" />
-      </div>
-    </div>
-  );
+  const isLoading = isLoadingHabits || isLoadingHistory;
 
   return (
     <div className="flex flex-col gap-6">
       <PullToRefreshIndicator {...pullToRefresh} />
       <NetworkStatusIndicator onRetry={handleRefresh} />
-      <header>
-        <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
-        <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
-      </header>
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-accent"><BrainCircuit />AI Coach Weekly Review</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isAnalyzing || isLoadingHistory ? (
-            <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin"/>{feedback}</div>
-          ) : ( <p className="text-foreground font-medium italic">"{feedback}"</p> )}
-        </CardContent>
-      </Card>
       
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle>Add New Habit</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={() => setIsDialogOpen(true)} 
-            className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Habit
-          </Button>
-        </CardContent>
-      </Card>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
+          <p className="text-muted-foreground mt-2">Build positive routines, one day at a time</p>
+        </div>
+        <Button 
+          onClick={() => setIsDialogOpen(true)}
+          className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent hover:bg-accent/90 text-accent-foreground"
+          size="lg"
+        >
+          <PlusCircle className="mr-2 h-5 w-5" />
+          New Habit
+        </Button>
+      </header>
 
-      <Card className="shadow-neumorphic-outset">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Target className="text-accent" />Today's Habits</CardTitle>
-          <CardDescription>Complete your habits for today to build your streak.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {isLoading ? (
-              [...Array(3)].map((_, i) => <HabitCardSkeleton key={i} />)
-            ) : !combinedHabits || combinedHabits.length === 0 ? (
-              <EmptyStateCTA
-                icon={<Target size={32} />}
-                title="Define Your Discipline"
-                message="No habits yet. Add one to start building the new you."
-                ctaElement={
-                  <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Your First Habit
-                  </Button>
-                }
-              />
-            ) : (
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      ) : combinedHabits && combinedHabits.length > 0 ? (
+        <Card className="shadow-neumorphic-outset">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="text-accent h-6 w-6" />
+              Today's Habits
+            </CardTitle>
+            <CardDescription>Track your daily progress</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
               <AnimatePresence>
-              {combinedHabits.map((habit) => (
-                <motion.div 
-                  key={habit.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className={cn(habit.isOptimistic && "opacity-50 pointer-events-none")}
-                >
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
-                    <div className="flex items-center gap-4">
-                      <Checkbox id={habit.id} checked={habit.done} onCheckedChange={() => handleHabitToggle(habit)} className="h-6 w-6 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground border-accent"/>
-                      <div className="flex items-center gap-3">
-                         <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${habit.color}33`, color: habit.color, border: `1px solid ${habit.color}50` }}>
-                            <Icon name={habit.icon} className="h-6 w-6" />
-                         </div>
-                         <div>
-                            <label htmlFor={habit.id} className="text-md font-medium leading-none">{habit.name}</label>
-                            <p className="text-sm text-muted-foreground">{getFrequencyText(habit.frequency)}</p>
-                          </div>
-                      </div>
+                {combinedHabits.map((habit) => (
+                  <motion.div
+                    key={habit.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg transition-all",
+                      habit.done ? "bg-accent/10" : "bg-background shadow-neumorphic-inset"
+                    )}
+                  >
+                    <Checkbox
+                      checked={habit.done}
+                      onCheckedChange={() => toggleHabit(habit)}
+                      className="h-6 w-6"
+                      style={{ borderColor: habit.color }}
+                    />
+                    <div 
+                      className="flex h-12 w-12 items-center justify-center rounded-lg shadow-neumorphic-outset"
+                      style={{ backgroundColor: `${habit.color}20` }}
+                    >
+                      <Icon name={habit.icon} className="h-6 w-6" style={{ color: habit.color }} />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
-                        <Flame className={cn(
-                          "h-5 w-5 text-orange-400",
-                          habit.streak > 0 && "animate-pulse-glow"
-                        )} />
-                        <span className="font-semibold text-lg text-orange-400">{habit.streak}</span>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteHabit(habit)}>
-                        <Trash2 size={16}/>
-                      </Button>
+                    <div className="flex-1">
+                      <p className={cn("font-semibold", habit.done && "line-through opacity-60")}>
+                        {habit.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {habit.streak > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <Flame className="h-4 w-4 text-orange-500" />
+                            {habit.streak} day streak
+                          </span>
+                        )}
+                      </p>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteHabit(habit)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                ))}
               </AnimatePresence>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <EmptyStateCTA
+          icon={<Target size={32} />}
+          title="Start Your First Habit"
+          message="Create a habit to begin building your daily routine."
+          ctaElement={
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent hover:bg-accent/90"
+              size="lg"
+            >
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Create Habit
+            </Button>
+          }
+        />
+      )}
 
+      {/* NEW 2.0 MODAL */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
-          open={isDialogOpen} 
-          className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+          open={isDialogOpen}
+          className="shadow-neumorphic-outset bg-background border-transparent max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col"
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <DialogHeader>
-            <DialogTitle>Create a New Habit</DialogTitle>
-            <DialogDescription>Build positive routines and track your progress.</DialogDescription>
-          </DialogHeader>
+          {/* Header - Fixed */}
+          <div className="flex-shrink-0 p-6 pb-4 space-y-1">
+            <DialogTitle className="text-2xl font-bold">Create New Habit</DialogTitle>
+            <DialogDescription className="text-base">Build a positive routine to track your progress</DialogDescription>
+          </div>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="habit-name-input">Habit Name</Label>
-              <Controller
-                name="name"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <Input 
-                    {...field}
-                    ref={habitNameInputRef}
-                    id="habit-name-input"
-                    placeholder="e.g. Read for 20 minutes" 
-                    disabled={isSaving}
-                    autoComplete="off"
-                    autoCapitalize="on"
-                    spellCheck="true"
-                    autoCorrect="on"
-                    enterKeyHint="done"
-                  />
-                )}
-              />
-               {interactiveSuggestion && (
-                  <div className="pt-2" role="region" aria-live="polite" aria-label="Interactive habit suggestion">
-                    <SuggestionPill suggestion={interactiveSuggestion} onClick={() => handleSuggestionClick(interactiveSuggestion)} />
-                  </div>
-                )}
-            </div>
-            
-            <div className="space-y-2">
-               <Label>Icon</Label>
-                <Controller
-                    name="icon"
-                    control={control}
-                    render={({ field }) => (
-                        <div className="grid grid-cols-8 gap-2">
-                        {Object.keys(habitIcons).map((iconName) => (
-                            <Button key={iconName} type="button" variant="outline" size="icon" className={cn("h-10 w-10", field.value === iconName && "ring-2 ring-ring bg-accent/20")} onClick={() => field.onChange(iconName as IconName)} disabled={isSaving}>
-                               <Icon name={iconName as IconName} className="h-5 w-5"/>
-                            </Button>
-                        ))}
-                        </div>
-                    )}
-                />
-            </div>
-             
-            <div className="space-y-2">
-                <Label>Color</Label>
-                <Controller
-                    name="color"
-                    control={control}
-                    render={({ field }) => (
-                        <div className="flex flex-wrap gap-2">
-                        {habitColors.map((color) => (
-                            <Button key={color} type="button" style={{backgroundColor: color}} className={cn("h-8 w-8 rounded-full border-2 border-transparent", field.value === color && "border-ring")} onClick={() => field.onChange(color)} disabled={isSaving}></Button>
-                        ))}
-                        </div>
-                    )}
-                />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label>Frequency</Label>
-                    <Controller
-                        name="frequency.type"
-                        control={control}
-                        render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="daily">Daily</SelectItem>
-                                    <SelectItem value="weekly">Weekly</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )}
-                    />
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col min-h-0 flex-1">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
+              
+              {/* Step 1: Name */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-semibold">1</div>
+                  <Label htmlFor="habit-name-input" className="text-base font-semibold">What's your habit?</Label>
                 </div>
-                {watchFrequency.type === 'weekly' && (
-                  <div className="space-y-2">
-                    <Label>Repeat on</Label>
-                     <Controller
-                        name="frequency.days"
-                        control={control}
-                        render={({ field }) => (
-                             <ToggleGroup type="multiple" variant="outline" value={field.value.map(String)} onValueChange={(days) => field.onChange(days.map(Number))} className="justify-start gap-1" disabled={isSaving}>
-                              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                                <ToggleGroupItem key={index} value={String(index)} aria-label={`Toggle ${day}`} className="h-9 w-9 rounded-full">{day}</ToggleGroupItem>
-                              ))}
-                            </ToggleGroup>
-                        )}
-                     />
-                  </div>
+                <Controller
+                  name="name"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Input 
+                      {...field}
+                      ref={habitNameInputRef}
+                      id="habit-name-input"
+                      placeholder="e.g. Read for 20 minutes, Drink 8 glasses of water..." 
+                      disabled={isSaving}
+                      autoComplete="off"
+                      className="h-12 text-base"
+                    />
+                  )}
+                />
+                {interactiveSuggestion && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <SuggestionPill suggestion={interactiveSuggestion} onClick={() => handleSuggestionClick(interactiveSuggestion)} />
+                  </motion.div>
                 )}
+              </div>
+
+              <Separator />
+            
+              {/* Step 2: Visual Identity */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-semibold">2</div>
+                  <Label className="text-base font-semibold">Choose icon & color</Label>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">Icon</Label>
+                    <Controller
+                      name="icon"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="grid grid-cols-4 gap-2">
+                          {Object.keys(habitIcons).map((iconName) => (
+                            <Button 
+                              key={iconName} 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className={cn(
+                                "h-14 w-14 transition-all",
+                                field.value === iconName && "ring-2 ring-accent bg-accent/10 scale-105"
+                              )} 
+                              onClick={() => field.onChange(iconName as IconName)} 
+                              disabled={isSaving}
+                            >
+                              <Icon name={iconName as IconName} className="h-6 w-6"/>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">Color</Label>
+                    <Controller
+                      name="color"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="grid grid-cols-3 gap-3">
+                          {habitColors.map((color) => (
+                            <Button 
+                              key={color} 
+                              type="button" 
+                              style={{backgroundColor: color}} 
+                              className={cn(
+                                "h-14 rounded-xl border-2 transition-all hover:scale-105",
+                                field.value === color ? "border-foreground scale-105 shadow-lg" : "border-transparent"
+                              )} 
+                              onClick={() => field.onChange(color)} 
+                              disabled={isSaving}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Step 3: Frequency */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-semibold">3</div>
+                  <Label className="text-base font-semibold">How often?</Label>
+                </div>
+                
+                <Controller
+                  name="frequency.type"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant={field.value === 'daily' ? 'default' : 'outline'}
+                        className={cn(
+                          "h-16 text-base font-semibold",
+                          field.value === 'daily' && "bg-accent hover:bg-accent/90"
+                        )}
+                        onClick={() => field.onChange('daily')}
+                        disabled={isSaving}
+                      >
+                        <Target className="mr-2 h-5 w-5" />
+                        Every Day
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={field.value === 'weekly' ? 'default' : 'outline'}
+                        className={cn(
+                          "h-16 text-base font-semibold",
+                          field.value === 'weekly' && "bg-accent hover:bg-accent/90"
+                        )}
+                        onClick={() => field.onChange('weekly')}
+                        disabled={isSaving}
+                      >
+                        <Target className="mr-2 h-5 w-5" />
+                        Specific Days
+                      </Button>
+                    </div>
+                  )}
+                />
+                
+                {watchFrequency.type === 'weekly' && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-3 pt-2"
+                  >
+                    <Label className="text-sm text-muted-foreground">Select days</Label>
+                    <Controller
+                      name="frequency.days"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="grid grid-cols-7 gap-2">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                            <Button
+                              key={index}
+                              type="button"
+                              variant={field.value.includes(index) ? 'default' : 'outline'}
+                              className={cn(
+                                "h-14 flex-col gap-1 text-xs font-semibold",
+                                field.value.includes(index) && "bg-accent hover:bg-accent/90"
+                              )}
+                              onClick={() => {
+                                const newDays = field.value.includes(index)
+                                  ? field.value.filter(d => d !== index)
+                                  : [...field.value, index].sort();
+                                field.onChange(newDays);
+                              }}
+                              disabled={isSaving}
+                            >
+                              <span className="text-lg">{day[0]}</span>
+                              <span className="opacity-70">{day.slice(1)}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    />
+                  </motion.div>
+                )}
+              </div>
             </div>
 
-            <DialogFooter>
+            {/* Footer - Fixed */}
+            <div className="flex-shrink-0 p-6 pt-4 border-t bg-background/95 backdrop-blur-sm">
+              <div className="flex gap-3 justify-end">
                 <DialogClose asChild>
                   <Button 
                     type="button" 
-                    variant="secondary" 
-                    className="shadow-neumorphic-outset active:shadow-neumorphic-inset" 
+                    variant="ghost" 
+                    className="min-w-24" 
                     disabled={isSaving}
                   >
                     Cancel
@@ -819,22 +700,24 @@ export default function HabitsPage() {
                 </DialogClose>
                 <Button 
                   type="submit" 
-                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground" 
+                  className="min-w-32 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-lg" 
                   disabled={isSaving || !watchName || (watchFrequency.type === 'weekly' && watchFrequency.days.length === 0)}
+                  size="lg"
                 >
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Creating...
                     </>
                   ) : (
                     <>
-                      <Wand2 className="mr-2 h-4 w-4"/>
+                      <Sparkles className="mr-2 h-4 w-4"/>
                       Create Habit
                     </>
                   )}
                 </Button>
-            </DialogFooter>
+              </div>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

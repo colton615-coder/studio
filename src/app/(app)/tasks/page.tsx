@@ -48,6 +48,11 @@ export default function TasksPage() {
   const [newPriority, setNewPriority] = useState<Priority>('Medium');
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const tasksCollection = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'tasks');
+  }, [user, firestore]);
+
   const handleRefresh = useCallback(async () => {
     setRefreshKey(prev => prev + 1);
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -72,8 +77,7 @@ export default function TasksPage() {
     return query(
       collection(firestore, 'users', user.uid, 'tasks'),
       where('completed', '==', true),
-      orderBy('updatedAt', 'desc'),
-      limit(20) // Only show recent 20 completed tasks
+      limit(50) // Show recent 50 completed tasks
     );
   }, [user, firestore]);
 
@@ -158,7 +162,10 @@ export default function TasksPage() {
     if (!tasksCollection) return;
     const docRef = doc(tasksCollection, task.id);
     const newCompletedState = !task.completed;
-    updateDocumentNonBlocking(docRef, { completed: newCompletedState });
+    updateDocumentNonBlocking(docRef, { 
+      completed: newCompletedState,
+      updatedAt: serverTimestamp()
+    });
     
     // Celebrate when completing a task with haptic feedback
     if (newCompletedState) {

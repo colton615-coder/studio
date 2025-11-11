@@ -41,20 +41,34 @@ export async function saveWorkoutHistory(
   const now = new Date();
 
   // Transform ClientExercise to CompletedExercise
+  // Map category values from ClientExercise ('Warm-up', 'Work', 'Cool-down', 'Rest') 
+  // to CompletedExercise expected lowercase values ('warmup', 'cooldown', 'rest', 'strength', 'cardio', 'flexibility')
   const completedExercises: CompletedExercise[] = exercises
     .filter(ex => ex.id !== 'rest') // Exclude rest periods from history
-    .map(ex => ({
-      exerciseId: ex.id,
-      name: ex.name,
-      type: ex.type,
-      duration: ex.duration,
-      reps: ex.reps,
-      sets: ex.sets,
-      muscleGroups: ex.muscleGroups,
-      difficulty: ex.difficulty,
-      category: ex.category,
-      completedAt: now,
-    }));
+    .map(ex => {
+      // Normalize category to match CompletedExercise type
+      let normalizedCategory: CompletedExercise['category'] = 'strength'; // default
+      if (ex.category === 'Warm-up') normalizedCategory = 'warmup';
+      else if (ex.category === 'Cool-down') normalizedCategory = 'cooldown';
+      else if (ex.category === 'Rest') normalizedCategory = 'rest';
+      else if (ex.category === 'Work') {
+        // Infer based on exercise metadata or default to 'strength'
+        normalizedCategory = 'strength';
+      }
+      
+      return {
+        exerciseId: ex.id,
+        name: ex.name,
+        type: ex.type,
+        duration: ex.duration,
+        reps: ex.reps,
+        sets: ex.sets,
+        muscleGroups: ex.muscleGroups,
+        difficulty: ex.difficulty,
+        category: normalizedCategory,
+        completedAt: now,
+      };
+    });
 
   const workoutData: Omit<WorkoutHistory, 'id'> = {
     workoutName,

@@ -36,51 +36,25 @@ service cloud.firestore {
     }
 
     /**
-     * @description Validates that the incoming data's `userProfileId` matches the user's UID.
-     * @param userId The UID of the user from the path.
-     * @returns boolean True if the `userProfileId` is correct.
-     */
-    function isDataOwner(userId) {
-      return request.resource.data.userProfileId == userId;
-    }
-
-    /**
-     * @description Ensures the `userProfileId` field cannot be changed on update.
-     * @returns boolean True if the `userProfileId` is unchanged.
-     */
-    function isOwnershipImmutable() {
-      return request.resource.data.userProfileId == resource.data.userProfileId;
-    }
-
-    /**
      * /users/{userId}
      * - Users can only read, update, or delete their own profile.
-     * - Creating a profile requires the document ID to match the user's UID.
+     * - Creating a profile requires authentication as that user.
      * - Listing all users is disallowed.
      */
     match /users/{userId} {
       allow get, update, delete: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.id == userId;
+      allow create: if isOwner(userId);
       allow list: if false;
 
       /**
        * Subcollections under a user's profile.
-       * These rules apply to habits, journalEntries, budgets, etc.
+       * These rules apply to habits, journalEntries, budgets, tasks, etc.
+       * All subcollections are accessible by the owner of the parent user document.
+       * The {document=**} syntax allows recursive matching of all nested documents.
        */
-      match /{collection}/{docId} {
-        allow list, get: if isOwner(userId);
-        allow create: if isOwner(userId) && isDataOwner(userId);
-        allow update: if isOwner(userId) && isOwnershipImmutable();
-        allow delete: if isOwner(userId);
+      match /{collection}/{document=**} {
+        allow read, write: if isOwner(userId);
       }
-
-      /**
-       * Special case for nested exercises, inheriting the workout template's ownership.
-       * This is an example of deeper nesting if required.
-       */
-       match /workoutTemplates/{workoutTemplateId}/exercises/{exerciseId} {
-          allow list, get, create, update, delete: if isOwner(userId);
-       }
     }
     
     /**
@@ -91,8 +65,8 @@ service cloud.firestore {
      */
     match /expenses/{expenseId} {
         allow get, update, delete: if isExistingOwner(resource.data.userProfileId);
-        allow list: if request.auth != null && request.query.where.size() > 0 && request.query.where[0][1] == 'userProfileId'; // Allow list only when filtering by userProfileId
-        allow create: if isOwner(request.resource.data.userProfileId);
+        allow list: if request.auth != null;
+        allow create: if request.auth != null && request.resource.data.userProfileId == request.auth.uid;
     }
   }
 }

@@ -126,6 +126,9 @@ def main():
     
     # Create 512x512 icon
     size_512 = create_icon(512, '/workspaces/studio/public/icons/icon-512x512.png')
+
+    # Create 180x180 Apple touch icon
+    size_180 = create_icon(180, '/workspaces/studio/public/icons/apple-touch-icon-180x180.png')
     
     print("\n" + "="*60)
     print("✓ Icon generation complete!")

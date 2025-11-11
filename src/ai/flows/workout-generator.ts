@@ -39,7 +39,7 @@ const AIWorkoutPlanSchema = z.object({
 
 // This is the "unrolled" rich object we will send to the client.
 // It includes the full exercise data plus the specific parameters for this step.
-export type ClientExercise = Exercise & {
+export type ClientExercise = Omit<Exercise, 'category'> & {
   type: 'time' | 'reps';
   duration?: number;
   reps?: number;

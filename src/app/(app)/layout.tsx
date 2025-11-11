@@ -11,22 +11,24 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { navLinks } from '@/lib/nav-links';
-import { useSidebarStore } from '@/lib/stores/useSidebarStore';
-import { Bot, Loader2, Menu } from 'lucide-react';
+import { Bot, Loader2 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+<<<<<<< HEAD
   const { isOpen } = useSidebarStore();
+=======
+  // Sidebar state now managed internally by SidebarProvider context.
+>>>>>>> b0695e9d86eef045d1eb5014bf3b65fa637b1427
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
@@ -90,6 +92,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </a>
       <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
       <SidebarProvider>
+<<<<<<< HEAD
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
@@ -141,18 +144,53 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset">
                     <Bot className="h-5 w-5 text-accent" />
+=======
+        <Sidebar>
+          <SidebarHeader>
+            <div className="flex items-center gap-2 p-2">
+              <Link href="/dashboard">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset cursor-pointer">
+                  <Bot className="h-6 w-6 text-accent" />
+>>>>>>> b0695e9d86eef045d1eb5014bf3b65fa637b1427
                 </div>
-                <h1 className="text-lg font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
+              </Link>
+              <h1 className="text-xl font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
             </div>
-            <div className="w-9" />
-        </header>
-        <main id="main-content" className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-          <div className="max-w-[1400px] mx-auto">
-            {children}
-          </div>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navLinks.map((link) => (
+                <SidebarMenuItem key={link.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === link.href}
+                    className={
+                      pathname === link.href ? 'bg-accent/10 text-accent shadow-neumorphic-inset' : 'shadow-neumorphic-outset'
+                    }
+                    tooltip={{
+                      children: link.label,
+                      className: "shadow-neumorphic-outset text-foreground bg-background border-transparent"
+                    }}
+                  >
+                    <Link href={link.href}>
+                      <link.icon className="h-5 w-5" />
+                      <span>{link.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset>
+          <Header />
+          <main id="main-content" className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+            <div className="max-w-[1400px] mx-auto">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
     </>
   );
 }

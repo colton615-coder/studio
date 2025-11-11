@@ -45,33 +45,68 @@ export function QuickStats() {
     return collection(firestore, 'users', user.uid, 'habits');
   }, [user, firestore]);
 
-  const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesCollection, { mode: 'once' });
-  const { data: budgets, isLoading: budgetsLoading } = useCollection<Budget>(budgetsCollection, { mode: 'once' });
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection, { mode: 'once' });
+  // CRITICAL FIX: Changed mode from 'once' to 'realtime' to prevent crashes
+  const { data: expenses, isLoading: expensesLoading, error: expensesError } = useCollection<Expense>(expensesCollection, { mode: 'realtime' });
+  const { data: budgets, isLoading: budgetsLoading, error: budgetsError } = useCollection<Budget>(budgetsCollection, { mode: 'realtime' });
+  const { data: habits, isLoading: habitsLoading, error: habitsError } = useCollection<Habit>(habitsCollection, { mode: 'realtime' });
 
   const monthlySpend = useMemo(() => {
-    if (!expenses) return 0;
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return expenses
-      .filter(e => {
-        const expenseDate = e.date?.toDate ? e.date.toDate() : new Date(e.date);
-        return expenseDate >= monthStart;
-      })
-      .reduce((sum, e) => sum + e.amount, 0);
+    try {
+      if (!expenses || !Array.isArray(expenses)) return 0;
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      return expenses
+        .filter(e => {
+          try {
+            const expenseDate = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+            return expenseDate >= monthStart;
+          } catch (error) {
+            console.error('Error parsing expense date:', error);
+            return false;
+          }
+        })
+        .reduce((sum, e) => sum + (e.amount || 0), 0);
+    } catch (error) {
+      console.error('Error calculating monthly spend:', error);
+      return 0;
+    }
   }, [expenses]);
 
   const totalBudget = useMemo(() => {
-    if (!budgets) return 0;
-    return budgets.reduce((sum, b) => sum + b.limit, 0);
+    try {
+      if (!budgets || !Array.isArray(budgets)) return 0;
+      return budgets.reduce((sum, b) => sum + (b.limit || 0), 0);
+    } catch (error) {
+      console.error('Error calculating total budget:', error);
+      return 0;
+    }
   }, [budgets]);
 
   const longestStreak = useMemo(() => {
-    if (!habits || habits.length === 0) return 0;
-    return Math.max(...habits.map(h => h.streak || 0));
+    try {
+      if (!habits || !Array.isArray(habits) || habits.length === 0) return 0;
+      return Math.max(...habits.map(h => h.streak || 0));
+    } catch (error) {
+      console.error('Error calculating longest streak:', error);
+      return 0;
+    }
   }, [habits]);
 
   const isLoading = expensesLoading || budgetsLoading || habitsLoading;
+  const hasError = expensesError || budgetsError || habitsError;
+
+  // CRITICAL FIX: Show error state instead of crashing
+  if (hasError) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <Card className="shadow-neumorphic-outset">
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">Unable to load stats</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -49,26 +49,64 @@ export function TodayOverview() {
     return collection(firestore, 'users', user.uid, 'tasks');
   }, [user, firestore]);
 
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection, { mode: 'once' });
-  const { data: habitHistory, isLoading: logsLoading } = useCollection<HabitLog>(habitLogsCollection, { mode: 'once' });
-  const { data: tasks, isLoading: tasksLoading } = useCollection<Task>(tasksCollection, { mode: 'once' });
+  // CRITICAL FIX: Changed mode from 'once' to 'realtime' to prevent crashes
+  const { data: habits, isLoading: habitsLoading, error: habitsError } = useCollection<Habit>(habitsCollection, { mode: 'realtime' });
+  const { data: habitHistory, isLoading: logsLoading, error: logsError } = useCollection<HabitLog>(habitLogsCollection, { mode: 'realtime' });
+  const { data: tasks, isLoading: tasksLoading, error: tasksError } = useCollection<Task>(tasksCollection, { mode: 'realtime' });
 
-  const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
+  const todayLog = useMemo(() => {
+    try {
+      return habitHistory?.find(log => log.id === todayStr) ?? null;
+    } catch (error) {
+      console.error('Error finding today log:', error);
+      return null;
+    }
+  }, [habitHistory, todayStr]);
 
   const habitStats = useMemo(() => {
-    if (!habits || !todayLog) return { completed: 0, total: 0 };
-    const completed = habits.filter(h => todayLog.log?.[h.id] === true).length;
-    return { completed, total: habits.length };
+    try {
+      if (!habits || !todayLog) return { completed: 0, total: habits?.length || 0 };
+      const completed = habits.filter(h => todayLog.log?.[h.id] === true).length;
+      return { completed, total: habits.length };
+    } catch (error) {
+      console.error('Error calculating habit stats:', error);
+      return { completed: 0, total: 0 };
+    }
   }, [habits, todayLog]);
 
   const taskStats = useMemo(() => {
-    if (!tasks) return { completed: 0, pending: 0 };
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = tasks.filter(t => !t.completed).length;
-    return { completed, pending };
+    try {
+      if (!tasks) return { completed: 0, pending: 0 };
+      const completed = tasks.filter(t => t.completed).length;
+      const pending = tasks.filter(t => !t.completed).length;
+      return { completed, pending };
+    } catch (error) {
+      console.error('Error calculating task stats:', error);
+      return { completed: 0, pending: 0 };
+    }
   }, [tasks]);
 
   const isLoading = habitsLoading || logsLoading || tasksLoading;
+  const hasError = habitsError || logsError || tasksError;
+
+  // CRITICAL FIX: Show error state instead of crashing
+  if (hasError) {
+    return (
+      <Card className="shadow-neumorphic-outset">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="text-accent" />
+            Today's Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Unable to load progress data. Please try refreshing the page.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (

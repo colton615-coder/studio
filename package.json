@@ -61,8 +61,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.3",
     "uuid": "^10.0.0",
-    "zod": "^3.24.2",
-    "zustand": "^4.4.7"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

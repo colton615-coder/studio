@@ -58,12 +58,14 @@ const DialogContent = React.forwardRef<
               {...props}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={shouldReduceMotion ? { duration: 0.08 } : { duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                // Ensure Framer Motion keeps the dialog centered even when it controls transform
+                style={{ x: '-50%', y: '-50%' }}
                 className={cn(
-                  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+                  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg max-h-[90vh] -translate-x-[50%] -translate-y-[50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
                   className
                 )}
             >
