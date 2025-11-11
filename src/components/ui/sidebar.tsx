@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { Slot } from "@radix-ui/react-slot"
@@ -27,6 +28,9 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+// Match the breakpoint used by useIsMobile (hooks/use-mobile.ts)
+const SIDEBAR_BREAKPOINT = 768
+const DEBUG_SIDEBAR = process.env.NEXT_PUBLIC_SIDEBAR_DEBUG === "true"
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -70,6 +74,7 @@ const SidebarProvider = React.forwardRef<
     ref
   ) => {
     const isMobile = useIsMobile()
+    const pathname = usePathname()
     const [openMobile, setOpenMobile] = React.useState(false)
 
     // This is the internal state of the sidebar.
@@ -92,10 +97,23 @@ const SidebarProvider = React.forwardRef<
     )
 
     // Helper to toggle the sidebar.
+    // Determine mobile at the moment of interaction to avoid stale initial state on first tap.
     const toggleSidebar = React.useCallback(() => {
-      return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+      const isNowMobile =
+        typeof window !== "undefined"
+          ? window.matchMedia(`(max-width: ${SIDEBAR_BREAKPOINT - 1}px)`).matches
+          : isMobile
+      if (DEBUG_SIDEBAR) {
+        // eslint-disable-next-line no-console
+        console.log("[sidebar] toggle", {
+          isMobileInitial: isMobile,
+          isNowMobile,
+          open,
+          openMobile,
+        })
+      }
+      if (isNowMobile) setOpenMobile((open) => !open)
+      else setOpen((open) => !open)
     }, [isMobile, setOpen, setOpenMobile])
 
     // Adds a keyboard shortcut to toggle the sidebar.
@@ -130,6 +148,13 @@ const SidebarProvider = React.forwardRef<
       }),
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
     )
+
+    // Close mobile sheet on route changes for cleaner navigation.
+    React.useEffect(() => {
+      if (openMobile) {
+        setOpenMobile(false)
+      }
+    }, [pathname])
 
     return (
       <SidebarContext.Provider value={contextValue}>
@@ -194,7 +219,8 @@ const Sidebar = React.forwardRef<
       )
     }
 
-    if (isMobile) {
+    const shouldRenderMobile = isMobile || openMobile
+    if (shouldRenderMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
