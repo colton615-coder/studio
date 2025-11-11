@@ -21,7 +21,7 @@ import { haptics } from '@/lib/haptics';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh-indicator';
 import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator';
-
+import { useSidebarStore } from '@/lib/stores/useSidebarStore';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,7 +48,7 @@ import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { celebrateHabitCompletion, celebrateStreak, celebrateAllHabitsComplete } from '@/lib/celebrations';
 
 
-const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2 } = LucideIcons;
+const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2, Menu } = LucideIcons;
 const habitIcons = { BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, BrainCircuit };
 type IconName = keyof typeof habitIcons;
 
@@ -104,6 +104,7 @@ export default function HabitsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { toggle } = useSidebarStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -630,9 +631,20 @@ export default function HabitsPage() {
     <div className="flex flex-col gap-6">
       <PullToRefreshIndicator {...pullToRefresh} />
       <NetworkStatusIndicator onRetry={handleRefresh} />
-      <header>
-        <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
-        <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
+          <p className="text-muted-foreground mt-2">Log your daily habits and watch your streaks grow.</p>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={toggle}
+          className="md:hidden shadow-neumorphic-outset active:shadow-neumorphic-inset flex-shrink-0"
+          aria-label="Toggle sidebar menu"
+        >
+          <Menu className="h-6 w-6 text-foreground" />
+        </Button>
       </header>
       <Card className="shadow-neumorphic-outset">
         <CardHeader>
@@ -730,7 +742,7 @@ export default function HabitsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
           open={isDialogOpen} 
-          className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+          className="shadow-neumorphic-outset bg-background border-transparent"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
