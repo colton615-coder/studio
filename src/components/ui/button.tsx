@@ -3,12 +3,11 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background",
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:scale-[1.02] active:scale-[0.98]",
   {
     variants: {
       variant: {
@@ -44,32 +43,13 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading, loadingText, children, ...props }, ref) => {
-    const shouldReduce = useReducedMotion()
-
-    // motion(Slot) allows passing animation props when using asChild
-    const MotionSlot: any = motion(Slot)
-    const MotionButton: any = motion.button
-
-    const Comp: any = asChild ? MotionSlot : MotionButton
-
-    const motionProps = shouldReduce
-      ? { transition: { duration: 0.08 } }
-      : {
-          whileHover: { scale: 1.02 },
-          whileTap: { scale: 0.98 },
-          transition: {
-            type: "spring",
-            stiffness: 400,
-            damping: 17,
-          },
-        }
+    const Comp = asChild ? Slot : "button"
 
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={loading || props.disabled}
-        {...motionProps}
         {...props}
       >
         {loading ? (

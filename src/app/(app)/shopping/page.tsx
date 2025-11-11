@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, FormEvent } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -31,12 +31,16 @@ export default function ShoppingListPage() {
   const { toast } = useToast();
   const [newItemDescription, setNewItemDescription] = useState('');
 
-  const shoppingListCollection = useMemoFirebase(() => {
+  const shoppingListQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return collection(firestore, 'users', user.uid, 'shoppingListItems');
+    return query(
+      collection(firestore, 'users', user.uid, 'shoppingListItems'),
+      orderBy('createdAt', 'desc'),
+      limit(50) // Limit to 50 most recent items for performance
+    );
   }, [user, firestore]);
 
-  const { data: items, isLoading, setData: setItems } = useCollection<ShoppingListItem>(shoppingListCollection);
+  const { data: items, isLoading, setData: setItems } = useCollection<ShoppingItem>(shoppingListQuery, { mode: 'realtime' });
 
   const { neededItems, purchasedItems } = useMemo(() => {
     const needed: ShoppingListItem[] = [];

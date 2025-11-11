@@ -49,9 +49,9 @@ export function TodayOverview() {
     return collection(firestore, 'users', user.uid, 'tasks');
   }, [user, firestore]);
 
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection);
-  const { data: habitHistory, isLoading: logsLoading } = useCollection<HabitLog>(habitLogsCollection);
-  const { data: tasks, isLoading: tasksLoading } = useCollection<Task>(tasksCollection);
+  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection, { mode: 'once' });
+  const { data: habitHistory, isLoading: logsLoading } = useCollection<HabitLog>(habitLogsCollection, { mode: 'once' });
+  const { data: tasks, isLoading: tasksLoading } = useCollection<Task>(tasksCollection, { mode: 'once' });
 
   const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
 

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, FormEvent, useCallback } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, orderBy, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { haptics } from '@/lib/haptics';
@@ -59,12 +59,40 @@ export default function TasksPage() {
     enabled: true,
   });
 
-  const tasksCollection = useMemoFirebase(() => {
+  const activeTasksQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return collection(firestore, 'users', user.uid, 'tasks');
+    return query(
+      collection(firestore, 'users', user.uid, 'tasks'),
+      where('completed', '==', false)
+    );
   }, [user, firestore]);
 
-  const { data: tasks, isLoading, setData: setTasks } = useCollection<Task>(tasksCollection);
+  const completedTasksQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(
+      collection(firestore, 'users', user.uid, 'tasks'),
+      where('completed', '==', true),
+      orderBy('updatedAt', 'desc'),
+      limit(20) // Only show recent 20 completed tasks
+    );
+  }, [user, firestore]);
+
+  const { data: activeTasks, isLoading: isLoadingActive, setData: setActiveTasks } = useCollection<Task>(activeTasksQuery, { mode: 'realtime' });
+  const { data: completedTasksData, isLoading: isLoadingCompleted, setData: setCompletedTasks } = useCollection<Task>(completedTasksQuery, { mode: 'realtime' });
+  
+  const tasks = useMemo(() => {
+    return [...(activeTasks || []), ...(completedTasksData || [])];
+  }, [activeTasks, completedTasksData]);
+  
+  const isLoading = isLoadingActive || isLoadingCompleted;
+  const setTasks = (updater: Task[] | ((prev: Task[] | null) => Task[] | null)) => {
+    // Split updates between active and completed
+    const newTasks = typeof updater === 'function' ? updater(tasks) : updater;
+    if (newTasks) {
+      setActiveTasks(newTasks.filter(t => !t.completed));
+      setCompletedTasks(newTasks.filter(t => t.completed));
+    }
+  };
   
   const { pendingTasks, completedTasks } = useMemo(() => {
     const pending: Task[] = [];

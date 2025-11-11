@@ -161,10 +161,10 @@ export default function HabitsPage() {
     return query(collection(firestore, 'users', user.uid, 'journalEntries'), orderBy('createdAt', 'desc'), limit(5));
   }, [user, firestore]);
 
-  const { data: habits, isLoading: isLoadingHabits, setData: setHabits } = useCollection<Habit>(habitsCollection);
-  const { data: recentJournalEntries } = useCollection<JournalEntry>(journalEntriesQuery);
+  const { data: habits, isLoading: isLoadingHabits, setData: setHabits } = useCollection<Habit>(habitsCollection, { mode: 'realtime' });
+  const { data: recentJournalEntries } = useCollection<JournalEntry>(journalEntriesQuery, { mode: 'once' });
   
-  const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection);
+  const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection, { mode: 'realtime' });
   
   const todayLog = useMemo(() => habitHistory?.find(log => log.id === todayStr) ?? null, [habitHistory, todayStr]);
   const isLoadingLog = isLoadingHistory;

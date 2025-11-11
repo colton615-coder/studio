@@ -45,9 +45,9 @@ export function QuickStats() {
     return collection(firestore, 'users', user.uid, 'habits');
   }, [user, firestore]);
 
-  const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesCollection);
-  const { data: budgets, isLoading: budgetsLoading } = useCollection<Budget>(budgetsCollection);
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection);
+  const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesCollection, { mode: 'once' });
+  const { data: budgets, isLoading: budgetsLoading } = useCollection<Budget>(budgetsCollection, { mode: 'once' });
+  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsCollection, { mode: 'once' });
 
   const monthlySpend = useMemo(() => {
     if (!expenses) return 0;
