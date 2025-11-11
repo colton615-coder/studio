@@ -153,6 +153,16 @@ export default function CalendarPage() {
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Event
             </Button>
+                        <Button
+                          onClick={() => setIsAddDialogOpen(true)}
+                          aria-label="Add new event"
+                          tabIndex={0}
+                          className="w-full mb-4 shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground focus:outline focus:outline-2 focus:outline-accent"
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
+                        >
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add Event
+                        </Button>
             <div className="space-y-4">
               {isLoading ? (
                  <div className="space-y-3">
@@ -169,8 +179,12 @@ export default function CalendarPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -50 }}
                         transition={{ duration: 0.3 }}
-                        onClick={() => openEventDetails(event)} 
-                        className="p-3 rounded-md bg-background shadow-neumorphic-inset cursor-pointer hover:bg-accent/10 transition-colors"
+                        onClick={() => openEventDetails(event)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View details for event ${event.title}`}
+                        className="p-3 rounded-md bg-background shadow-neumorphic-inset cursor-pointer hover:bg-accent/10 transition-colors focus:outline focus:outline-2 focus:outline-accent"
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openEventDetails(event); }}
                       >
                         <p className="font-medium text-foreground">{event.title}</p>
                       </motion.div>
@@ -186,6 +200,17 @@ export default function CalendarPage() {
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Add Event
                     </Button>
+                                      <Button
+                                        onClick={() => setIsAddDialogOpen(true)}
+                                        aria-label="Add new event"
+                                        tabIndex={0}
+                                        variant="outline"
+                                        className="shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
+                                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
+                                      >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Event
+                                      </Button>
                   }
                 />
               )}

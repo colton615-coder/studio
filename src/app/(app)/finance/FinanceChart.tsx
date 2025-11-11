@@ -16,7 +16,7 @@ interface FinanceChartProps {
 const chartConfig = {
   spending: {
     label: 'Spending',
-    color: 'hsl(var(--accent))',
+    color: '#a855f7', // Use high-contrast purple
   },
 } satisfies ChartConfig;
 

@@ -193,7 +193,15 @@ export default function TasksPage() {
                 <Badge className={cn('border', priorityColors[task.priority])}>
                     {task.priority}
                 </Badge>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteTask(task)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => deleteTask(task)}
+                  aria-label={`Delete task: ${task.description}`}
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); deleteTask(task); } }}
+                >
                     <Trash2 size={16}/>
                 </Button>
                 </div>

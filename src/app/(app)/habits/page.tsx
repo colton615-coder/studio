@@ -392,11 +392,21 @@ export default function HabitsPage() {
   }
 
   const SuggestionPill = ({ suggestion, onClick }: { suggestion: HabitSuggestion, onClick: () => void }) => (
-    <button onClick={onClick} className="flex items-center gap-2 p-2 rounded-full bg-background shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-all text-sm text-foreground">
-        <div className="h-6 w-6 rounded-full flex items-center justify-center" style={{ backgroundColor: `${suggestion.color}33`, color: suggestion.color }}>
-            <Icon name={suggestion.icon as IconName} className="h-4 w-4" />
-        </div>
-        <span>{suggestion.name}</span>
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 p-2 rounded-full bg-background shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-all text-sm text-foreground"
+      tabIndex={0}
+      aria-label={`Suggestion: ${suggestion.name}`}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+    >
+      <div
+        className="h-6 w-6 rounded-full flex items-center justify-center"
+        style={{ backgroundColor: `${suggestion.color}80`, color: suggestion.color }}
+        aria-label={`Icon for ${suggestion.name}`}
+      >
+        <Icon name={suggestion.icon as IconName} className="h-4 w-4" />
+      </div>
+      <span>{suggestion.name}</span>
     </button>
   );
 

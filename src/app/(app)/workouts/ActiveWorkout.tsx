@@ -157,8 +157,15 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold font-headline text-shadow-lg text-center flex-shrink-0 mx-4">{currentExercise.name}</h1>
             <div className="flex-1 text-right">
-                <Button variant="ghost" size="icon" onClick={() => setIsInstructionsSheetOpen(true)}>
-                    <Info className="text-accent"/>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Show exercise instructions"
+                  tabIndex={0}
+                  onClick={() => setIsInstructionsSheetOpen(true)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsInstructionsSheetOpen(true); }}
+                >
+                  <Info className="text-accent"/>
                 </Button>
             </div>
           </div>
@@ -191,7 +198,7 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
                   {nextExercise ? (
                      <ExerciseImage asset={nextExercise.asset} name={nextExercise.name} alt={nextExercise.name} className="w-full h-full" />
                   ) : (
-                    <div className="w-full h-full bg-background flex items-center justify-center text-accent font-bold">END</div>
+                    <div className="w-full h-full bg-background flex items-center justify-center text-accent font-bold" role="status" aria-label="End of workout">END</div>
                   )}
                 </div>
                 <div>
@@ -206,19 +213,41 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
           </Card>
           
           {isRepBased ? (
-              <Button onClick={handleCompleteSet} size="lg" className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-full h-16 text-lg bg-green-500/80 hover:bg-green-500 text-white">
+              <Button
+                onClick={handleCompleteSet}
+                size="lg"
+                aria-label="Complete set"
+                tabIndex={0}
+                className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-full h-16 text-lg bg-green-500/80 hover:bg-green-500 text-white focus:outline focus:outline-2 focus:outline-accent"
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCompleteSet(); }}
+              >
                 <Check />
                 <span className="ml-2">Complete Set</span>
               </Button>
           ) : (
             <div className="flex justify-center gap-4">
-                <Button onClick={handlePause} size="lg" className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-32 bg-primary/20 hover:bg-primary/30 text-primary-foreground">
-                <PauseCircle />
-                <span className="ml-2">Pause</span>
+                <Button
+                  onClick={handlePause}
+                  size="lg"
+                  aria-label="Pause workout"
+                  tabIndex={0}
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-32 bg-primary/20 hover:bg-primary/30 text-primary-foreground focus:outline focus:outline-2 focus:outline-accent"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handlePause(); }}
+                >
+                  <PauseCircle />
+                  <span className="ml-2">Pause</span>
                 </Button>
-                <Button onClick={handleSkip} size="lg" variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-32">
-                <SkipForward />
-                <span className="ml-2">Skip</span>
+                <Button
+                  onClick={handleSkip}
+                  size="lg"
+                  variant="outline"
+                  aria-label="Skip exercise"
+                  tabIndex={0}
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset w-32 focus:outline focus:outline-2 focus:outline-accent"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleSkip(); }}
+                >
+                  <SkipForward />
+                  <span className="ml-2">Skip</span>
                 </Button>
             </div>
           )}
@@ -226,17 +255,52 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
       </div>
       
        <Dialog open={isPauseModalOpen} onOpenChange={(open) => !open && handleResume()}>
-        <DialogContent open={isPauseModalOpen} className="shadow-neumorphic-outset bg-background border-transparent" hideCloseButton>
-          <DialogHeader className="items-center text-center"><DialogTitle className="text-2xl">Workout Paused</DialogTitle><DialogDescription>Take a breather. Ready to get back to it?</DialogDescription></DialogHeader>
+        <DialogContent
+          open={isPauseModalOpen}
+          className="shadow-neumorphic-outset bg-background border-transparent"
+          hideCloseButton
+          role="dialog"
+          aria-modal="true"
+          aria-label="Workout paused dialog"
+          tabIndex={-1}
+        >
+          <DialogHeader className="items-center text-center">
+            <DialogTitle className="text-2xl">Workout Paused</DialogTitle>
+            <DialogDescription>Take a breather. Ready to get back to it?</DialogDescription>
+          </DialogHeader>
           <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
-            <Button onClick={handleResume} className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground"><PlayCircle className="mr-2 h-4 w-4" />Resume Workout</Button>
-            <Button onClick={handleEndWorkout} variant="destructive" className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset"><XCircle className="mr-2 h-4 w-4" />End Workout</Button>
+            <Button
+              onClick={handleResume}
+              aria-label="Resume workout"
+              tabIndex={0}
+              className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground focus:outline focus:outline-2 focus:outline-accent"
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleResume(); }}
+            >
+              <PlayCircle className="mr-2 h-4 w-4" />Resume Workout
+            </Button>
+            <Button
+              onClick={handleEndWorkout}
+              variant="destructive"
+              aria-label="End workout"
+              tabIndex={0}
+              className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleEndWorkout(); }}
+            >
+              <XCircle className="mr-2 h-4 w-4" />End Workout
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
       <Sheet open={isInstructionsSheetOpen} onOpenChange={setIsInstructionsSheetOpen}>
-        <SheetContent side="bottom" className="h-4/5 rounded-t-lg bg-background/95 backdrop-blur-lg border-t border-border">
+        <SheetContent
+          side="bottom"
+          className="h-4/5 rounded-t-lg bg-background/95 backdrop-blur-lg border-t border-border"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Exercise instructions sheet"
+          tabIndex={-1}
+        >
             <SheetHeader>
                 <SheetTitle className="text-3xl text-center mb-4">{currentExercise.name}</SheetTitle>
             </SheetHeader>

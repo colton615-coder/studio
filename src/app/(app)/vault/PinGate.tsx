@@ -160,9 +160,25 @@ export function PinGate({ children }: PinGateProps) {
             </CardContent>
             <CardFooter>
               {isConfirming ? (
-                <Button onClick={handleConfirmPin} className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset">Confirm PIN</Button>
+                <Button
+                  onClick={handleConfirmPin}
+                  aria-label="Confirm PIN"
+                  tabIndex={0}
+                  className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleConfirmPin(); }}
+                >
+                  Confirm PIN
+                </Button>
               ) : (
-                <Button onClick={handleCreatePin} className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset">Create PIN</Button>
+                <Button
+                  onClick={handleCreatePin}
+                  aria-label="Create PIN"
+                  tabIndex={0}
+                  className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCreatePin(); }}
+                >
+                  Create PIN
+                </Button>
               )}
             </CardFooter>
           </>

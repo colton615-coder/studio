@@ -276,7 +276,15 @@ export function AiKnoxClient() {
       </div>
 
       <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}>
-        <DialogContent open={isConfirmationModalOpen} className="sm:max-w-md shadow-neumorphic-outset bg-background border-transparent" hideCloseButton>
+        <DialogContent
+          open={isConfirmationModalOpen}
+          className="sm:max-w-md shadow-neumorphic-outset bg-background border-transparent"
+          hideCloseButton
+          role="dialog"
+          aria-modal="true"
+          aria-label="Entry saved confirmation dialog"
+          tabIndex={-1}
+        >
           <DialogHeader className="items-center text-center">
             <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-4 shadow-neumorphic-inset">
               <Lock size={32} />

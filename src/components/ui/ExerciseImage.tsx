@@ -49,7 +49,7 @@ export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProp
       return (
         <Image
           src={`https://source.unsplash.com/random/600x600/?${encodeURIComponent(finalAsset.value)}`}
-          alt={alt}
+          alt={alt || `Exercise: ${name}`}
           width={600}
           height={600}
           className={cn("object-cover aspect-square bg-muted", className)}
@@ -58,10 +58,9 @@ export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProp
           data-ai-hint={finalAsset.value}
         />
       );
-    
     case 'initials':
-        const backgroundColor = nameToHsl(name);
-        const gradient = `linear-gradient(145deg, ${backgroundColor}, hsl(${parseInt(backgroundColor.slice(4, 7)) + 20}, 35%, 15%))`;
+      const backgroundColor = nameToHsl(name);
+      const gradient = `linear-gradient(145deg, ${backgroundColor}, hsl(${parseInt(backgroundColor.slice(4, 7)) + 20}, 35%, 15%))`;
       return (
         <div
           className={cn(
@@ -69,18 +68,18 @@ export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProp
             className
           )}
           style={{ background: gradient }}
+          aria-label={`Exercise initials for ${name}`}
+          role="img"
         >
           {finalAsset.value}
         </div>
       );
-    
-    case 'gif': // This case now points to a local placeholder if needed
+    case 'gif':
     default:
-       // Fallback to API if gif is specified but fails (or isn't implemented)
       return (
-         <Image
+        <Image
           src={`https://source.unsplash.com/random/600x600/?${encodeURIComponent(name)}`}
-          alt={alt}
+          alt={alt || `Exercise: ${name}`}
           width={600}
           height={600}
           className={cn("object-cover aspect-square bg-muted", className)}

@@ -165,6 +165,17 @@ export default function ShoppingListPage() {
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item)}>
                   <Trash2 size={16} />
                   </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={`Delete ${item.description}`}
+                                  tabIndex={0}
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus:outline focus:outline-2 focus:outline-destructive"
+                                  onClick={() => deleteItem(item)}
+                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') deleteItem(item); }}
+                                >
+                                  <Trash2 size={16} />
+                                </Button>
               </div>
             </motion.div>
             ))}
@@ -209,6 +220,16 @@ export default function ShoppingListPage() {
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Item
                 </Button>
+                              <Button
+                                type="submit"
+                                aria-label="Add item to shopping list"
+                                tabIndex={0}
+                                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground focus:outline focus:outline-2 focus:outline-accent"
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleSubmit(e); }}
+                              >
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Item
+                              </Button>
               </form>
             </CardContent>
           </Card>

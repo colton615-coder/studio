@@ -23,7 +23,7 @@ export function CircularProgress({
   const offset = circumference - (value / 100) * circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className="relative inline-flex items-center justify-center" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} aria-label={label ? `Progress: ${label}` : 'Progress'}>
       <svg width={size} height={size} className="transform -rotate-90">
         {/* Background circle */}
         <circle
