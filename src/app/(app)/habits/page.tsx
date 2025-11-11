@@ -131,6 +131,29 @@ export default function HabitsPage() {
   // Ref for the habit name input for programmatic focus
   const habitNameInputRef = useRef<HTMLInputElement>(null);
 
+  // SCROLL-LOCK MANAGEMENT: Ensure scroll is always restored when modal closes
+  // This is the single source of truth for managing document.body.overflow
+  // It executes whenever isDialogOpen changes, regardless of how the modal was closed
+  useEffect(() => {
+    if (isDialogOpen) {
+      // MODAL OPENING: Disable page scroll
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    } else {
+      // MODAL CLOSING: Restore page scroll (cleanup)
+      // This executes whether modal was submitted, dismissed, or escape-pressed
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    // CLEANUP: Ensure overflow is restored if component unmounts while modal is open
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isDialogOpen]);
+
   const { control, handleSubmit, watch, setValue, reset } = useForm<HabitFormData>({
     defaultValues: {
       name: '',
