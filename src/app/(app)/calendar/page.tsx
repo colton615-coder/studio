@@ -149,20 +149,16 @@ export default function CalendarPage() {
             <CardDescription>Events for the selected day.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="w-full mb-4 shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground">
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              aria-label="Add new event"
+              tabIndex={0}
+              className="w-full mb-4 shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground focus:outline focus:outline-2 focus:outline-accent"
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Event
             </Button>
-                        <Button
-                          onClick={() => setIsAddDialogOpen(true)}
-                          aria-label="Add new event"
-                          tabIndex={0}
-                          className="w-full mb-4 shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent/20 hover:bg-accent/30 text-accent-foreground focus:outline focus:outline-2 focus:outline-accent"
-                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
-                        >
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Event
-                        </Button>
             <div className="space-y-4">
               {isLoading ? (
                  <div className="space-y-3">
@@ -196,21 +192,17 @@ export default function CalendarPage() {
                   title="No Events Scheduled"
                   message="This day is wide open. Add an event to get started."
                   ctaElement={
-                    <Button onClick={() => setIsAddDialogOpen(true)} variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset">
+                    <Button
+                      onClick={() => setIsAddDialogOpen(true)}
+                      aria-label="Add new event"
+                      tabIndex={0}
+                      variant="outline"
+                      className="shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
+                    >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Add Event
                     </Button>
-                                      <Button
-                                        onClick={() => setIsAddDialogOpen(true)}
-                                        aria-label="Add new event"
-                                        tabIndex={0}
-                                        variant="outline"
-                                        className="shadow-neumorphic-outset active:shadow-neumorphic-inset focus:outline focus:outline-2 focus:outline-accent"
-                                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setIsAddDialogOpen(true); }}
-                                      >
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Event
-                                      </Button>
                   }
                 />
               )}
