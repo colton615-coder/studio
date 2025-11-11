@@ -742,16 +742,18 @@ export default function HabitsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
           open={isDialogOpen} 
-          className="shadow-neumorphic-outset bg-background border-transparent"
+          className="shadow-neumorphic-outset bg-background border-transparent max-h-[85vh] p-0 gap-0 flex flex-col"
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <DialogHeader>
-            <DialogTitle>Create a New Habit</DialogTitle>
-            <DialogDescription>Build positive routines and track your progress.</DialogDescription>
-          </DialogHeader>
+          <div className="p-6 pb-4">
+            <DialogHeader>
+              <DialogTitle>Create a New Habit</DialogTitle>
+              <DialogDescription>Build positive routines and track your progress.</DialogDescription>
+            </DialogHeader>
+          </div>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 overflow-hidden min-h-0">
-            <div className="overflow-y-auto space-y-6 px-1 -mx-1">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col min-h-0 flex-1">
+            <div className="overflow-y-auto px-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="habit-name-input">Habit Name</Label>
               <Controller
@@ -848,7 +850,7 @@ export default function HabitsPage() {
             </div>
             </div>
 
-            <DialogFooter className="flex-shrink-0">
+            <DialogFooter>
                 <DialogClose asChild>
                   <Button 
                     type="button" 
