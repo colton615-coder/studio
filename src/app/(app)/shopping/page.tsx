@@ -45,7 +45,8 @@ export default function ShoppingListPage() {
     );
   }, [user, firestore]);
 
-  const { data: items, isLoading, setData: setItems } = useCollection<ShoppingItem>(shoppingListQuery, { mode: 'realtime' });
+  // Generic type should match ShoppingListItem definition
+  const { data: items, isLoading, setData: setItems } = useCollection<ShoppingListItem>(shoppingListQuery, { mode: 'realtime' });
 
   const { neededItems, purchasedItems } = useMemo(() => {
     const needed: ShoppingListItem[] = [];

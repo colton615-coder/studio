@@ -130,32 +130,25 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold text-foreground mb-4">All Modules</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((link) => (
-            <Link href={link.href} key={link.href} passHref legacyBehavior>
-              <a
-                role="button"
-                tabIndex={0}
-                aria-label={`Open ${link.label} module`}
-                className="block focus:outline focus:outline-2 focus:outline-accent"
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    window.location.href = link.href;
-                  }
-                }}
-              >
-                <Card className="h-full shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-shadow duration-200 ease-in-out cursor-pointer group">
-                  <CardHeader className="flex flex-row items-center gap-4">
-                    <div className="p-3 rounded-lg bg-background shadow-neumorphic-inset">
-                      <link.icon className="w-6 h-6 text-accent" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-foreground group-hover:text-accent transition-colors">
-                        {link.label}
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-1">{featureDescriptions[link.href]}</CardDescription>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </a>
+            <Link
+              href={link.href}
+              key={link.href}
+              aria-label={`Open ${link.label} module`}
+              className="block focus:outline focus:outline-2 focus:outline-accent"
+            >
+              <Card className="h-full shadow-neumorphic-outset hover:shadow-neumorphic-inset transition-shadow duration-200 ease-in-out cursor-pointer group">
+                <CardHeader className="flex flex-row items-center gap-4">
+                  <div className="p-3 rounded-lg bg-background shadow-neumorphic-inset">
+                    <link.icon className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-foreground group-hover:text-accent transition-colors">
+                      {link.label}
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1">{featureDescriptions[link.href]}</CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
             </Link>
           ))}
         </div>

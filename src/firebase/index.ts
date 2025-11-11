@@ -3,7 +3,14 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import {
+  getFirestore,
+  initializeFirestore,
+  type Firestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  memoryLocalCache,
+} from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -37,30 +44,43 @@ export function initializeFirebase() {
   return getSdks(getApp());
 }
 
+// Ensure we only configure Firestore persistence once per session
+let configuredFirestore: Firestore | null = null;
+
 export function getSdks(firebaseApp: FirebaseApp) {
-  const firestore = getFirestore(firebaseApp);
-  
-  // Enable offline persistence for PWA functionality
+  // On the client, initialize Firestore with explicit local cache settings
   if (typeof window !== 'undefined') {
-    enableIndexedDbPersistence(firestore, {
-      synchronizeTabs: true, // Allow multiple tabs to share cache
-    }).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('Offline persistence failed: Multiple tabs open. Using memory cache.');
-      } else if (err.code === 'unimplemented') {
-        // Browser doesn't support persistence
-        console.warn('Offline persistence not supported in this browser.');
-      } else {
-        console.error('Error enabling offline persistence:', err);
+    if (!configuredFirestore) {
+      try {
+        configuredFirestore = initializeFirestore(firebaseApp, {
+          localCache: persistentLocalCache({
+            tabManager: persistentMultipleTabManager(),
+          }),
+        });
+      } catch (e) {
+        // If persistence cannot be enabled (e.g., private mode), fall back to memory cache
+        try {
+          configuredFirestore = initializeFirestore(firebaseApp, {
+            localCache: memoryLocalCache(),
+          });
+          console.warn('Using in-memory cache for Firestore (persistence unavailable).');
+        } catch (_e) {
+          // As a last resort, get a default Firestore instance
+          configuredFirestore = getFirestore(firebaseApp);
+        }
       }
-    });
+    }
+  } else {
+    // On the server, just get the default Firestore (no persistence)
+    configuredFirestore = configuredFirestore ?? getFirestore(firebaseApp);
   }
-  
+
+  const firestore = configuredFirestore ?? getFirestore(firebaseApp);
+
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore
+    firestore,
   };
 }
 
