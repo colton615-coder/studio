@@ -338,43 +338,160 @@ export default function HabitsPage() {
 
   const handleHabitToggle = async (habit: Habit & {done: boolean}) => {
     if (!user || !firestore) return;
-    const habitRef = doc(firestore, 'users', user.uid, 'habits', habit.id);
-    const logRef = doc(firestore, 'users', user.uid, 'habitLogs', todayStr);
-    const newDoneState = !habit.done;
-    let newStreak = habit.streak;
     
-    // Immediately write to Firestore (non-blocking) so the checkbox updates quickly
-    const logUpdate = { log: { [habit.id]: newDoneState } };
-    setDocumentNonBlocking(logRef, logUpdate, { merge: true });
-
-    if (newDoneState) {
-      const lastCompletedDate = habit.lastCompleted?.toDate();
-      if (!lastCompletedDate || !isToday(lastCompletedDate)) {
-        newStreak = newStreak + 1;
-        // Celebrate streak increase with strong haptic
-        haptics.success();
-        celebrateStreak(newStreak);
-      } else {
-        // Simple celebration for checking habit with medium haptic
-        haptics.medium();
-        celebrateHabitCompletion();
-      }
-      setDocumentNonBlocking(habitRef, { streak: newStreak, lastCompleted: serverTimestamp() }, { merge: true });
+    try {
+      const habitRef = doc(firestore, 'users', user.uid, 'habits', habit.id);
+      const logRef = doc(firestore, 'users', user.uid, 'habitLogs', todayStr);
+      const newDoneState = !habit.done;
+      let newStreak = habit.streak;
       
-      // Check if all habits are now complete
-      const allComplete = combinedHabits?.every((h: Habit & {done: boolean}) => h.id === habit.id ? true : h.done);
-      if (allComplete && combinedHabits && combinedHabits.length > 1) {
-        setTimeout(() => {
-          haptics.pattern([100, 75, 100, 75]);
-          celebrateAllHabitsComplete();
-        }, 300);
+      // Store original state for rollback on failure
+      const originalDone = habit.done;
+      const originalStreak = habit.streak;
+      
+      // 1. OPTIMISTIC UPDATE: Update local state immediately for responsive UI
+      if (setHabits && combinedHabits) {
+        const updatedHabits = combinedHabits.map(h => 
+          h.id === habit.id 
+            ? { ...h, done: newDoneState, streak: newStreak } 
+            : h
+        );
+        setHabits(updatedHabits);
       }
-    } else {
-      const lastCompletedDate = habit.lastCompleted?.toDate();
-      if(lastCompletedDate && isToday(lastCompletedDate)) {
-        newStreak = Math.max(0, newStreak - 1);
-        setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
+
+      if (newDoneState) {
+        const lastCompletedDate = habit.lastCompleted?.toDate();
+        
+        // Calculate new streak
+        if (!lastCompletedDate || !isToday(lastCompletedDate)) {
+          newStreak = newStreak + 1;
+        }
+
+        // 2. HAPTIC FEEDBACK: Wrapped in try-catch to prevent crash
+        try {
+          if (newStreak > originalStreak) {
+            haptics.success();
+          } else {
+            haptics.medium();
+          }
+        } catch (hapticError) {
+          console.warn('⚠️ Haptic feedback error:', hapticError);
+          // Non-critical - don't crash app
+        }
+
+        // 3. CONFETTI ANIMATION: Wrapped in try-catch to prevent crash
+        try {
+          if (newStreak > originalStreak) {
+            celebrateStreak(newStreak);
+          } else {
+            celebrateHabitCompletion();
+          }
+        } catch (confettiError) {
+          console.warn('⚠️ Confetti animation error:', confettiError);
+          // Non-critical - don't crash app
+        }
+
+        // 4. FIREBASE WRITES: Async with comprehensive error handling
+        try {
+          // Update completion log
+          const logUpdate = { log: { [habit.id]: newDoneState } };
+          setDocumentNonBlocking(logRef, logUpdate, { merge: true });
+          
+          // Update habit with new streak and timestamp
+          setDocumentNonBlocking(habitRef, { 
+            streak: newStreak, 
+            lastCompleted: serverTimestamp() 
+          }, { merge: true });
+        } catch (firebaseError) {
+          console.error('❌ Firebase write error on habit completion:', firebaseError);
+          
+          // ROLLBACK: Restore original state on Firebase failure
+          if (setHabits && combinedHabits) {
+            const rollbackHabits = combinedHabits.map(h => 
+              h.id === habit.id 
+                ? { ...h, done: originalDone, streak: originalStreak } 
+                : h
+            );
+            setHabits(rollbackHabits);
+          }
+          
+          // NOTIFY USER: Show error toast
+          toast({ 
+            variant: 'destructive', 
+            title: 'Sync Failed', 
+            description: 'Could not save habit completion. Please try again.' 
+          });
+          
+          throw firebaseError;
+        }
+
+        // 5. ALL HABITS COMPLETE CHECK: Wrapped in try-catch
+        try {
+          const allComplete = combinedHabits?.every((h: Habit & {done: boolean}) => 
+            h.id === habit.id ? newDoneState : h.done
+          );
+          if (allComplete && combinedHabits && combinedHabits.length > 1) {
+            setTimeout(() => {
+              try {
+                haptics.pattern([100, 75, 100, 75]);
+                celebrateAllHabitsComplete();
+              } catch (allCompleteError) {
+                console.warn('⚠️ All habits complete celebration error:', allCompleteError);
+              }
+            }, 300);
+          }
+        } catch (completionCheckError) {
+          console.warn('⚠️ Error checking all habits completion:', completionCheckError);
+        }
+      } else {
+        // UNCHECKING A HABIT
+        try {
+          const lastCompletedDate = habit.lastCompleted?.toDate();
+          if (lastCompletedDate && isToday(lastCompletedDate)) {
+            newStreak = Math.max(0, newStreak - 1);
+          }
+
+          // Update completion log and streak
+          const logUpdate = { log: { [habit.id]: newDoneState } };
+          setDocumentNonBlocking(logRef, logUpdate, { merge: true });
+          setDocumentNonBlocking(habitRef, { streak: newStreak }, { merge: true });
+        } catch (firebaseError) {
+          console.error('❌ Firebase write error on habit unchecking:', firebaseError);
+          
+          // ROLLBACK: Restore original state
+          if (setHabits && combinedHabits) {
+            const rollbackHabits = combinedHabits.map(h => 
+              h.id === habit.id 
+                ? { ...h, done: originalDone, streak: originalStreak } 
+                : h
+            );
+            setHabits(rollbackHabits);
+          }
+          
+          toast({ 
+            variant: 'destructive', 
+            title: 'Sync Failed', 
+            description: 'Could not update habit. Please try again.' 
+          });
+          
+          throw firebaseError;
+        }
       }
+    } catch (error) {
+      // FINAL CATCH-ALL: Prevent unhandled promise rejection from crashing app
+      console.error('❌ Critical error in handleHabitToggle:', error);
+      
+      // Show generic error if specific error wasn't already shown
+      if (!(error instanceof Error) || !error.message.includes('Sync')) {
+        toast({ 
+          variant: 'destructive', 
+          title: 'Error', 
+          description: 'An unexpected error occurred. Please try again.' 
+        });
+      }
+      
+      // DO NOT RE-THROW - prevents app crash on white screen
+      // Error is logged for debugging, user is notified via toast
     }
   };
 
