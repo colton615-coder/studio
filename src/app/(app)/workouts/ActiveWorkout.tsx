@@ -221,8 +221,8 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
                 <svg className="w-72 h-72 sm:w-96 sm:h-96 transform -rotate-90">
                     <defs>
                       <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" className={categoryStyle.gradient.split(' ')[0].replace('from-', '')} stopColor="currentColor" />
-                        <stop offset="100%" className={categoryStyle.gradient.split(' ')[2].replace('to-', '')} stopColor="currentColor" />
+                        <stop offset="0%" stopColor={categoryStyle.color} />
+                        <stop offset="100%" stopColor={categoryStyle.color} />
                       </linearGradient>
                     </defs>
                     <circle cx="50%" cy="50%" r="140" stroke="hsl(var(--muted) / 0.2)" strokeWidth="12" fill="transparent" className="sm:r-[180px]" />

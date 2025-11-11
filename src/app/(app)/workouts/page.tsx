@@ -50,6 +50,7 @@ export default function WorkoutsPage() {
         setWorkout(null);
       } else {
         setWorkout(result);
+        setScreen('lobby');
       }
     });
   };
