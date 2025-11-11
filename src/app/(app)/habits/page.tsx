@@ -563,30 +563,8 @@ export default function HabitsPage() {
         <DialogContent open={isDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create a New Habit</DialogTitle>
-            <DialogDescription>Personalize your new habit. Get suggestions from your AI Coach.</DialogDescription>
+            <DialogDescription>Build positive routines and track your progress.</DialogDescription>
           </DialogHeader>
-          
-          <Separator />
-
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2 text-accent">
-              <Sparkles size={16}/>AI Coach Suggestions
-              <InfoTooltip content="AI analyzes your journal entries and current habits to suggest personalized routines that align with your goals." />
-            </Label>
-            <div className="min-h-[40px]" role="region" aria-live="polite" aria-label="AI Coach suggestions">
-              {isAiLoading ? <AiLoadingSkeleton/> : (
-                proactiveSuggestions.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {proactiveSuggestions.map((suggestion, i) => (
-                      <SuggestionPill key={i} suggestion={suggestion} onClick={() => handleSuggestionClick(suggestion)}/>
-                    ))}
-                  </div>
-                ) : <p className="text-xs text-muted-foreground">Write in your journal to get personalized suggestions.</p>
-              )}
-            </div>
-          </div>
-
-          <Separator />
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
