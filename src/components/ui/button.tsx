@@ -21,10 +21,10 @@ const buttonVariants = cva(
         neumorphic: "shadow-neumorphic-outset hover:shadow-neumorphic-outset-lg active:shadow-neumorphic-inset bg-background"
       },
       size: {
-        default: "h-10 py-2 px-4",
-        sm: "h-9 px-3 rounded-md",
-        lg: "h-11 px-8 rounded-md",
-        icon: "h-10 w-10",
+        default: "h-11 py-2 px-4 min-h-[44px]",
+        sm: "h-10 px-3 rounded-md min-h-[44px]",
+        lg: "h-12 px-8 rounded-md",
+        icon: "h-11 w-11 min-h-[44px] min-w-[44px]",
       },
     },
     defaultVariants: {

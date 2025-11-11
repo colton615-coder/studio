@@ -483,6 +483,7 @@ export default function FinancePage() {
                 <Input 
                   id="budget-amount" 
                   type="number" 
+                  inputMode="decimal"
                   value={newBudgetAmount} 
                   onChange={(e) => setNewBudgetAmount(e.target.value)} 
                   className="col-span-3" 
@@ -589,6 +590,7 @@ export default function FinancePage() {
                 <Input 
                   id="expense-amount" 
                   type="number" 
+                  inputMode="decimal"
                   value={newExpenseAmount} 
                   onChange={(e) => setNewExpenseAmount(e.target.value)} 
                   className="col-span-3" 

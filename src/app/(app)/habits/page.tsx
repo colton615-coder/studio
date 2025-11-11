@@ -17,6 +17,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useDebouncedCallback } from 'use-debounce';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { haptics } from '@/lib/haptics';
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -335,10 +336,12 @@ export default function HabitsPage() {
       const lastCompletedDate = habit.lastCompleted?.toDate();
       if (!lastCompletedDate || !isToday(lastCompletedDate)) {
         newStreak = newStreak + 1;
-        // Celebrate streak increase
+        // Celebrate streak increase with strong haptic
+        haptics.success();
         celebrateStreak(newStreak);
       } else {
-        // Simple celebration for checking habit
+        // Simple celebration for checking habit with medium haptic
+        haptics.medium();
         celebrateHabitCompletion();
       }
       setDocumentNonBlocking(habitRef, { streak: newStreak, lastCompleted: serverTimestamp() }, { merge: true });
@@ -346,7 +349,10 @@ export default function HabitsPage() {
       // Check if all habits are now complete
       const allComplete = combinedHabits?.every((h: Habit & {done: boolean}) => h.id === habit.id ? true : h.done);
       if (allComplete && combinedHabits && combinedHabits.length > 1) {
-        setTimeout(() => celebrateAllHabitsComplete(), 300);
+        setTimeout(() => {
+          haptics.pattern([100, 75, 100, 75]);
+          celebrateAllHabitsComplete();
+        }, 300);
       }
     } else {
       const lastCompletedDate = habit.lastCompleted?.toDate();
@@ -540,7 +546,7 @@ export default function HabitsPage() {
               <Sparkles size={16}/>AI Coach Suggestions
               <InfoTooltip content="AI analyzes your journal entries and current habits to suggest personalized routines that align with your goals." />
             </Label>
-            <div className="min-h-[40px]">
+            <div className="min-h-[40px]" role="region" aria-live="polite" aria-label="AI Coach suggestions">
               {isAiLoading ? <AiLoadingSkeleton/> : (
                 proactiveSuggestions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -577,7 +583,7 @@ export default function HabitsPage() {
                 )}
               />
                {interactiveSuggestion && (
-                  <div className="pt-2">
+                  <div className="pt-2" role="region" aria-live="polite" aria-label="Interactive habit suggestion">
                     <SuggestionPill suggestion={interactiveSuggestion} onClick={() => handleSuggestionClick(interactiveSuggestion)} />
                   </div>
                 )}

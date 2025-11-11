@@ -56,6 +56,8 @@ export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProp
           onError={handleError}
           unoptimized // Good for dynamic sources to avoid build-time optimization
           data-ai-hint={finalAsset.value}
+          loading="lazy"
+          decoding="async"
         />
       );
     case 'initials':
@@ -86,6 +88,8 @@ export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProp
           onError={handleError}
           unoptimized
           data-ai-hint={name}
+          loading="lazy"
+          decoding="async"
         />
       );
   }

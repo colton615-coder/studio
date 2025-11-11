@@ -4,6 +4,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBl
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { haptics } from '@/lib/haptics';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -116,8 +117,9 @@ export default function TasksPage() {
     const newCompletedState = !task.completed;
     updateDocumentNonBlocking(docRef, { completed: newCompletedState });
     
-    // Celebrate when completing a task
+    // Celebrate when completing a task with haptic feedback
     if (newCompletedState) {
+      haptics.medium();
       celebrateTaskComplete();
     }
   };

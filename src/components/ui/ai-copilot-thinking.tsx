@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -13,6 +13,7 @@ interface AICoPilotThinkingProps {
 
 export function AICoPilotThinking({ steps, onComplete, durationPerStep = 2000 }: AICoPilotThinkingProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (currentStep >= steps.length) {
@@ -45,7 +46,7 @@ export function AICoPilotThinking({ steps, onComplete, durationPerStep = 2000 }:
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                   className="flex items-center gap-3 text-sm"
                 >
                   {isCompleted ? (
