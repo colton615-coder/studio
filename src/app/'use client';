@@ -1,0 +1,45 @@
+'use client';
+
+import { useSidebar, SidebarTrigger } from '@/components/ui/sidebar';
+
+/**
+ * Header Component
+ * - App title now acts as the sidebar toggle.
+ * - Removes the robot icon trigger.
+ * - Accessible: button role, aria-expanded state.
+ * - iOS path can easily be reintroduced if needed (placeholder).
+ */
+export function Header() {
+  const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+  const expanded = isMobile ? openMobile : open;
+
+  // If you still want an iOS-specific direct path, uncomment:
+  // const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  // const useDirect = isIOS && isMobile;
+
+  return (
+    <header className="flex h-14 items-center justify-between border-b border-border px-4">
+      <SidebarTrigger asChild>
+        <button
+          type="button"
+          aria-label={expanded ? 'Collapse navigation' : 'Expand navigation'}
+          aria-expanded={expanded}
+          onClick={(e) => {
+            // Direct toggle (currently one path for all)
+            toggleSidebar();
+          }}
+          className="group relative -ml-1 select-none rounded-md px-3 py-2 text-left font-headline text-accent text-lg font-bold tracking-wide
+                     focus:outline-none focus:ring-2 focus:ring-accent
+                     active:scale-[.97] transition
+                     after:absolute after:-inset-1 after:rounded-md
+                     hover:bg-accent/10"
+        >
+          <span className="pointer-events-none">LiFE-iN-SYNC</span>
+        </button>
+      </SidebarTrigger>
+
+      {/* Right spacer (flex alignment) */}
+      <div className="flex-1" />
+    </header>
+  );
+}
