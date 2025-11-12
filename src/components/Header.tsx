@@ -22,10 +22,9 @@ export function Header() {
       <SidebarTrigger asChild>
         <button
           type="button"
-          onClick={toggleSidebar}
           aria-label="Toggle sidebar"
           aria-expanded={expanded}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset active:shadow-neumorphic-inset cursor-pointer transition-all hover:bg-primary/30 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="sidebar-toggle flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-neumorphic-outset active:shadow-neumorphic-inset cursor-pointer transition-all hover:bg-primary/30 focus:outline-none focus:ring-2 focus:ring-accent"
         >
           <Bot className="h-6 w-6 text-accent" />
         </button>

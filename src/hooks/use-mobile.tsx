@@ -28,8 +28,14 @@ export function useIsMobile() {
     // Ensure state is correct on mount
     setIsMobile(mql.matches)
 
-    mql.addEventListener("change", onChange)
-    return () => mql.removeEventListener("change", onChange)
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange)
+      return () => mql.removeEventListener("change", onChange)
+    }
+
+    // Safari < 14 fallback
+    mql.addListener(onChange)
+    return () => mql.removeListener(onChange)
   }, [])
 
   return isMobile
