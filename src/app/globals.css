@@ -153,5 +153,16 @@
   /* Aliases to keep legacy class names working with new chromatic values */
   .shadow-neumorphic-outset { @apply shadow-neu-outset; }
   .shadow-neumorphic-inset { @apply shadow-neu-inset; }
+
+  /* Sheen animation for prism buttons */
+  @keyframes sheen {
+    0% { transform: translateX(-60%) rotate(12deg); opacity: 0; }
+    15% { opacity: 0.35; }
+    50% { transform: translateX(60%) rotate(12deg); opacity: 0.25; }
+    85% { opacity: 0.15; }
+    100% { transform: translateX(120%) rotate(12deg); opacity: 0; }
+  }
+
+  .animate-sheen { animation: sheen 2.2s ease-in-out infinite; }
 }
 }

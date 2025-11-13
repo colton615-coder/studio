@@ -17,6 +17,7 @@ import { DollarSign, PiggyBank, Receipt, PlusCircle, Loader2, Wand2, BrainCircui
 // Lazy load FinanceChart to reduce initial bundle size by ~200KB
 const FinanceChart = lazy(() => import('./FinanceChart').then(mod => ({ default: mod.FinanceChart })));
 import { Button } from '@/components/ui/button';
+import { EmeraldPrismButton } from './EmeraldPrismButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -289,10 +290,7 @@ export default function FinancePage() {
           <p className="text-muted-foreground mt-2">Your AI-powered financial dashboard.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-           <Button onClick={() => setIsBudgetDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset hover:shadow-glow-green hover:scale-105 bg-primary/80 hover:bg-primary text-primary-foreground transition-all duration-300">
-             <PlusCircle className="mr-2 h-4 w-4" />
-             New Budget
-           </Button>
+           <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} className="flex-1 md:flex-none" />
             <Button onClick={() => setIsExpenseDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset hover:shadow-glow-purple hover:scale-105 bg-accent/20 hover:bg-accent/30 text-accent-foreground transition-all duration-300" disabled={!budgets || budgets.length === 0}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Expense
@@ -339,10 +337,7 @@ export default function FinancePage() {
             title="Start Your Financial Journey"
             message="Create a budget to start tracking your spending and get insights from your AI coach."
             ctaElement={
-              <Button onClick={() => setIsBudgetDialogOpen(true)} className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Your First Budget
-              </Button>
+              <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)}>Create Your First Budget</EmeraldPrismButton>
             }
          />
       ) : (
