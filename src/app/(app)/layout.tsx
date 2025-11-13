@@ -18,6 +18,7 @@ import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { Header } from "@/components/Header";
+import BottomNavBar from "@/app/components/BottomNavBar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -143,10 +144,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Header />
           <main
             id="main-content"
-            className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+            className="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)] pb-24 md:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
           >
             <div className="max-w-[1400px] mx-auto">{children}</div>
           </main>
+          {/* Bottom navigation for mobile devices */}
+          <div className="md:hidden">
+            <BottomNavBar />
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </>
