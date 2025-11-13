@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useTransition, FormEvent, useCallback, lazy, Suspense } from 'react';
+import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc, query, orderBy, limit } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -155,7 +156,7 @@ export default function FinancePage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: "AI Budget Created!", description: `${budgetData.name} has been added.`});
+      // Removing suggestion from list provides sufficient feedback
       setAiSuggestions(s => s.filter(s => s.category !== budgetData.category));
      } catch {
        toast({ variant: 'destructive', title: "Creation Failed", description: "Could not save the AI suggested budget." });
@@ -177,7 +178,7 @@ export default function FinancePage() {
             updatedAt: serverTimestamp(),
         });
         
-        toast({ title: "Budget Created!", description: `${newBudgetName} has been added.`});
+        // Visual feedback via button animation instead of toast
         setBudgetCreateSuccess(true);
         setTimeout(() => setBudgetCreateSuccess(false), 1200);
         setNewBudgetName('');
@@ -216,7 +217,7 @@ export default function FinancePage() {
       setNewExpenseAmount('');
       setTargetBudgetId('');
       setIsExpenseDialogOpen(false);
-      toast({ title: "Expense Logged!", description: `${newExpenseDescription} has been added.`});
+      // Dialog closing provides sufficient feedback
     } catch {
       toast({ variant: 'destructive', title: "Save Failed", description: "Could not log your expense. Please try again." });
     } finally {
@@ -290,7 +291,7 @@ export default function FinancePage() {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-bold font-headline text-foreground">Finance</h1>
-          <p className="text-muted-foreground mt-2">Your AI-powered financial dashboard.</p>
+          <p className="text-muted-foreground mt-2">Money won't solve everything, but it's a decent start.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
            <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess} className="flex-1 md:flex-none" />
@@ -337,8 +338,8 @@ export default function FinancePage() {
       ) : !budgets || budgets.length === 0 ? (
          <EmptyStateCTA
             icon={<PiggyBank size={32}/>}
-            title="Start Your Financial Journey"
-            message="Create a budget to start tracking your spending and get insights from your AI coach."
+            title="No Budgets Set"
+            message="Tracking won't make you rich, but at least you'll know where it all went."
             ctaElement={
               <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess}>Create Your First Budget</EmeraldPrismButton>
             }
@@ -431,35 +432,37 @@ export default function FinancePage() {
                           exit={{ opacity: 0, x: -50 }}
                           transition={{ duration: 0.3 }}
                         >
-                        <Card className="shadow-neumorphic-outset">
-                            <CardHeader>
-                                <CardTitle className="flex justify-between items-start">
-                                    <span>{budget.name}</span>
-                                     <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
-                                                <MoreVertical size={16} />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleDeleteBudget(budget.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                <Trash2 className="mr-2" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </CardTitle>
-                                <CardDescription>
-                                    ${budget.amount.toLocaleString()} / {budget.period}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Progress value={budget.progress} indicatorClassName="bg-accent" />
-                                <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
-                                    <span>Spent: ${budget.spent.toLocaleString()}</span>
-                                    <span>Remaining: ${budget.remaining.toLocaleString()}</span>
-                                </div>
-                            </CardContent>
+                        <Card className="shadow-neumorphic-outset hover:shadow-glow-blue transition-shadow cursor-pointer">
+                            <Link href={`/finance/${budget.id}`}>
+                              <CardHeader>
+                                  <CardTitle className="flex justify-between items-start">
+                                      <span>{budget.name}</span>
+                                       <DropdownMenu>
+                                          <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                  <MoreVertical size={16} />
+                                              </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                              <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleDeleteBudget(budget.id); }} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                  <Trash2 className="mr-2" />
+                                                  Delete
+                                              </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                      </DropdownMenu>
+                                  </CardTitle>
+                                  <CardDescription>
+                                      ${budget.amount.toLocaleString()} / {budget.period}
+                                  </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                  <Progress value={budget.progress} indicatorClassName="bg-accent" />
+                                  <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                                      <span>Spent: ${budget.spent.toLocaleString()}</span>
+                                      <span>Remaining: ${budget.remaining.toLocaleString()}</span>
+                                  </div>
+                              </CardContent>
+                            </Link>
                         </Card>
                         </motion.div>
                     ))}

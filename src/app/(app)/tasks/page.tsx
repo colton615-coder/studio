@@ -148,7 +148,7 @@ export default function TasksPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: 'Task Added', description: `"${description}" was added.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
@@ -183,7 +183,7 @@ export default function TasksPage() {
       // 2. Background Firestore delete
       const docRef = doc(tasksCollection, taskToDelete.id);
       deleteDocumentNonBlocking(docRef);
-      toast({ title: 'Task Removed', description: `"${taskToDelete.description}" was removed.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
@@ -274,7 +274,7 @@ export default function TasksPage() {
       <NetworkStatusIndicator onRetry={handleRefresh} />
       <header>
         <h1 className="text-4xl font-bold font-headline text-foreground">Tasks</h1>
-        <p className="text-muted-foreground mt-2">Log daily objectives and set priorities.</p>
+        <p className="text-muted-foreground mt-2">Everything is a thing.</p>
       </header>
 
        {isLoading ? (
@@ -289,7 +289,7 @@ export default function TasksPage() {
                 <CardTitle>Add New Task</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                     <Input
                     value={newTaskDescription}
                     onChange={(e) => setNewTaskDescription(e.target.value)}
@@ -334,8 +334,8 @@ export default function TasksPage() {
        ) : (
             <EmptyStateCTA
                 icon={<ListTodo size={32} />}
-                title="Get Organized"
-                message="Your to-do list is empty. Add a task to get started."
+                title="Nothing To Do"
+                message="Enjoy the calm. It won't last long."
                 ctaElement={
                     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg mx-auto">
                         <Input

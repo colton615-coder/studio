@@ -2,14 +2,11 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { Button } from '@/components/ui/button';
+import { useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
@@ -18,10 +15,6 @@ export default function LoginPage() {
       router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
-
-  const handleSignIn = () => {
-    initiateAnonymousSignIn(auth);
-  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -35,18 +28,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-neumorphic-outset">
         <CardHeader className="text-center">
           <CardTitle>Welcome</CardTitle>
-          <CardDescription>Sign in to continue to your dashboard.</CardDescription>
+          <CardDescription>Authentication required. Please contact the administrator.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isUserLoading ? (
-            <div className="flex justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-accent" />
-            </div>
-          ) : (
-            <Button onClick={handleSignIn} className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
-              Sign In Anonymously
-            </Button>
-          )}
+          <div className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-accent" />
+          </div>
         </CardContent>
       </Card>
     </main>

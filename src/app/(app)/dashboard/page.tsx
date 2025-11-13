@@ -3,7 +3,6 @@
 import { useCallback, useState, Suspense } from "react";
 import { QuickStats } from "@/components/dashboard/QuickStats";
 import { TodayOverview } from "@/components/dashboard/TodayOverview";
-import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
@@ -72,7 +71,7 @@ export default function DashboardPage() {
 
 			<header className="space-y-2">
 				<h1 className="text-4xl font-bold font-headline text-foreground">Dashboard</h1>
-				<p className="text-muted-foreground">Monitor progress, track habits, and jump into quick tasks.</p>
+				<p className="text-muted-foreground">Your time on earth is limited. Let's at least do something with it.</p>
 			</header>
 
 			<ErrorBoundary>
@@ -81,16 +80,11 @@ export default function DashboardPage() {
 				</Suspense>
 			</ErrorBoundary>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<ErrorBoundary>
-					<Suspense fallback={<TodayOverviewFallback />}>
-						<TodayOverview key={`overview-${refreshKey}`} />
-					</Suspense>
-				</ErrorBoundary>
-				<ErrorBoundary>
-					<QuickActions />
-				</ErrorBoundary>
-			</div>
+			<ErrorBoundary>
+				<Suspense fallback={<TodayOverviewFallback />}>
+					<TodayOverview key={`overview-${refreshKey}`} />
+				</Suspense>
+			</ErrorBoundary>
 		</MotionDiv>
 	);
 }
