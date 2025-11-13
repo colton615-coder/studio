@@ -401,8 +401,13 @@ export default function HabitsPageNew() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Repetition builds character. Or at least that's the theory.</p>
         </div>
-        <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="hidden md:inline-flex" />
-        <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="md:hidden w-auto px-4 py-2">New Habit</EmberPrismButton>
+        {/* Only show action buttons when habits exist (populated state) */}
+        {!isLoading && combinedHabits && combinedHabits.length > 0 && (
+          <>
+            <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="hidden md:inline-flex" />
+            <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="md:hidden w-auto px-4 py-2">New Habit</EmberPrismButton>
+          </>
+        )}
       </header>
 
       {isLoading ? (
