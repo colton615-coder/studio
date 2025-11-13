@@ -24,19 +24,18 @@ const nameToHsl = (name: string) => {
 
 
 export function ExerciseImage({ asset: _asset, name, alt, className }: ExerciseImageProps) {
-  const [currentAsset] = useState<PlaceholderImage | null>(null);
   const [hasApiError, setHasApiError] = useState(false);
 
   // Fallback to initials if API fails
   const finalAsset = useMemo(() => {
-    if (currentAsset.type === 'api' && hasApiError) {
+    if (hasApiError) {
       return {
         type: 'initials',
         value: name.split(' ').map(word => word[0]).join('').toUpperCase() || 'EX',
       } as ExerciseAsset;
     }
-    return currentAsset;
-  }, [currentAsset, hasApiError, name]);
+    return _asset;
+  }, [_asset, hasApiError, name]);
 
   const handleError = () => {
     if (finalAsset.type === 'api') {

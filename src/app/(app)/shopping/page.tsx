@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingCart, PlusCircle, Trash2, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 

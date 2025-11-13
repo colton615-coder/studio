@@ -40,9 +40,14 @@ export function JournalVault() {
 
     return (
         <div className="flex flex-col gap-8">
-            <header>
-                <h1 className="text-4xl font-bold font-headline text-foreground">Secure Vault</h1>
-                <p className="text-muted-foreground mt-2">Browse your securely saved journal entries.</p>
+            <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="text-4xl font-bold font-headline text-foreground">Secure Vault</h1>
+                    <p className="text-muted-foreground mt-2">Browse your securely saved journal entries.</p>
+                </div>
+                <Button asChild variant="outline" className="shadow-neumorphic-outset active:shadow-neumorphic-inset mt-4 md:mt-0">
+                    <Link href="/vault/settings">Security Settings</Link>
+                </Button>
             </header>
 
             <Card className="shadow-neumorphic-outset">
