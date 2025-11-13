@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useTransition, FormEvent, useCallback, lazy, Suspense } from 'react';
+import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc, query, orderBy, limit } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -431,35 +432,37 @@ export default function FinancePage() {
                           exit={{ opacity: 0, x: -50 }}
                           transition={{ duration: 0.3 }}
                         >
-                        <Card className="shadow-neumorphic-outset">
-                            <CardHeader>
-                                <CardTitle className="flex justify-between items-start">
-                                    <span>{budget.name}</span>
-                                     <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
-                                                <MoreVertical size={16} />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleDeleteBudget(budget.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                <Trash2 className="mr-2" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </CardTitle>
-                                <CardDescription>
-                                    ${budget.amount.toLocaleString()} / {budget.period}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Progress value={budget.progress} indicatorClassName="bg-accent" />
-                                <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
-                                    <span>Spent: ${budget.spent.toLocaleString()}</span>
-                                    <span>Remaining: ${budget.remaining.toLocaleString()}</span>
-                                </div>
-                            </CardContent>
+                        <Card className="shadow-neumorphic-outset hover:shadow-glow-blue transition-shadow cursor-pointer">
+                            <Link href={`/finance/${budget.id}`}>
+                              <CardHeader>
+                                  <CardTitle className="flex justify-between items-start">
+                                      <span>{budget.name}</span>
+                                       <DropdownMenu>
+                                          <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                  <MoreVertical size={16} />
+                                              </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                              <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleDeleteBudget(budget.id); }} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                  <Trash2 className="mr-2" />
+                                                  Delete
+                                              </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                      </DropdownMenu>
+                                  </CardTitle>
+                                  <CardDescription>
+                                      ${budget.amount.toLocaleString()} / {budget.period}
+                                  </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                  <Progress value={budget.progress} indicatorClassName="bg-accent" />
+                                  <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                                      <span>Spent: ${budget.spent.toLocaleString()}</span>
+                                      <span>Remaining: ${budget.remaining.toLocaleString()}</span>
+                                  </div>
+                              </CardContent>
+                            </Link>
                         </Card>
                         </motion.div>
                     ))}
