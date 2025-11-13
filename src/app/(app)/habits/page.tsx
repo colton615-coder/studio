@@ -102,6 +102,7 @@ export default function HabitsPageNew() {
   const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [habitCreateSuccess, setHabitCreateSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
   const habitNameInputRef = useRef<HTMLInputElement>(null);
@@ -214,6 +215,8 @@ export default function HabitsPageNew() {
       });
 
       toast({ title: 'Habit Created!', description: `"${data.name}" has been added to your habits.` });
+      setHabitCreateSuccess(true);
+      setTimeout(() => setHabitCreateSuccess(false), 1200);
       setIsDialogOpen(false);
       reset();
       setInteractiveSuggestion(null);
@@ -380,8 +383,8 @@ export default function HabitsPageNew() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Build positive routines, one day at a time</p>
         </div>
-        <EmberPrismButton onClick={() => setIsDialogOpen(true)} className="hidden md:inline-flex" />
-        <EmberPrismButton onClick={() => setIsDialogOpen(true)} className="md:hidden w-auto px-4 py-2" icon="flame">New Habit</EmberPrismButton>
+        <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="hidden md:inline-flex" />
+        <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="md:hidden w-auto px-4 py-2">New Habit</EmberPrismButton>
       </header>
 
       {isLoading ? (
@@ -458,7 +461,7 @@ export default function HabitsPageNew() {
           title="Start Your First Habit"
           message="Create a habit to begin building your daily routine."
           ctaElement={
-            <EmberPrismButton onClick={() => setIsDialogOpen(true)} icon="flame">Create Habit</EmberPrismButton>
+            <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess}>Create Habit</EmberPrismButton>
           }
         />
       )}

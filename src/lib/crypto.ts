@@ -17,7 +17,7 @@ function generateSalt(): Uint8Array {
 /**
  * Convert Uint8Array to base64 string for storage
  */
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
+function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -69,7 +69,7 @@ export async function hashPin(
   const hashBuffer = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: usedSalt,
+      salt: usedSalt as any, // Cast to satisfy TS BufferSource expectations
       iterations: ITERATIONS,
       hash: 'SHA-256',
     },

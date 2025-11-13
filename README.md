@@ -34,3 +34,39 @@ const { toggleSidebar } = useSidebar()
 ```
 
 Deprecated: The old Zustand store `useSidebarStore` is no longer used and should not be imported.
+
+## Prism Button Component
+
+Interactive jewel-like action buttons are centralized in `src/components/ui/prism-button.tsx` with thin wrappers per domain (`EmeraldPrismButton`, `EmberPrismButton`, `PulsePrismButton`).
+
+Usage:
+
+```tsx
+import { PrismButton } from '@/components/ui/prism-button';
+
+<PrismButton
+	variant="emerald" // 'emerald' | 'ember' | 'pulse'
+	loading={isSaving}
+	success={didSucceed}
+	icon={<Plus className="w-5 h-5" />}
+	onClick={handleCreate}
+>
+	New Budget
+</PrismButton>
+```
+
+Props:
+- `variant`: color + glow theme.
+- `loading`: shows spinner, disables press/haptics, dims surface.
+- `success`: triggers particle micro‑animation (auto‑suppressed for reduced motion).
+- `icon`: optional leading icon node.
+- Standard button props (`disabled`, `onClick`, etc.) are forwarded.
+
+Accessibility & Motion:
+- ARIA label auto-derived from child text; override via `label` prop.
+- Particle + scale animations respect `prefers-reduced-motion`.
+
+Guidelines:
+- Fire `success` only after confirmed async completion.
+- Avoid nesting complex layouts inside; keep to short verb phrases.
+- Use wrapper components in feature folders when you need local default text.

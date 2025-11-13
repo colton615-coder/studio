@@ -81,6 +81,7 @@ export default function FinancePage() {
   // Dialog states
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
+  const [budgetCreateSuccess, setBudgetCreateSuccess] = useState(false);
   const handleRefresh = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }, []);
@@ -177,6 +178,8 @@ export default function FinancePage() {
         });
         
         toast({ title: "Budget Created!", description: `${newBudgetName} has been added.`});
+        setBudgetCreateSuccess(true);
+        setTimeout(() => setBudgetCreateSuccess(false), 1200);
         setNewBudgetName('');
         setNewBudgetAmount('');
         setNewBudgetCategory('');
@@ -290,7 +293,7 @@ export default function FinancePage() {
           <p className="text-muted-foreground mt-2">Your AI-powered financial dashboard.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-           <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} className="flex-1 md:flex-none" />
+           <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess} className="flex-1 md:flex-none" />
             <Button onClick={() => setIsExpenseDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset hover:shadow-glow-purple hover:scale-105 bg-accent/20 hover:bg-accent/30 text-accent-foreground transition-all duration-300" disabled={!budgets || budgets.length === 0}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Expense
@@ -337,7 +340,7 @@ export default function FinancePage() {
             title="Start Your Financial Journey"
             message="Create a budget to start tracking your spending and get insights from your AI coach."
             ctaElement={
-              <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)}>Create Your First Budget</EmeraldPrismButton>
+              <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess}>Create Your First Budget</EmeraldPrismButton>
             }
          />
       ) : (
