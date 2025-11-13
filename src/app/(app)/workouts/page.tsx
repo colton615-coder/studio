@@ -2,9 +2,10 @@
 import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PulsePrismButton } from './PulsePrismButton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Dumbbell, PlayCircle, Clock, Loader2, Wand2, ArrowLeft, BarChart3, Flame, Target, Wind } from 'lucide-react';
+import { Dumbbell, Clock, Loader2, Wand2, ArrowLeft, BarChart3, Flame, Target, Wind } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -245,13 +246,7 @@ export default function WorkoutsPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button 
-                onClick={() => setScreen('active')} 
-                className="w-full shadow-neumorphic-outset active:shadow-neumorphic-inset bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-lg h-14 transition-all hover:scale-105"
-              >
-                <PlayCircle className="mr-2 h-6 w-6" />
-                Start Workout
-              </Button>
+              <PulsePrismButton onClick={() => setScreen('active')} className="w-full" />
             </CardFooter>
           </Card>
         </motion.div>

@@ -24,6 +24,7 @@ import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { EmberPrismButton } from './EmberPrismButton';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,7 +36,7 @@ import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 import { celebrateHabitCompletion, celebrateStreak, celebrateAllHabitsComplete } from '@/lib/celebrations';
 
 
-const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles } = LucideIcons;
+const { Flame, Target, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles } = LucideIcons;
 const habitIcons = { BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, BrainCircuit };
 type IconName = keyof typeof habitIcons;
 
@@ -379,14 +380,8 @@ export default function HabitsPageNew() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
           <p className="text-muted-foreground mt-2">Build positive routines, one day at a time</p>
         </div>
-        <Button 
-          onClick={() => setIsDialogOpen(true)}
-          className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent hover:bg-accent/90 text-accent-foreground"
-          size="lg"
-        >
-          <PlusCircle className="mr-2 h-5 w-5" />
-          New Habit
-        </Button>
+        <EmberPrismButton onClick={() => setIsDialogOpen(true)} className="hidden md:inline-flex" />
+        <EmberPrismButton onClick={() => setIsDialogOpen(true)} className="md:hidden w-auto px-4 py-2" icon="flame">New Habit</EmberPrismButton>
       </header>
 
       {isLoading ? (
@@ -463,14 +458,7 @@ export default function HabitsPageNew() {
           title="Start Your First Habit"
           message="Create a habit to begin building your daily routine."
           ctaElement={
-            <Button 
-              onClick={() => setIsDialogOpen(true)}
-              className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-accent hover:bg-accent/90"
-              size="lg"
-            >
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Create Habit
-            </Button>
+            <EmberPrismButton onClick={() => setIsDialogOpen(true)} icon="flame">Create Habit</EmberPrismButton>
           }
         />
       )}
