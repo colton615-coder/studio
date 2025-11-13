@@ -104,7 +104,7 @@ export default function ShoppingListPage() {
   const toggleItem = (item: ShoppingListItem) => {
     if (!shoppingListCollection) return;
     const docRef = doc(shoppingListCollection, item.id);
-    updateDocumentNonBlocking(docRef, { purchased: !item.purchased });
+    updateDocumentNonBlocking(docRef, { purchased: !item.purchased, updatedAt: serverTimestamp() });
   };
   
   const deleteItem = (itemToDelete: ShoppingListItem) => {
@@ -212,6 +212,7 @@ export default function ShoppingListPage() {
                   onChange={(e) => setNewItemDescription(e.target.value)}
                   placeholder="e.g., Organic milk"
                   className="flex-grow"
+                  enterKeyHint="done"
                 />
                 <Button
                   type="submit"
@@ -253,6 +254,7 @@ export default function ShoppingListPage() {
                     onChange={(e) => setNewItemDescription(e.target.value)}
                     placeholder="e.g., Organic milk"
                     className="flex-grow"
+                    enterKeyHint="done"
                     />
                     <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
                         <PlusCircle className="mr-2 h-4 w-4" />
