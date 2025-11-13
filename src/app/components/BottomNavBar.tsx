@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, CheckCircle, ListTodo, Wallet, Bot } from "lucide-react";
+import { Home, CheckCircle, ListTodo, Wallet, Dumbbell, Calendar, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptics } from "@/lib/haptics";
 
@@ -46,11 +46,25 @@ const navItems: NavItem[] = [
     isActive: (pathname) => pathname.startsWith("/finance"),
   },
   {
-    href: "/ai-knox",
-    label: "AI Knox",
-    icon: Bot,
-    glowClass: "shadow-glow-purple",
-    isActive: (pathname) => pathname.startsWith("/ai-knox"),
+    href: "/workouts",
+    label: "Workouts",
+    icon: Dumbbell,
+    glowClass: "shadow-glow-orange",
+    isActive: (pathname) => pathname.startsWith("/workouts"),
+  },
+  {
+    href: "/calendar",
+    label: "Calendar",
+    icon: Calendar,
+    glowClass: "shadow-glow-green",
+    isActive: (pathname) => pathname.startsWith("/calendar"),
+  },
+  {
+    href: "/shopping",
+    label: "Shopping",
+    icon: ShoppingCart,
+    glowClass: "shadow-glow-blue",
+    isActive: (pathname) => pathname.startsWith("/shopping"),
   },
 ];
 
