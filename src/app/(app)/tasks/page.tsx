@@ -274,7 +274,7 @@ export default function TasksPage() {
       <NetworkStatusIndicator onRetry={handleRefresh} />
       <header>
         <h1 className="text-4xl font-bold font-headline text-foreground">Tasks</h1>
-        <p className="text-muted-foreground mt-2">Log daily objectives and set priorities.</p>
+        <p className="text-muted-foreground mt-2">Everything is a thing.</p>
       </header>
 
        {isLoading ? (
@@ -334,8 +334,8 @@ export default function TasksPage() {
        ) : (
             <EmptyStateCTA
                 icon={<ListTodo size={32} />}
-                title="Get Organized"
-                message="Your to-do list is empty. Add a task to get started."
+                title="Nothing To Do"
+                message="Enjoy the calm. It won't last long."
                 ctaElement={
                     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg mx-auto">
                         <Input

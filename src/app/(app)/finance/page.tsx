@@ -290,7 +290,7 @@ export default function FinancePage() {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-bold font-headline text-foreground">Finance</h1>
-          <p className="text-muted-foreground mt-2">Your AI-powered financial dashboard.</p>
+          <p className="text-muted-foreground mt-2">Money won't solve everything, but it's a decent start.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
            <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess} className="flex-1 md:flex-none" />
@@ -337,8 +337,8 @@ export default function FinancePage() {
       ) : !budgets || budgets.length === 0 ? (
          <EmptyStateCTA
             icon={<PiggyBank size={32}/>}
-            title="Start Your Financial Journey"
-            message="Create a budget to start tracking your spending and get insights from your AI coach."
+            title="No Budgets Set"
+            message="Tracking won't make you rich, but at least you'll know where it all went."
             ctaElement={
               <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess}>Create Your First Budget</EmeraldPrismButton>
             }

@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
 			<header className="space-y-2">
 				<h1 className="text-4xl font-bold font-headline text-foreground">Dashboard</h1>
-				<p className="text-muted-foreground">Monitor progress, track habits, and jump into quick tasks.</p>
+				<p className="text-muted-foreground">Your time on earth is limited. Let's at least do something with it.</p>
 			</header>
 
 			<ErrorBoundary>
