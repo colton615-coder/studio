@@ -293,13 +293,16 @@ export default function FinancePage() {
           <h1 className="text-4xl font-bold font-headline text-foreground">Finance</h1>
           <p className="text-muted-foreground mt-2">Money won't solve everything, but it's a decent start.</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-           <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess} className="flex-1 md:flex-none" />
-            <Button onClick={() => setIsExpenseDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset hover:shadow-glow-purple hover:scale-105 bg-accent/20 hover:bg-accent/30 text-accent-foreground transition-all duration-300" disabled={!budgets || budgets.length === 0}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Expense
-            </Button>
-        </div>
+        {/* Only show action buttons when budgets exist (populated state) */}
+        {!isLoadingBudgets && budgets && budgets.length > 0 && (
+          <div className="flex gap-2 w-full md:w-auto">
+             <EmeraldPrismButton onClick={() => setIsBudgetDialogOpen(true)} success={budgetCreateSuccess} className="flex-1 md:flex-none" />
+              <Button onClick={() => setIsExpenseDialogOpen(true)} className="flex-1 md:flex-none shadow-neumorphic-outset active:shadow-neumorphic-inset hover:shadow-glow-purple hover:scale-105 bg-accent/20 hover:bg-accent/30 text-accent-foreground transition-all duration-300">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Expense
+              </Button>
+          </div>
+        )}
       </header>
       
       {isLoadingBudgets ? (
@@ -500,6 +503,7 @@ export default function FinancePage() {
                   disabled={isSavingBudget}
                   required
                   enterKeyHint="next"
+                  autoComplete="off"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -515,6 +519,7 @@ export default function FinancePage() {
                   disabled={isSavingBudget}
                   required
                   enterKeyHint="next"
+                  autoComplete="off"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -609,6 +614,7 @@ export default function FinancePage() {
                   placeholder="e.g., Coffee shop" 
                   required
                   enterKeyHint="next"
+                  autoComplete="off"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -623,6 +629,7 @@ export default function FinancePage() {
                   placeholder="e.g., 5.50" 
                   required
                   enterKeyHint="done"
+                  autoComplete="off"
                 />
               </div>
             </div>

@@ -6,7 +6,6 @@ import { FirebaseClientProvider } from '@/firebase';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 import PushNotificationClient from '@/components/pwa/PushNotificationClient';
 import DeviceValidationBanner from '@/components/DeviceValidationBanner';
-import BottomNavBar from '@/app/components/BottomNavBar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -45,10 +44,9 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <div className="flex min-h-screen flex-col">
             <DeviceValidationBanner />
-            <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.75rem)]">
+            <main className="flex-1">
               {children}
             </main>
-            <BottomNavBar />
           </div>
         </FirebaseClientProvider>
         <Toaster />
