@@ -15,7 +15,11 @@ export default {
         code: ['monospace'],
       },
       colors: {
-        background: 'hsl(var(--background))',
+        background: {
+          DEFAULT: 'hsl(var(--background))',
+          primary: '#0D0D0F',
+          secondary: '#1A1A1C',
+        },
         foreground: 'hsl(var(--foreground))',
         card: {
           DEFAULT: 'hsl(var(--card))',
@@ -40,6 +44,9 @@ export default {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          data: '#F59E0B',
+          success: '#10B981',
+          info: '#3B82F6',
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
@@ -77,6 +84,14 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+      },
+      spacing: {
+        '1': '4px',
+        '2': '8px',
+        '3': '12px',
+        '4': '16px',
+        '5': '20px',
+        '6': '24px',
       },
       boxShadow: {
         'neumorphic-outset': '5px 5px 10px rgba(26, 20, 35, 0.8), -5px -5px 10px rgba(50, 40, 60, 0.4)',

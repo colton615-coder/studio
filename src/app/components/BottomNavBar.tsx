@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, CheckCircle, ListTodo, Wallet, Bot } from "lucide-react";
+import { Home, CheckCircle, ListTodo, Wallet, Dumbbell, Calendar, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptics } from "@/lib/haptics";
 
@@ -46,11 +46,25 @@ const navItems: NavItem[] = [
     isActive: (pathname) => pathname.startsWith("/finance"),
   },
   {
-    href: "/ai-knox",
-    label: "AI Knox",
-    icon: Bot,
-    glowClass: "shadow-glow-purple",
-    isActive: (pathname) => pathname.startsWith("/ai-knox"),
+    href: "/workouts",
+    label: "Workouts",
+    icon: Dumbbell,
+    glowClass: "shadow-glow-orange",
+    isActive: (pathname) => pathname.startsWith("/workouts"),
+  },
+  {
+    href: "/calendar",
+    label: "Calendar",
+    icon: Calendar,
+    glowClass: "shadow-glow-green",
+    isActive: (pathname) => pathname.startsWith("/calendar"),
+  },
+  {
+    href: "/shopping",
+    label: "Shopping",
+    icon: ShoppingCart,
+    glowClass: "shadow-glow-blue",
+    isActive: (pathname) => pathname.startsWith("/shopping"),
   },
 ];
 
@@ -93,43 +107,55 @@ export default function BottomNavBar() {
       className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-xl justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3"
     >
       <div className="flex w-full items-center justify-between gap-2 rounded-3xl border border-border/40 bg-background/95 px-3 py-2 shadow-neumorphic-outset backdrop-blur-md">
-        {resolvedNavItems.map(({ href, label, icon: Icon, glowClass, isActive }) => {
-          const active = isActive(pathname);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={handlePress}
-              aria-label={label}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex-1 select-none focus-visible:outline-none",
-                "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              )}
-            >
-              <motion.span
+        <div
+          className="flex flex-nowrap overflow-x-auto scrollbar-hide w-full gap-2 px-1 snap-x snap-mandatory"
+          tabIndex={0}
+          aria-label="Module navigation"
+          role="list"
+        >
+          {resolvedNavItems.map(({ href, label, icon: Icon, glowClass, isActive }) => {
+            const active = isActive(pathname);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={handlePress}
+                aria-label={label}
+                aria-current={active ? "page" : undefined}
+                role="listitem"
                 className={cn(
-                  "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium tracking-wide transition",
-                  active
-                    ? cn("text-accent", "shadow-neumorphic-inset", glowClass)
-                    : "text-muted-foreground shadow-neumorphic-outset",
-                  "bg-background/90"
+                  "group relative flex-none select-none focus-visible:outline-none snap-center",
+                  "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 )}
-                whileTap={prefersReducedMotion ? undefined : { scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 450, damping: 32 }}
               >
-                <Icon
-                  aria-hidden
+                <motion.span
                   className={cn(
-                    "h-6 w-6",
-                    active ? "text-accent" : "text-muted-foreground group-hover:text-foreground"
+                    "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium tracking-wide transition",
+                    active
+                      ? cn("text-accent", "shadow-neumorphic-inset", glowClass)
+                      : "text-muted-foreground shadow-neumorphic-outset",
+                    "bg-background/90"
                   )}
-                />
-                <span className="leading-none">{label}</span>
-              </motion.span>
-            </Link>
-          );
-        })}
+                  whileTap={prefersReducedMotion ? undefined : { scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                >
+                  <Icon
+                    aria-hidden
+                    className={cn(
+                      "h-6 w-6",
+                      active ? "text-accent" : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                  />
+                  <span className="leading-none">{label}</span>
+                </motion.span>
+              </Link>
+            );
+          })}
+        </div>
+        {/* Optional scroll indicator for mobile UX */}
+        <div className="absolute bottom-1 left-0 right-0 h-1 pointer-events-none">
+          <div className="w-full h-full bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        </div>
       </div>
     </nav>
   );

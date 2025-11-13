@@ -148,7 +148,7 @@ export default function TasksPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: 'Task Added', description: `"${description}" was added.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
@@ -183,7 +183,7 @@ export default function TasksPage() {
       // 2. Background Firestore delete
       const docRef = doc(tasksCollection, taskToDelete.id);
       deleteDocumentNonBlocking(docRef);
-      toast({ title: 'Task Removed', description: `"${taskToDelete.description}" was removed.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
@@ -250,13 +250,31 @@ export default function TasksPage() {
     </div>
   );
 
+  // Swipe navigation logic
+  const router = require('next/navigation').useRouter();
+  const MotionDiv = require('@/lib/motion').MotionDiv;
+  const moduleOrder = ['/dashboard', '/habits', '/tasks', '/finance', '/ai-knox'];
+  const currentIndex = moduleOrder.indexOf('/tasks');
+  const handleSwipe = (_event: MouseEvent, info: { offset: { x: number } }) => {
+    if (info.offset.x < -80 && currentIndex < moduleOrder.length - 1) {
+      router.push(moduleOrder[currentIndex + 1]);
+    } else if (info.offset.x > 80 && currentIndex > 0) {
+      router.push(moduleOrder[currentIndex - 1]);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <MotionDiv
+      className="flex flex-col gap-6"
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={handleSwipe}
+    >
       <PullToRefreshIndicator {...pullToRefresh} />
       <NetworkStatusIndicator onRetry={handleRefresh} />
       <header>
         <h1 className="text-4xl font-bold font-headline text-foreground">Tasks</h1>
-        <p className="text-muted-foreground mt-2">Log daily objectives and set priorities.</p>
+        <p className="text-muted-foreground mt-2">Everything is a thing.</p>
       </header>
 
        {isLoading ? (
@@ -271,7 +289,7 @@ export default function TasksPage() {
                 <CardTitle>Add New Task</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                     <Input
                     value={newTaskDescription}
                     onChange={(e) => setNewTaskDescription(e.target.value)}
@@ -316,8 +334,8 @@ export default function TasksPage() {
        ) : (
             <EmptyStateCTA
                 icon={<ListTodo size={32} />}
-                title="Get Organized"
-                message="Your to-do list is empty. Add a task to get started."
+                title="Nothing To Do"
+                message="Enjoy the calm. It won't last long."
                 ctaElement={
                     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg mx-auto">
                         <Input
@@ -345,6 +363,6 @@ export default function TasksPage() {
                 }
             />
        )}
-    </div>
+    </MotionDiv>
   );
 }

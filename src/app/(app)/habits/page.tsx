@@ -214,7 +214,7 @@ export default function HabitsPageNew() {
         createdAt: serverTimestamp(),
       });
 
-      toast({ title: 'Habit Created!', description: `"${data.name}" has been added to your habits.` });
+      // Visual feedback via button animation instead of toast
       setHabitCreateSuccess(true);
       setTimeout(() => setHabitCreateSuccess(false), 1200);
       setIsDialogOpen(false);
@@ -371,17 +371,35 @@ export default function HabitsPageNew() {
     }
   };
 
+  // Swipe navigation logic
+  const router = require('next/navigation').useRouter();
+  const MotionDiv = require('@/lib/motion').MotionDiv;
+  const moduleOrder = ['/dashboard', '/habits', '/tasks', '/finance', '/ai-knox'];
+  const currentIndex = moduleOrder.indexOf('/habits');
+  const handleSwipe = (_event: MouseEvent, info: { offset: { x: number } }) => {
+    if (info.offset.x < -80 && currentIndex < moduleOrder.length - 1) {
+      router.push(moduleOrder[currentIndex + 1]);
+    } else if (info.offset.x > 80 && currentIndex > 0) {
+      router.push(moduleOrder[currentIndex - 1]);
+    }
+  };
+
   const isLoading = isLoadingHabits || isLoadingHistory;
 
   return (
-    <div className="flex flex-col gap-6">
+    <MotionDiv
+      className="flex flex-col gap-6"
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={handleSwipe}
+    >
       <PullToRefreshIndicator {...pullToRefresh} />
       <NetworkStatusIndicator onRetry={handleRefresh} />
       
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold font-headline text-foreground">Habit Tracker</h1>
-          <p className="text-muted-foreground mt-2">Build positive routines, one day at a time</p>
+          <p className="text-muted-foreground mt-2">Repetition builds character. Or at least that's the theory.</p>
         </div>
         <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="hidden md:inline-flex" />
         <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess} className="md:hidden w-auto px-4 py-2">New Habit</EmberPrismButton>
@@ -402,7 +420,7 @@ export default function HabitsPageNew() {
             <CardDescription>Track your daily progress</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <AnimatePresence>
                 {combinedHabits.map((habit) => (
                   <motion.div
@@ -412,7 +430,7 @@ export default function HabitsPageNew() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -50 }}
                     className={cn(
-                      "flex items-center gap-4 p-4 rounded-lg transition-all",
+                      "group flex items-center gap-4 p-4 rounded-lg transition-all",
                       habit.done ? "bg-accent/10" : "bg-background shadow-neumorphic-inset"
                     )}
                   >
@@ -458,8 +476,8 @@ export default function HabitsPageNew() {
       ) : (
         <EmptyStateCTA
           icon={<Target size={32} />}
-          title="Start Your First Habit"
-          message="Create a habit to begin building your daily routine."
+          title="No Habits Yet"
+          message="Might as well start somewhere. Today's as good as any."
           ctaElement={
             <EmberPrismButton onClick={() => setIsDialogOpen(true)} success={habitCreateSuccess}>Create Habit</EmberPrismButton>
           }
@@ -701,6 +719,6 @@ export default function HabitsPageNew() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </MotionDiv>
   );
 }

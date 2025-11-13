@@ -1,10 +1,11 @@
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
+import PushNotificationClient from '@/components/pwa/PushNotificationClient';
+import DeviceValidationBanner from '@/components/DeviceValidationBanner';
 import BottomNavBar from '@/app/components/BottomNavBar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -43,6 +44,7 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
           <div className="flex min-h-screen flex-col">
+            <DeviceValidationBanner />
             <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.75rem)]">
               {children}
             </main>
@@ -51,6 +53,7 @@ export default function RootLayout({
         </FirebaseClientProvider>
         <Toaster />
         <ServiceWorkerRegistration />
+        <PushNotificationClient />
       </body>
     </html>
   );
