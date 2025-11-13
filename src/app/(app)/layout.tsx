@@ -120,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     isActive={pathname === link.href}
                     className={
                       pathname === link.href
-                        ? "bg-accent/10 text-accent shadow-neumorphic-inset"
+                        ? "bg-accent/10 text-accent shadow-neumorphic-inset shadow-glow-green"
                         : "shadow-neumorphic-outset"
                     }
                     tooltip={{

@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
 	return (
 		<MotionDiv
-			className="flex flex-col gap-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]"
+			className="flex flex-col gap-6"
 			drag="x"
 			dragConstraints={{ left: 0, right: 0 }}
 			onDragEnd={handleSwipe}
