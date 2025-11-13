@@ -289,7 +289,7 @@ export default function TasksPage() {
                 <CardTitle>Add New Task</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                     <Input
                     value={newTaskDescription}
                     onChange={(e) => setNewTaskDescription(e.target.value)}

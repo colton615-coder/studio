@@ -420,7 +420,7 @@ export default function HabitsPageNew() {
             <CardDescription>Track your daily progress</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <AnimatePresence>
                 {combinedHabits.map((habit) => (
                   <motion.div
@@ -430,7 +430,7 @@ export default function HabitsPageNew() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -50 }}
                     className={cn(
-                      "flex items-center gap-4 p-4 rounded-lg transition-all",
+                      "group flex items-center gap-4 p-4 rounded-lg transition-all",
                       habit.done ? "bg-accent/10" : "bg-background shadow-neumorphic-inset"
                     )}
                   >
