@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useTransition, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   useUser,
   useFirestore,
@@ -7,11 +7,10 @@ import {
   useMemoFirebase,
   setDocumentNonBlocking,
   deleteDocumentNonBlocking,
-  addDocumentNonBlocking,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, limit, orderBy } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { format, isToday } from 'date-fns';
-import { getHabitFeedback, fetchProactiveSuggestions, fetchInteractiveSuggestion } from './actions';
+import { fetchInteractiveSuggestion } from './actions';
 import * as LucideIcons from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useDebouncedCallback } from 'use-debounce';
@@ -25,14 +24,7 @@ import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -41,9 +33,10 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 import { celebrateHabitCompletion, celebrateStreak, celebrateAllHabitsComplete } from '@/lib/celebrations';
+import { logError, logWarn } from '@/lib/logger';
 
 
-const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles, Wand2 } = LucideIcons;
+const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles } = LucideIcons;
 const habitIcons = { BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, BrainCircuit };
 type IconName = keyof typeof habitIcons;
 
@@ -110,12 +103,10 @@ export default function HabitsPageNew() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
   const habitNameInputRef = useRef<HTMLInputElement>(null);
 
   const handleRefresh = useCallback(async () => {
-    setRefreshKey(prev => prev + 1);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }, []);
 

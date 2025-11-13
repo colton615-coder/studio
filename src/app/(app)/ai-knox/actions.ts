@@ -1,20 +1,18 @@
 'use server';
 
-import {
-  aiKnoxTherapy,
-  AiKnoxTherapyOutput,
-} from '@/ai/flows/ai-knox-therapy';
+import { aiKnoxTherapy, AiKnoxTherapyOutput } from '@/ai/flows/ai-knox-therapy';
 import {
   generateJournalPrompt,
   JournalPromptOutput,
 } from '@/ai/flows/journal-insight-prompt';
+import { logError } from '@/lib/logger';
 
 
 export async function getDailyPrompt(): Promise<JournalPromptOutput> {
   try {
     const result = await generateJournalPrompt({});
     return result;
-  } catch (_error) {
+  } catch {
     return { prompt: 'What are you grateful for today?' };
   }
 }
@@ -35,10 +33,7 @@ export async function getAiKnoxResponse(
     const result = await aiKnoxTherapy({ userInput });
     return result;
   } catch (error) {
-    // Log error details in development
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('AI Knox error:', error);
-    }
+    logError('AI Knox error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return { error: `AI Knox error: ${errorMessage}` };
   }

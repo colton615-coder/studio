@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,8 +43,9 @@ export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
       const userRef = doc(firestore, 'users', user.uid);
       await updateDoc(userRef, {
         onboardingCompleted: true,
-        preferredModules: selectedModules,
-        onboardingCompletedAt: new Date(),
+        preferredModules: selectedModules.length ? selectedModules : [],
+        onboardingCompletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       onComplete();
     } catch (error) {

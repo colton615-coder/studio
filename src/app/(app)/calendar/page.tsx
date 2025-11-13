@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
+import { logError } from '@/lib/logger';
 
 type CalendarEvent = {
   id: string;
@@ -77,7 +78,7 @@ export default function CalendarPage() {
       setNewEventTitle('');
       setNewEventDescription('');
       setIsAddDialogOpen(false);
-    } catch (_error) {
+    } catch {
       toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your event. Please try again.' });
     } finally {
       setIsSaving(false);
@@ -94,7 +95,7 @@ export default function CalendarPage() {
       setIsDetailDialogOpen(false);
       setSelectedEvent(null);
     } catch (error) {
-      console.error("Failed to delete event:", error);
+      logError('Failed to delete event:', error);
       toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete the event.' });
     }
   };
@@ -129,7 +130,7 @@ export default function CalendarPage() {
                 day_today: "bg-primary/50 text-primary-foreground",
               }}
               components={{
-                DayContent: ({ date, ...props }) => {
+                 DayContent: ({ date }) => {
                    const isEventDay = events?.some(event => format(event.startDate.toDate(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
                    return (
                       <div className="relative">

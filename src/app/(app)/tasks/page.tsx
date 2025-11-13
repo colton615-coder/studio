@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, FormEvent, useCallback } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, orderBy, limit } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp, query, where, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { haptics } from '@/lib/haptics';
@@ -46,7 +46,6 @@ export default function TasksPage() {
   const { toast } = useToast();
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newPriority, setNewPriority] = useState<Priority>('Medium');
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const tasksCollection = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -54,7 +53,6 @@ export default function TasksPage() {
   }, [user, firestore]);
 
   const handleRefresh = useCallback(async () => {
-    setRefreshKey(prev => prev + 1);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }, []);
 
@@ -151,7 +149,7 @@ export default function TasksPage() {
         updatedAt: serverTimestamp(),
       });
       toast({ title: 'Task Added', description: `"${description}" was added.` });
-    } catch (error) {
+    } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
       setTasks(tasks.filter(t => t.id !== optimisticId));
@@ -186,25 +184,12 @@ export default function TasksPage() {
       const docRef = doc(tasksCollection, taskToDelete.id);
       deleteDocumentNonBlocking(docRef);
       toast({ title: 'Task Removed', description: `"${taskToDelete.description}" was removed.` });
-    } catch (error) {
+    } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
       setTasks(originalTasks);
     }
   };
-  
-  const TaskItemSkeleton = () => (
-    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-5 w-5 rounded-sm" />
-        <Skeleton className="h-5 w-48" />
-      </div>
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-6 w-16 rounded-full" />
-        <Skeleton className="h-8 w-8" />
-      </div>
-    </div>
-  );
   
   const renderTaskList = (title: string, list: Task[], icon: React.ReactNode) => (
     <div>

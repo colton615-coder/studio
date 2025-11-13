@@ -112,7 +112,7 @@ export function AiKnoxClient() {
         title: 'Entry Saved',
         description: 'Your journal entry has been secured in your vault.',
       });
-    } catch (_e: any) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',

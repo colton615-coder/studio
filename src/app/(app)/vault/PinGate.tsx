@@ -1,13 +1,14 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { KeyRound, ShieldAlert } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { logError } from '@/lib/logger';
 
 interface PinGateProps {
   children: React.ReactNode;
@@ -25,12 +26,18 @@ export function PinGate({ children }: PinGateProps) {
   const [confirmPin, setConfirmPin] = useState<string[]>(['', '', '', '']);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pinStorageKey = useMemo(() => (user?.uid ? `user_pin_${user.uid}` : 'user_pin'), [user?.uid]);
 
   useEffect(() => {
-    const userPin = localStorage.getItem('user_pin');
+    const userPin = localStorage.getItem(pinStorageKey);
     setStoredPin(userPin);
     setIsPinSet(!!userPin);
-  }, []);
+    setPin(['', '', '', '']);
+    setConfirmPin(['', '', '', '']);
+    setIsConfirming(false);
+    setIsAuthenticated(false);
+    setError(null);
+  }, [pinStorageKey]);
 
   const handlePinChange = (index: number, value: string) => {
     if (!/^[0-9]$/.test(value) && value !== '') return;
@@ -50,7 +57,8 @@ export function PinGate({ children }: PinGateProps) {
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !pin[index] && index > 0) {
+    const activePin = isConfirming ? confirmPin : pin;
+    if (e.key === 'Backspace' && !activePin[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -74,7 +82,7 @@ export function PinGate({ children }: PinGateProps) {
       return;
     }
     const newPin = pin.join('');
-    localStorage.setItem('user_pin', newPin);
+    localStorage.setItem(pinStorageKey, newPin);
     setStoredPin(newPin);
     setIsPinSet(true);
     setIsAuthenticated(true);
@@ -99,14 +107,14 @@ export function PinGate({ children }: PinGateProps) {
   
   const handleForgotPin = async () => {
     try {
-      localStorage.clear(); // Clear all localStorage data
+      localStorage.removeItem(pinStorageKey);
       const authModule = await import('firebase/auth');
-      // Use getAuth and signOut from firebase/auth
-      const { getAuth, signOut } = authModule as any;
+      const { getAuth, signOut } = authModule;
       const auth = getAuth();
       await signOut(auth);
       router.push('/login');
     } catch (error) {
+      logError('Failed to reset PIN', error);
       setError('Failed to reset PIN. Please try again.');
     }
   };

@@ -8,6 +8,7 @@ import { Target, CheckCircle2, Circle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import Link from 'next/link';
+import { logError } from '@/lib/logger';
 
 type Habit = {
   id: string;
@@ -58,7 +59,7 @@ export function TodayOverview() {
     try {
       return habitHistory?.find(log => log.id === todayStr) ?? null;
     } catch (error) {
-      console.error('Error finding today log:', error);
+      logError('Error finding today log:', error);
       return null;
     }
   }, [habitHistory, todayStr]);
@@ -69,7 +70,7 @@ export function TodayOverview() {
       const completed = habits.filter(h => todayLog.log?.[h.id] === true).length;
       return { completed, total: habits.length };
     } catch (error) {
-      console.error('Error calculating habit stats:', error);
+      logError('Error calculating habit stats:', error);
       return { completed: 0, total: 0 };
     }
   }, [habits, todayLog]);
@@ -81,7 +82,7 @@ export function TodayOverview() {
       const pending = tasks.filter(t => !t.completed).length;
       return { completed, pending };
     } catch (error) {
-      console.error('Error calculating task stats:', error);
+      logError('Error calculating task stats:', error);
       return { completed: 0, pending: 0 };
     }
   }, [tasks]);

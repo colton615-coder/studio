@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
+import BottomNavBar from '@/app/components/BottomNavBar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -39,9 +40,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} dark`}>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.75rem)]">
+              {children}
+            </main>
+            <BottomNavBar />
+          </div>
         </FirebaseClientProvider>
         <Toaster />
         <ServiceWorkerRegistration />

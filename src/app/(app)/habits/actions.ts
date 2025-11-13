@@ -26,7 +26,7 @@ export async function getHabitFeedback(
   try {
     const result = await getHabitCoaching(input);
     return result;
-  } catch (_error) {
+  } catch {
     return { error: 'AI coach is unavailable. Focus on your habits for now.' };
   }
 }
@@ -45,7 +45,7 @@ export async function fetchProactiveSuggestions(
   try {
     const result = await getProactiveSuggestions(input);
     return result;
-  } catch (_error) {
+  } catch {
     return { suggestions: [] };
   }
 }
@@ -60,7 +60,7 @@ export async function fetchInteractiveSuggestion(
   try {
     const result = await getInteractiveSuggestion(input);
     return result;
-  } catch (_error) {
+  } catch {
     return { suggestion: undefined };
   }
 }

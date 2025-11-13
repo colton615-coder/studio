@@ -15,7 +15,7 @@ import {
 import { navLinks } from "@/lib/nav-links";
 import { Bot, Loader2 } from "lucide-react";
 import { useUser, useFirestore } from "@/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { Header } from "@/components/Header";
 
@@ -46,13 +46,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         if (!userDoc.exists()) {
           await setDoc(userRef, {
-            email: user.email,
-            createdAt: new Date(),
+            id: user.uid,
+            email: user.email ?? "",
+            username: user.displayName ?? user.uid,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
             onboardingCompleted: false,
           });
           setShowOnboarding(true);
         } else {
           const data = userDoc.data();
+          if (!data?.updatedAt) {
+            await setDoc(
+              userRef,
+              {
+                updatedAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
           if (!data?.onboardingCompleted) {
             setShowOnboarding(true);
           }

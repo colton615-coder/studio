@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, FormEvent } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingCart, PlusCircle, Trash2, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 
@@ -94,7 +93,7 @@ export default function ShoppingListPage() {
         updatedAt: serverTimestamp(),
       });
       toast({ title: 'Item Added', description: `"${description}" was added to your list.` });
-    } catch (error) {
+    } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add item to your list.' });
       setItems(items.filter(item => item.id !== optimisticId));
@@ -119,22 +118,12 @@ export default function ShoppingListPage() {
       const docRef = doc(shoppingListCollection, itemToDelete.id);
       deleteDocumentNonBlocking(docRef);
       toast({ title: 'Item Removed', description: `"${itemToDelete.description}" was removed from your list.` });
-    } catch (error) {
+    } catch {
        // 3. Rollback on failure
        toast({ variant: 'destructive', title: 'Error', description: 'Could not remove item from your list.' });
        setItems(originalItems);
     }
   };
-
-  const ListItemSkeleton = () => (
-    <div className="flex items-center justify-between p-4 rounded-lg bg-background shadow-neumorphic-inset">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-5 w-5 rounded-sm" />
-        <Skeleton className="h-5 w-40" />
-      </div>
-      <Skeleton className="h-8 w-8" />
-    </div>
-  );
 
   const renderShoppingList = (title: string, list: ShoppingListItem[], icon: React.ReactNode, type: 'needed' | 'purchased') => (
      <div>

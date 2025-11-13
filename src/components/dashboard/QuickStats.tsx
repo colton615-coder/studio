@@ -17,7 +17,7 @@ type Expense = {
 type Budget = {
   id: string;
   category: string;
-  limit: number;
+  amount: number;
 };
 
 type Habit = {
@@ -75,7 +75,7 @@ export function QuickStats() {
   const totalBudget = useMemo(() => {
     try {
       if (!budgets || !Array.isArray(budgets)) return 0;
-      return budgets.reduce((sum, b) => sum + (b.limit || 0), 0);
+      return budgets.reduce((sum, b) => sum + (b.amount || 0), 0);
     } catch (error) {
       console.error('Error calculating total budget:', error);
       return 0;
