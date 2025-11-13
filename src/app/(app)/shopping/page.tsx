@@ -63,7 +63,7 @@ export default function ShoppingListPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newItemDescription.trim() || !user || !shoppingListCollection || !items || !setItems) return;
+    if (!newItemDescription.trim() || !user || !shoppingListCollection || !setItems) return;
     
     const description = newItemDescription;
     setNewItemDescription('');
@@ -78,8 +78,8 @@ export default function ShoppingListPage() {
       isOptimistic: true,
     };
 
-    // 1. Optimistic UI update
-    setItems([...items, optimisticItem]);
+    // 1. Optimistic UI update (handles null state safely)
+    setItems(prev => ([...(prev ?? []), optimisticItem]));
 
     try {
       // 2. Background Firestore write
@@ -97,7 +97,7 @@ export default function ShoppingListPage() {
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add item to your list.' });
-      setItems(items.filter(item => item.id !== optimisticId));
+      setItems(prev => prev ? prev.filter(item => item.id !== optimisticId) : prev);
     }
   };
 
@@ -162,20 +162,17 @@ export default function ShoppingListPage() {
                       {item.description}
                   </label>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem(item)}>
-                  <Trash2 size={16} />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Delete ${item.description}`}
+                    tabIndex={0}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus:outline focus:outline-2 focus:outline-destructive"
+                    onClick={() => deleteItem(item)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') deleteItem(item); }}
+                  >
+                    <Trash2 size={16} />
                   </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`Delete ${item.description}`}
-                                  tabIndex={0}
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus:outline focus:outline-2 focus:outline-destructive"
-                                  onClick={() => deleteItem(item)}
-                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') deleteItem(item); }}
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
               </div>
             </motion.div>
             ))}
@@ -216,20 +213,15 @@ export default function ShoppingListPage() {
                   placeholder="e.g., Organic milk"
                   className="flex-grow"
                 />
-                <Button type="submit" className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground">
+                <Button
+                  type="submit"
+                  aria-label="Add item to shopping list"
+                  tabIndex={0}
+                  className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground focus:outline focus:outline-2 focus:outline-accent"
+                >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Item
                 </Button>
-                              <Button
-                                type="submit"
-                                aria-label="Add item to shopping list"
-                                tabIndex={0}
-                                className="shadow-neumorphic-outset active:shadow-neumorphic-inset bg-primary/80 hover:bg-primary text-primary-foreground focus:outline focus:outline-2 focus:outline-accent"
-                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleSubmit(e); }}
-                              >
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Item
-                              </Button>
               </form>
             </CardContent>
           </Card>
