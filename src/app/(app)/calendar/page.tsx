@@ -61,7 +61,14 @@ export default function CalendarPage() {
   }, [date, events]);
 
   const handleAddEvent = async () => {
-    if (!newEventTitle || !date || !user || !eventsCollection) return;
+    if (!newEventTitle || !date || !user || !eventsCollection) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Add Event',
+        description: 'Please fill in all required fields.',
+      });
+      return;
+    }
     
     setIsSaving(true);
     try {
@@ -86,7 +93,14 @@ export default function CalendarPage() {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!eventsCollection || !eventId) return;
+    if (!eventsCollection || !eventId) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Delete Event',
+        description: 'Unable to delete event. Please try again.',
+      });
+      return;
+    }
     
     try {
       const docRef = doc(eventsCollection, eventId);

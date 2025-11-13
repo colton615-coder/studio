@@ -145,7 +145,14 @@ export default function FinancePage() {
   
 
   const handleAddBudget = async (budgetData: { name: string; amount: number; category: string; period: 'monthly' | 'weekly' | 'yearly' }) => {
-    if (!user || !budgetsCollection) return;
+    if (!user || !budgetsCollection) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Add Budget',
+        description: 'Please ensure you are logged in and try again.',
+      });
+      return;
+    }
      try {
       await addDocumentNonBlocking(budgetsCollection, {
         userProfileId: user.uid, 
@@ -194,10 +201,24 @@ export default function FinancePage() {
   
   const handleAddExpense = async (e?: FormEvent) => {
     e?.preventDefault();
-    if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) return;
+    if (!newExpenseDescription.trim() || !newExpenseAmount || !targetBudgetId || !user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Add Expense',
+        description: 'Please fill in all required fields.',
+      });
+      return;
+    }
     
     const targetBudget = budgets?.find(b => b.id === targetBudgetId);
-    if (!targetBudget) return;
+    if (!targetBudget) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Budget',
+        description: 'The selected budget could not be found. Please try again.',
+      });
+      return;
+    }
 
     setIsSavingExpense(true);
     try {
