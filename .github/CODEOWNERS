@@ -1,0 +1,33 @@
+# CODEOWNERS file for repository
+# These owners will be requested for review when someone opens a pull request
+# that modifies files in the specified paths.
+
+# Default owner for everything in the repo
+* @colton615-coder
+
+# Critical paths requiring review
+
+# Firebase configuration and security rules
+/firestore.rules @colton615-coder
+/firebase.json @colton615-coder
+/.firebaserc @colton615-coder
+
+# Core application layout and routing
+/src/app/layout.tsx @colton615-coder
+/src/app/(app)/layout.tsx @colton615-coder
+
+# Firebase client and authentication
+/src/firebase/ @colton615-coder
+
+# CI/CD and workflows
+/.github/workflows/ @colton615-coder
+
+# Build and configuration files
+/package.json @colton615-coder
+/package-lock.json @colton615-coder
+/next.config.ts @colton615-coder
+/tsconfig.json @colton615-coder
+
+# Documentation
+/README.md @colton615-coder
+/docs/ @colton615-coder
