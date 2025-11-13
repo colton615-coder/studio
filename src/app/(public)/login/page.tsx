@@ -2,26 +2,23 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot } from 'lucide-react';
+import { Bot, Lock } from 'lucide-react';
 import { MotionDiv } from '@/lib/motion';
+import { Button } from '@/components/ui/button';
 
+/**
+ * Login page - NO AUTHENTICATION REQUIRED
+ * The app is open to all users without login
+ * Only "The Vault" requires a 4-digit PIN
+ */
 export default function LoginPage() {
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, isUserLoading, router]);
-
-  // Don't render anything while checking auth - the AuthGate in FirebaseClientProvider
-  // will show the splash screen
-  if (isUserLoading) {
-    return null;
-  }
+    // Redirect immediately to dashboard since no auth is needed
+    router.push('/dashboard');
+  }, [router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -44,14 +41,23 @@ export default function LoginPage() {
       >
         <Card className="w-full max-w-sm shadow-neumorphic-outset">
           <CardHeader className="text-center">
-            <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Sign in to access your personalized dashboard</CardDescription>
+            <CardTitle>Welcome to LiFE-iN-SYNC</CardTitle>
+            <CardDescription>Your all-in-one life management dashboard</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground">
-              <p className="mb-2">Authentication is currently being configured.</p>
-              <p>Please check back soon or contact your administrator for access.</p>
+            <div className="text-center text-sm text-muted-foreground space-y-3">
+              <p>No login required! Access your dashboard freely.</p>
+              <div className="flex items-center justify-center gap-2 text-accent">
+                <Lock className="h-4 w-4" />
+                <p className="font-medium">Only "The Vault" requires a 4-digit PIN</p>
+              </div>
             </div>
+            <Button 
+              onClick={() => router.push('/dashboard')} 
+              className="w-full shadow-neumorphic-outset"
+            >
+              Go to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </MotionDiv>

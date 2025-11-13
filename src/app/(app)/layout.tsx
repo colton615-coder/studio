@@ -26,11 +26,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  // Auth redirection is now handled globally by FirebaseClientProvider's AuthGate
-  // This layout only runs after authentication is confirmed
+  // NO AUTHENTICATION REQUIRED - user can access app without login
+  // Authentication only required for "The Vault" (4-digit PIN)
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
+      // Skip onboarding if no user (authentication not required)
       if (!user || !firestore) {
         setCheckingOnboarding(false);
         return;
@@ -74,12 +75,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     if (user && firestore) {
       checkOnboardingStatus();
+    } else {
+      // No user - skip onboarding check
+      setCheckingOnboarding(false);
     }
   }, [user, firestore]);
 
-  // Show minimal loading state only for onboarding check
-  // Auth loading is handled by FirebaseClientProvider
-  if (checkingOnboarding || !user) {
+  // Show minimal loading state only for onboarding check (when user exists)
+  if (checkingOnboarding) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-accent" />

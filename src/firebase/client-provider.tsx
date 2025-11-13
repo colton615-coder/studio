@@ -1,41 +1,50 @@
 'use client';
 
-import React, { useMemo, type ReactNode } from 'react';
+import React, { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider, useUser } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
 import Splashscreen from '@/components/Splashscreen';
-import { usePathname, useRouter } from 'next/navigation';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
 }
 
 /**
- * AuthGate component handles the authentication flow:
- * - Shows animated splash screen while loading
- * - Redirects to /login if unauthenticated (except for public routes)
- * - Renders children if authenticated
+ * AuthGate component - NO AUTHENTICATION REQUIRED
+ * Authentication is only needed for "The Vault" (4-digit PIN)
+ * Shows splash screen with daily affirmation during initial load
  */
 function AuthGate({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useUser();
-  const pathname = usePathname();
-  const router = useRouter();
+  const { isUserLoading } = useUser();
+  const [showSplash, setShowSplash] = useState(true);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
-  // Show splash screen during initial auth check
-  if (isUserLoading) {
+  // Ensure splash screen shows for minimum 2.5 seconds to allow animation to complete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 2500); // 2.5 seconds minimum display time
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Hide splash only when both Firebase is ready AND minimum time has elapsed
+  useEffect(() => {
+    if (!isUserLoading && minTimeElapsed) {
+      // Add small delay for fade out animation
+      const fadeTimer = setTimeout(() => {
+        setShowSplash(false);
+      }, 300);
+      return () => clearTimeout(fadeTimer);
+    }
+  }, [isUserLoading, minTimeElapsed]);
+
+  // Show splash screen with daily affirmation during initial load
+  if (showSplash) {
     return <Splashscreen />;
   }
 
-  // Allow access to public routes without authentication
-  const publicRoutes = ['/login', '/signup'];
-  const isPublicRoute = publicRoutes.some(route => pathname?.startsWith(route));
-
-  // Redirect to login if not authenticated and not on a public route
-  if (!user && !isPublicRoute && pathname !== '/') {
-    router.push('/login');
-    return <Splashscreen />;
-  }
-
+  // No authentication checks - allow access to all routes
   return <>{children}</>;
 }
 
