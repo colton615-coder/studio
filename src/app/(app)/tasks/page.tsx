@@ -250,8 +250,26 @@ export default function TasksPage() {
     </div>
   );
 
+  // Swipe navigation logic
+  const router = require('next/navigation').useRouter();
+  const MotionDiv = require('@/lib/motion').MotionDiv;
+  const moduleOrder = ['/dashboard', '/habits', '/tasks', '/finance', '/ai-knox'];
+  const currentIndex = moduleOrder.indexOf('/tasks');
+  const handleSwipe = (_event: MouseEvent, info: { offset: { x: number } }) => {
+    if (info.offset.x < -80 && currentIndex < moduleOrder.length - 1) {
+      router.push(moduleOrder[currentIndex + 1]);
+    } else if (info.offset.x > 80 && currentIndex > 0) {
+      router.push(moduleOrder[currentIndex - 1]);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <MotionDiv
+      className="flex flex-col gap-6"
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={handleSwipe}
+    >
       <PullToRefreshIndicator {...pullToRefresh} />
       <NetworkStatusIndicator onRetry={handleRefresh} />
       <header>
@@ -345,6 +363,6 @@ export default function TasksPage() {
                 }
             />
        )}
-    </div>
+    </MotionDiv>
   );
 }

@@ -9,6 +9,8 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { NetworkStatusIndicator } from "@/components/ui/network-status-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { MotionDiv } from "@/lib/motion";
 
 function QuickStatsFallback() {
 	return (
@@ -34,6 +36,7 @@ function TodayOverviewFallback() {
 
 export default function DashboardPage() {
 	const [refreshKey, setRefreshKey] = useState(0);
+	const moduleOrder = ['/dashboard', '/habits', '/tasks', '/finance', '/ai-knox'];
 
 	const handleRefresh = useCallback(async () => {
 		setRefreshKey((prev) => prev + 1);
@@ -46,8 +49,24 @@ export default function DashboardPage() {
 		enabled: true,
 	});
 
+	// Swipe navigation logic
+	const router = useRouter();
+	const currentIndex = moduleOrder.indexOf('/dashboard');
+	const handleSwipe = (_event: MouseEvent, info: { offset: { x: number } }) => {
+		if (info.offset.x < -80 && currentIndex < moduleOrder.length - 1) {
+			router.push(moduleOrder[currentIndex + 1]);
+		} else if (info.offset.x > 80 && currentIndex > 0) {
+			router.push(moduleOrder[currentIndex - 1]);
+		}
+	};
+
 	return (
-		<div className="flex flex-col gap-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+		<MotionDiv
+			className="flex flex-col gap-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]"
+			drag="x"
+			dragConstraints={{ left: 0, right: 0 }}
+			onDragEnd={handleSwipe}
+		>
 			<PullToRefreshIndicator {...pullToRefresh} />
 			<NetworkStatusIndicator onRetry={handleRefresh} />
 
@@ -72,6 +91,6 @@ export default function DashboardPage() {
 					<QuickActions />
 				</ErrorBoundary>
 			</div>
-		</div>
+		</MotionDiv>
 	);
 }
