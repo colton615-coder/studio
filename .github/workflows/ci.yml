@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+# Explicitly limit GITHUB_TOKEN permissions for security
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
