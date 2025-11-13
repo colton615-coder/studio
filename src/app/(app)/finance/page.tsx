@@ -155,7 +155,7 @@ export default function FinancePage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: "AI Budget Created!", description: `${budgetData.name} has been added.`});
+      // Removing suggestion from list provides sufficient feedback
       setAiSuggestions(s => s.filter(s => s.category !== budgetData.category));
      } catch {
        toast({ variant: 'destructive', title: "Creation Failed", description: "Could not save the AI suggested budget." });
@@ -177,7 +177,7 @@ export default function FinancePage() {
             updatedAt: serverTimestamp(),
         });
         
-        toast({ title: "Budget Created!", description: `${newBudgetName} has been added.`});
+        // Visual feedback via button animation instead of toast
         setBudgetCreateSuccess(true);
         setTimeout(() => setBudgetCreateSuccess(false), 1200);
         setNewBudgetName('');
@@ -216,7 +216,7 @@ export default function FinancePage() {
       setNewExpenseAmount('');
       setTargetBudgetId('');
       setIsExpenseDialogOpen(false);
-      toast({ title: "Expense Logged!", description: `${newExpenseDescription} has been added.`});
+      // Dialog closing provides sufficient feedback
     } catch {
       toast({ variant: 'destructive', title: "Save Failed", description: "Could not log your expense. Please try again." });
     } finally {

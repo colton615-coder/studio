@@ -214,7 +214,7 @@ export default function HabitsPageNew() {
         createdAt: serverTimestamp(),
       });
 
-      toast({ title: 'Habit Created!', description: `"${data.name}" has been added to your habits.` });
+      // Visual feedback via button animation instead of toast
       setHabitCreateSuccess(true);
       setTimeout(() => setHabitCreateSuccess(false), 1200);
       setIsDialogOpen(false);

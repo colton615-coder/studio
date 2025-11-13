@@ -148,7 +148,7 @@ export default function TasksPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toast({ title: 'Task Added', description: `"${description}" was added.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
@@ -183,7 +183,7 @@ export default function TasksPage() {
       // 2. Background Firestore delete
       const docRef = doc(tasksCollection, taskToDelete.id);
       deleteDocumentNonBlocking(docRef);
-      toast({ title: 'Task Removed', description: `"${taskToDelete.description}" was removed.` });
+      // Optimistic UI update provides sufficient feedback
     } catch {
       // 3. Rollback on failure
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove task.' });
