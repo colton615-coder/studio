@@ -27,11 +27,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
+  // Auth redirection is now handled globally by FirebaseClientProvider's AuthGate
+  // This layout only runs after authentication is confirmed
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -81,7 +78,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, firestore]);
 
-  if (isUserLoading || !user || checkingOnboarding) {
+  // Show minimal loading state only for onboarding check
+  // Auth loading is handled by FirebaseClientProvider
+  if (checkingOnboarding || !user) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-accent" />
