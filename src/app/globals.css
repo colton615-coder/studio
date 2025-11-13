@@ -107,4 +107,51 @@
   .text-shadow-lg {
     text-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6);
   }
+
+  /* High-Fidelity Neumorphism (Chromatic Purple Theme) */
+  /* Base tinted surface */
+  .bg-neu-base { background-color: #1A1B23; }
+
+  /* Floating (convex / popped out) */
+  .shadow-neu-outset {
+    box-shadow:
+      8px 8px 16px #13141a, /* Deep violet-black shadow */
+      -8px -8px 16px #262834; /* Lavender highlight */
+  }
+
+  /* Engraved (concave / pushed in) */
+  .shadow-neu-inset {
+    box-shadow:
+      inset 6px 6px 12px #111217,
+      inset -6px -6px 12px #252732;
+  }
+
+  /* Active press feedback */
+  .active-press:active {
+    transform: scale(0.98);
+    box-shadow:
+      inset 4px 4px 8px #111217,
+      inset -4px -4px 8px #252732;
+  }
+
+  /* Noise overlay utility (subtle tactile texture) */
+  .neu-noise {
+    position: relative;
+  }
+  .neu-noise::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/ filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/ svg%3E");
+    background-size: 300px 300px;
+    mix-blend-mode: overlay;
+    opacity: 0.4; /* faint */
+    border-radius: inherit;
+  }
+
+  /* Aliases to keep legacy class names working with new chromatic values */
+  .shadow-neumorphic-outset { @apply shadow-neu-outset; }
+  .shadow-neumorphic-inset { @apply shadow-neu-inset; }
+}
 }

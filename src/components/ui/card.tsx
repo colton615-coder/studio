@@ -9,16 +9,18 @@ const Card = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & {
     animate?: boolean
     interactive?: boolean
+    neu?: boolean
   }
->(({ className, animate = true, interactive = false, ...props }, ref) => {
+>(({ className, animate = true, interactive = false, neu = false, ...props }, ref) => {
   const Comp: any = animate ? MotionDiv : "div"
   
   return (
     <Comp
       ref={ref}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
-        interactive && "cursor-pointer transition-all duration-200 hover:shadow-neumorphic-inset hover:scale-[1.01]",
+        "rounded-lg border bg-card text-card-foreground shadow-sm neu-noise",
+        interactive && "cursor-pointer transition-all duration-200 shadow-neu-outset hover:shadow-neu-inset hover:scale-[1.01] active-press",
+        neu && "bg-neu-base shadow-neu-outset active-press text-foreground",
         className
       )}
       initial={animate ? { opacity: 0, y: 20 } : undefined}

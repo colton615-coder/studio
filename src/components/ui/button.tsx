@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:scale-[1.02] active:scale-[0.98]",
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:scale-[1.02] active:scale-[0.98] neu-noise",
   {
     variants: {
       variant: {
@@ -17,7 +17,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "underline-offset-4 hover:underline text-primary",
-        neumorphic: "shadow-neumorphic-outset hover:shadow-neumorphic-outset-lg active:shadow-neumorphic-inset bg-background",
+        neumorphic: "bg-neu-base shadow-neu-outset active-press text-foreground",
         success: "bg-success text-success-foreground hover:bg-success/90",
         warning: "bg-warning text-warning-foreground hover:bg-warning/90",
       },
@@ -29,7 +29,7 @@ const buttonVariants = cva(
       },
       shadow: {
         none: "",
-        neumorphic: "shadow-neumorphic-outset hover:shadow-neumorphic-inset",
+        neumorphic: "shadow-neu-outset active-press",
         glow: "hover:shadow-glow-purple",
         "glow-green": "hover:shadow-glow-green hover:scale-105",
         "glow-orange": "hover:shadow-glow-orange hover:scale-105",
@@ -50,15 +50,20 @@ export interface ButtonProps
   asChild?: boolean
   loading?: boolean
   loadingText?: string
+  neu?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading, loadingText, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading, loadingText, neu = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size }),
+          neu && "bg-neu-base shadow-neu-outset active-press neu-noise text-foreground",
+          className
+        )}
         ref={ref}
         disabled={loading || props.disabled}
         {...props}

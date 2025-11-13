@@ -50,7 +50,7 @@ export function JournalVault() {
                 </Button>
             </header>
 
-            <Card className="shadow-neumorphic-outset">
+            <Card neu>
                 <CardHeader>
                     <CardTitle>Past Entries</CardTitle>
                     <CardDescription>Your thoughts, safe and sound.</CardDescription>
