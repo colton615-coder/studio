@@ -11,6 +11,18 @@ To get started, take a look at `src/app/page.tsx`.
 - `npm run start` runs the production build
 - `npm run lint` runs eslint on `src`
 - `npm run typecheck` runs TypeScript type checks
+- `npm run test` runs the test suite with Vitest
+
+## CI/CD
+
+This repository uses GitHub Actions for continuous integration. The CI workflow (`.github/workflows/ci.yml`) runs on all pull requests to `main` and includes:
+
+- **Lint**: ESLint code quality checks
+- **Type Check**: TypeScript type validation
+- **Test**: Vitest test suite
+- **Build**: Production build verification
+
+See `docs/BRANCH_PROTECTION.md` for details on branch protection rules and required status checks.
 
 ## Sidebar State (stable)
 
