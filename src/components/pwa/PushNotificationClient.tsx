@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { NotificationService } from "@/services/NotificationService";
 

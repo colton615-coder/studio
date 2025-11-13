@@ -1,4 +1,6 @@
 // src/hooks/useDeviceValidation.ts
+"use client";
+
 import { useEffect, useState } from "react";
 
 export function useDeviceValidation() {

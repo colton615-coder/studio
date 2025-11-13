@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { useDeviceValidation } from "@/hooks/useDeviceValidation";
 import { Card } from "@/components/ui/Card";
