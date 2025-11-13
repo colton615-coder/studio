@@ -18,7 +18,7 @@ export async function getWorkoutPlan(
   try {
     const result = await generateWorkoutPlan({ prompt });
     return result;
-  } catch (_error) {
+  } catch {
     return { error: 'AI workout generator is unavailable right now. Please try again later.' };
   }
 }

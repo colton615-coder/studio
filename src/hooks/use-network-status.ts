@@ -12,8 +12,8 @@ export function useNetworkStatus() {
     try {
       const count = await offlineQueue.getOperationCount();
       setPendingCount(count);
-    } catch (error) {
-      console.error('Failed to get pending operations count:', error);
+    } catch {
+      // Failed to get count, use 0 as fallback
     }
   }, []);
 

@@ -12,7 +12,7 @@ export async function getBudgetSuggestions(
   try {
     const result = await getBudgetCoaching(input);
     return result;
-  } catch (_e: any) {
+  } catch {
     return { error: 'AI Financial Coach is unavailable right now. Please try again later.' };
   }
 }

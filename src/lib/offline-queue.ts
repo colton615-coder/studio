@@ -30,7 +30,6 @@ class OfflineQueueManager {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('Failed to open IndexedDB for offline queue');
         reject(request.error);
       };
 

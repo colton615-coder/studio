@@ -2,8 +2,6 @@
  * Type definitions for workout history and stats
  */
 
-import type { ClientExercise } from '@/ai/flows/workout-generator';
-
 export interface CompletedExercise {
   exerciseId: string;
   name: string;

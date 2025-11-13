@@ -23,8 +23,8 @@ const nameToHsl = (name: string) => {
 };
 
 
-export function ExerciseImage({ asset, name, className, alt }: ExerciseImageProps) {
-  const [currentAsset, setCurrentAsset] = useState(asset);
+export function ExerciseImage({ asset: _asset, name, alt, className }: ExerciseImageProps) {
+  const [currentAsset] = useState<PlaceholderImage | null>(null);
   const [hasApiError, setHasApiError] = useState(false);
 
   // Fallback to initials if API fails

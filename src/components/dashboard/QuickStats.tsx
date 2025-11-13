@@ -60,14 +60,12 @@ export function QuickStats() {
           try {
             const expenseDate = e.date?.toDate ? e.date.toDate() : new Date(e.date);
             return expenseDate >= monthStart;
-          } catch (error) {
-            console.error('Error parsing expense date:', error);
+          } catch {
             return false;
           }
         })
         .reduce((sum, e) => sum + (e.amount || 0), 0);
-    } catch (error) {
-      console.error('Error calculating monthly spend:', error);
+    } catch {
       return 0;
     }
   }, [expenses]);
@@ -76,8 +74,7 @@ export function QuickStats() {
     try {
       if (!budgets || !Array.isArray(budgets)) return 0;
       return budgets.reduce((sum, b) => sum + (b.amount || 0), 0);
-    } catch (error) {
-      console.error('Error calculating total budget:', error);
+    } catch {
       return 0;
     }
   }, [budgets]);
@@ -86,8 +83,7 @@ export function QuickStats() {
     try {
       if (!habits || !Array.isArray(habits) || habits.length === 0) return 0;
       return Math.max(...habits.map(h => h.streak || 0));
-    } catch (error) {
-      console.error('Error calculating longest streak:', error);
+    } catch {
       return 0;
     }
   }, [habits]);

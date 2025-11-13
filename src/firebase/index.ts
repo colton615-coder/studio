@@ -28,7 +28,7 @@ export function initializeFirebase() {
       try {
         // Attempt to initialize via Firebase Hosting environment variables
         firebaseApp = initializeApp();
-      } catch (_e) {
+      } catch {
         // If auto-init fails, fall back to explicit config
         firebaseApp = initializeApp(firebaseConfig);
       }
@@ -57,14 +57,13 @@ export function getSdks(firebaseApp: FirebaseApp) {
             tabManager: persistentMultipleTabManager(),
           }),
         });
-      } catch (e) {
+      } catch {
         // If persistence cannot be enabled (e.g., private mode), fall back to memory cache
         try {
           configuredFirestore = initializeFirestore(firebaseApp, {
             localCache: memoryLocalCache(),
           });
-          console.warn('Using in-memory cache for Firestore (persistence unavailable).');
-        } catch (_e) {
+        } catch {
           // As a last resort, get a default Firestore instance
           configuredFirestore = getFirestore(firebaseApp);
         }

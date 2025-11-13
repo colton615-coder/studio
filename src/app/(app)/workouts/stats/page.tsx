@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  BarChart3, TrendingUp, Dumbbell, Calendar, Award, 
+  BarChart3, TrendingUp, Dumbbell, Calendar, 
   Flame, Target, Trophy, Zap, Activity, Clock, ArrowLeft, Check
 } from 'lucide-react';
 import Link from 'next/link';
@@ -27,7 +27,9 @@ export default function WorkoutStatsPage() {
     if (user) {
       getWorkoutHistory(user.uid, 100)
         .then(setWorkouts)
-        .catch(console.error)
+        .catch(() => {
+          // Failed to load history
+        })
         .finally(() => setLoading(false));
     }
   }, [user]);

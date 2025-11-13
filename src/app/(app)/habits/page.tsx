@@ -33,7 +33,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyStateCTA } from '@/components/ui/empty-state-cta';
 import { celebrateHabitCompletion, celebrateStreak, celebrateAllHabitsComplete } from '@/lib/celebrations';
-import { logError, logWarn } from '@/lib/logger';
 
 
 const { Flame, Target, PlusCircle, Trash2, Loader2, BrainCircuit, BookOpen, GlassWater, Dumbbell, Bed, Apple, DollarSign, ClipboardCheck, Sparkles } = LucideIcons;
@@ -172,8 +171,8 @@ export default function HabitsPageNew() {
       if (result?.suggestion && result.suggestion.name !== name) {
         setInteractiveSuggestion(result.suggestion as HabitSuggestion);
       }
-    } catch (error) {
-      console.warn('Interactive suggestion failed:', error);
+    } catch {
+      // Suggestion failure is non-critical
     }
   }, 500);
 
@@ -217,7 +216,7 @@ export default function HabitsPageNew() {
       setIsDialogOpen(false);
       reset();
       setInteractiveSuggestion(null);
-    } catch (error) {
+    } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not create habit. Please try again.' });
       setHabits(habits.filter(h => h.id !== optimisticId));
     } finally {
@@ -264,8 +263,8 @@ export default function HabitsPageNew() {
           } else {
             haptics.medium();
           }
-        } catch (hapticError) {
-          console.warn('⚠️ Haptic feedback error:', hapticError);
+        } catch {
+          // Haptic feedback is optional
         }
 
         try {
@@ -274,8 +273,8 @@ export default function HabitsPageNew() {
           } else {
             celebrateHabitCompletion();
           }
-        } catch (confettiError) {
-          console.warn('⚠️ Confetti animation error:', confettiError);
+        } catch {
+          // Confetti animation is optional
         }
 
         try {
@@ -286,8 +285,8 @@ export default function HabitsPageNew() {
             streak: newStreak, 
             lastCompleted: serverTimestamp() 
           }, { merge: true });
-        } catch (firebaseError) {
-          console.error('❌ Firebase write error on habit completion:', firebaseError);
+        } catch {
+          // Firebase error handled by toast below
           
           if (setHabits && combinedHabits) {
             const rollbackHabits = combinedHabits.map(h => 
@@ -314,20 +313,20 @@ export default function HabitsPageNew() {
               try {
                 haptics.pattern([100, 75, 100, 75]);
                 celebrateAllHabitsComplete();
-              } catch (allCompleteError) {
-                console.warn('⚠️ All habits complete celebration error:', allCompleteError);
+              } catch {
+                // Celebration is optional
               }
             }, 300);
           }
-        } catch (checkError) {
-          console.warn('⚠️ All-complete check error:', checkError);
+        } catch {
+          // All-complete check is non-critical
         }
       } else {
         try {
           const logUpdate = { log: { [habit.id]: newDoneState } };
           await setDocumentNonBlocking(logRef, logUpdate, { merge: true });
-        } catch (firebaseError) {
-          console.error('❌ Firebase write error on habit un-completion:', firebaseError);
+        } catch {
+          // Firebase error handled by rollback and toast below
           
           if (setHabits && combinedHabits) {
             const rollbackHabits = combinedHabits.map(h => 
@@ -343,8 +342,7 @@ export default function HabitsPageNew() {
           });
         }
       }
-    } catch (error) {
-      console.error('❌ Critical error in toggleHabit:', error);
+    } catch {
       toast({ 
         variant: 'destructive', 
         title: 'Error', 
@@ -363,7 +361,7 @@ export default function HabitsPageNew() {
       const docRef = doc(habitsCollection, habit.id);
       await deleteDocumentNonBlocking(docRef);
       toast({ title: 'Habit Deleted', description: `"${habit.name}" has been removed.` });
-    } catch (error) {
+    } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not delete habit.' });
       setHabits(originalHabits);
     }

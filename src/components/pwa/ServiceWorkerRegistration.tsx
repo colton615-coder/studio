@@ -45,9 +45,8 @@ export default function ServiceWorkerRegistration() {
         }
 
         return () => clearInterval(interval);
-      } catch (err) {
+      } catch {
         // silent fail by design
-        console.warn('Service worker registration failed:', err);
       }
     })();
 

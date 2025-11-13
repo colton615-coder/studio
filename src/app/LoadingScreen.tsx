@@ -45,8 +45,7 @@ function getCachedAffirmation(): Affirmation | null {
     }
     
     return null;
-  } catch (error) {
-    console.error('Error reading cached affirmation:', error);
+  } catch {
     return null;
   }
 }
@@ -63,8 +62,8 @@ function cacheAffirmation(affirmation: Affirmation): void {
       timestamp: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error('Error caching affirmation:', error);
+  } catch {
+    // Cache write failure is non-critical
   }
 }
 
@@ -95,7 +94,6 @@ async function fetchRandomAffirmation(): Promise<Affirmation> {
       source: data.source,
     };
   } catch (error) {
-    console.error('Error fetching affirmation:', error);
     throw error;
   }
 }
@@ -124,9 +122,8 @@ export default function LoadingScreen() {
         const newAffirmation = await fetchRandomAffirmation();
         setAffirmation(newAffirmation);
         cacheAffirmation(newAffirmation);
-      } catch (_error) {
+      } catch {
         // Use fallback if fetch fails (offline, error, etc.)
-        console.warn('Using fallback affirmation due to fetch error');
         setAffirmation(FALLBACK_AFFIRMATION);
         // Don't cache fallback - we want to try fetching again next time
       } finally {

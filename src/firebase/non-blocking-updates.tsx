@@ -29,8 +29,8 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
         collectionPath: docRef.parent.path,
         documentId: docRef.id,
         data,
-      }).catch(queueError => {
-        console.error('Failed to queue operation:', queueError);
+      }).catch(() => {
+        // Queue operation failure is non-critical
       });
     } else {
       // Handle other errors (permissions, etc.)
@@ -64,8 +64,8 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
           type: 'add',
           collectionPath: colRef.path,
           data,
-        }).catch(queueError => {
-          console.error('Failed to queue operation:', queueError);
+        }).catch(() => {
+          // Queue operation failure is non-critical
         });
       } else {
         // Handle other errors (permissions, etc.)
@@ -99,8 +99,8 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
           collectionPath: docRef.parent.path,
           documentId: docRef.id,
           data,
-        }).catch(queueError => {
-          console.error('Failed to queue operation:', queueError);
+        }).catch(() => {
+          // Queue operation failure is non-critical
         });
       } else {
         // Handle other errors (permissions, etc.)
@@ -132,8 +132,8 @@ export function deleteDocumentNonBlocking(docRef: DocumentReference) {
           type: 'delete',
           collectionPath: docRef.parent.path,
           documentId: docRef.id,
-        }).catch(queueError => {
-          console.error('Failed to queue operation:', queueError);
+        }).catch(() => {
+          // Queue operation failure is non-critical
         });
       } else {
         // Handle other errors (permissions, etc.)

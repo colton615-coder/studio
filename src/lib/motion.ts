@@ -1,7 +1,6 @@
 "use client"
 
-import { motion, HTMLMotionProps } from "framer-motion"
-import React from "react"
+import { motion } from "framer-motion"
 
 // Use Framer Motion's HTMLMotionProps directly to avoid conflicts with React's
 // DOM event typings (onDrag, etc.). This keeps the motion props accurate.

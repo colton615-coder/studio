@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import type { WorkoutPlan, ClientExercise } from '@/ai/flows/workout-generator';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import type { WorkoutPlan } from '@/ai/flows/workout-generator';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PauseCircle, PlayCircle, SkipForward, XCircle, Info, Check, Trophy, Flame, Target, Wind, Clock } from 'lucide-react';
+import { PauseCircle, PlayCircle, SkipForward, XCircle, Info, Check, Flame, Target, Wind, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ExerciseImage } from '@/components/ui/ExerciseImage';
@@ -130,15 +130,13 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#FFD700', '#FFA500', '#FF6347'],
-        });
-      }
-    } catch (error) {
-      console.error('Failed to check PR:', error);
+        colors: ['#FFD700', '#FFA500', '#FF6347'],
+      });
     }
-  };
-
-  return (
+  } catch {
+    // PR check is non-critical
+  }
+};  return (
     <>
       <div className="fixed inset-0 w-full h-full">
         <ExerciseImage

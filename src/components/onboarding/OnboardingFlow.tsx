@@ -48,7 +48,7 @@ export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
         updatedAt: serverTimestamp(),
       });
       onComplete();
-    } catch (error) {
+    } catch {
       onComplete();
     }
   };

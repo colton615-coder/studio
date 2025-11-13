@@ -6,7 +6,6 @@ import { useNetworkStatus } from '@/hooks/use-network-status';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { offlineQueue, QueuedOperation } from '@/lib/offline-queue';
 import { useToast } from '@/hooks/use-toast';
 
 interface NetworkStatusIndicatorProps {
@@ -30,7 +29,7 @@ export function NetworkStatusIndicator({ onRetry }: NetworkStatusIndicatorProps)
         title: 'Sync Complete',
         description: 'All pending operations have been synced.',
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Sync Failed',

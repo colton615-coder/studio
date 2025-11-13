@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, ErrorInfo, ReactNode } from 'react'
+import React, { Component, ReactNode } from 'react'
 import { Button } from './ui/button'
 import { motion } from 'framer-motion'
 
@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Catch errors silently; component will render fallback UI
+  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
+    // Log to monitoring service if needed
   }
 
   public render() {

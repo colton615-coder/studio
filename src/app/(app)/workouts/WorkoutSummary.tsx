@@ -3,10 +3,8 @@ import { useRouter } from 'next/navigation';
 import type { WorkoutPlan } from '@/ai/flows/workout-generator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, CalendarPlus, BookHeart, PartyPopper, Clock, Flame, Zap, Trophy, TrendingUp } from 'lucide-react';
+import { CalendarPlus, BookHeart, PartyPopper, Clock, Zap, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { collection, serverTimestamp } from 'firebase/firestore';
@@ -41,12 +39,11 @@ export function WorkoutSummary({ workout, completedCount, onDone }: WorkoutSumma
         workout.exercises,
         totalTime
       )
-        .then((id) => {
-          console.log('Workout history saved with ID:', id);
+        .then(() => {
           setHistorySaved(true);
         })
-        .catch((error) => {
-          console.error('Failed to save workout history:', error);
+        .catch(() => {
+          // History save failure is non-critical
         });
     }
   }, [user, historySaved, workout, totalTime]);
@@ -74,12 +71,13 @@ export function WorkoutSummary({ workout, completedCount, onDone }: WorkoutSumma
       });
       
       toast({
-        title: "Success",
-        description: "Workout added to calendar"
+        title: 'Success',
+        description: 'Event added to your calendar!',
+        variant: "default",
       });
       
       router.push('/calendar');
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to add workout to calendar",

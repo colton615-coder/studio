@@ -26,7 +26,6 @@ export function usePullToRefresh({
   });
 
   const touchStartY = useRef<number>(0);
-  const scrollableRef = useRef<HTMLElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
   const handleTouchStart = useCallback(
@@ -95,10 +94,9 @@ export function usePullToRefresh({
         await onRefresh();
         // Success haptic
         haptics.success();
-      } catch (error) {
+      } catch {
         // Error haptic
         haptics.error();
-        console.error('Pull to refresh failed:', error);
       } finally {
         // Reset state
         setState({
