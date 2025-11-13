@@ -11,31 +11,19 @@ interface FirebaseClientProviderProps {
 }
 
 /**
- * AuthGate component handles the authentication flow:
- * - Shows animated splash screen while loading
- * - Redirects to /login if unauthenticated (except for public routes)
- * - Renders children if authenticated
+ * AuthGate component - NO AUTHENTICATION REQUIRED
+ * Authentication is only needed for "The Vault" (4-digit PIN)
+ * Shows splash screen with daily affirmation during initial load
  */
 function AuthGate({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useUser();
-  const pathname = usePathname();
-  const router = useRouter();
+  const { isUserLoading } = useUser();
 
-  // Show splash screen during initial auth check
+  // Show splash screen with daily affirmation during initial Firebase setup
   if (isUserLoading) {
     return <Splashscreen />;
   }
 
-  // Allow access to public routes without authentication
-  const publicRoutes = ['/login', '/signup'];
-  const isPublicRoute = publicRoutes.some(route => pathname?.startsWith(route));
-
-  // Redirect to login if not authenticated and not on a public route
-  if (!user && !isPublicRoute && pathname !== '/') {
-    router.push('/login');
-    return <Splashscreen />;
-  }
-
+  // No authentication checks - allow access to all routes
   return <>{children}</>;
 }
 

@@ -2,9 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { MotionDiv } from "@/lib/motion";
-import { Bot, Loader2 } from "lucide-react";
 import affirmationsData from "@/data/affirmations.json";
 
+/**
+ * Splashscreen with animated daily affirmation
+ * - Affirmation animates from small to big
+ * - Shows while app loads in background
+ * - Fades away to reveal the dashboard
+ */
 export default function Splashscreen() {
   const [affirmation, setAffirmation] = useState<string>("");
 
@@ -15,58 +20,61 @@ export default function Splashscreen() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-      {/* Animated logo container */}
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Main affirmation - animates from small to big */}
       <MotionDiv
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col items-center gap-4 mb-8"
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ 
+          scale: [0.3, 1.1, 1],
+          opacity: [0, 1, 1]
+        }}
+        transition={{ 
+          duration: 1.2,
+          ease: [0.34, 1.56, 0.64, 1], // Bouncy easing
+          times: [0, 0.7, 1]
+        }}
+        className="max-w-2xl px-8 text-center"
       >
+        {/* Affirmation text with glow effect */}
         <MotionDiv
-          animate={{ 
-            scale: [1, 1.05, 1],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/20 text-primary shadow-neumorphic-outset"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="relative"
         >
-          <Bot className="h-12 w-12 text-accent" />
-        </MotionDiv>
-        
-        <MotionDiv
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <h1 className="text-5xl font-bold font-headline text-accent">LiFE-iN-SYNC</h1>
+          <p className="text-2xl sm:text-3xl md:text-4xl font-bold font-headline text-accent leading-relaxed">
+            {affirmation || "Every day is a new opportunity to grow..."}
+          </p>
+          
+          {/* Decorative quotation marks */}
+          <span className="absolute -top-4 -left-2 text-6xl text-accent/30 font-serif">&ldquo;</span>
+          <span className="absolute -bottom-4 -right-2 text-6xl text-accent/30 font-serif">&rdquo;</span>
         </MotionDiv>
       </MotionDiv>
 
-      {/* Animated affirmation */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        className="max-w-md text-center px-4"
-      >
-        <p className="text-lg font-medium text-muted-foreground mb-6">
-          {affirmation || "Preparing your experience..."}
-        </p>
-      </MotionDiv>
-
-      {/* Loading indicator */}
+      {/* Subtle pulsing dots indicator */}
       <MotionDiv
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.3 }}
-        className="flex items-center gap-2"
+        transition={{ delay: 1, duration: 0.5 }}
+        className="flex space-x-2 mt-12"
       >
-        <Loader2 className="h-5 w-5 animate-spin text-accent" />
-        <span className="text-sm text-muted-foreground">Initializing...</span>
+        {[0, 1, 2].map((i) => (
+          <MotionDiv
+            key={i}
+            animate={{
+              scale: [1, 1.5, 1],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: i * 0.2,
+              ease: "easeInOut",
+            }}
+            className="w-2 h-2 rounded-full bg-accent"
+          />
+        ))}
       </MotionDiv>
     </div>
   );
