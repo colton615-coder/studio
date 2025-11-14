@@ -221,7 +221,7 @@ export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent open={open} className="max-w-2xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()}>
         {renderStep()}
       </DialogContent>
     </Dialog>

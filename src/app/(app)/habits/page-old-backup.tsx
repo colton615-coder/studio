@@ -743,7 +743,6 @@ export default function HabitsPage() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
-          open={isDialogOpen} 
           className="shadow-neumorphic-outset bg-background border-transparent max-h-[85vh] p-0 gap-0 flex flex-col"
           onInteractOutside={(e) => e.preventDefault()}
         >

@@ -481,7 +481,6 @@ export default function HabitsPageNew() {
       {/* NEW 2.0 MODAL */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
-          open={isDialogOpen}
           className="shadow-neumorphic-outset bg-background border-transparent max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col"
           onInteractOutside={(e) => e.preventDefault()}
         >

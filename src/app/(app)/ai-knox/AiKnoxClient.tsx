@@ -277,7 +277,6 @@ export function AiKnoxClient() {
 
       <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}>
         <DialogContent
-          open={isConfirmationModalOpen}
           className="sm:max-w-md shadow-neumorphic-outset bg-background border-transparent"
           hideCloseButton
           role="dialog"

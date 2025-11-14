@@ -238,7 +238,7 @@ export default function CalendarPage() {
           }
         }}
       >
-        <DialogContent open={isAddDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent">
+        <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           <DialogHeader>
             <DialogTitle>Add Event for {date ? format(date, 'MMMM d') : ''}</DialogTitle>
             <DialogDescription>
@@ -313,7 +313,7 @@ export default function CalendarPage() {
         open={isDetailDialogOpen} 
         onOpenChange={setIsDetailDialogOpen}
       >
-        <DialogContent open={isDetailDialogOpen} className="shadow-neumorphic-outset bg-background border-transparent">
+        <DialogContent className="shadow-neumorphic-outset bg-background border-transparent">
           {selectedEvent && (
             <>
               <DialogHeader>

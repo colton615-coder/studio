@@ -326,7 +326,6 @@ export function ActiveWorkout({ workout, onFinish }: ActiveWorkoutProps) {
       
        <Dialog open={isPauseModalOpen} onOpenChange={(open) => !open && handleResume()}>
         <DialogContent
-          open={isPauseModalOpen}
           className="shadow-neumorphic-outset bg-background border-transparent"
           hideCloseButton
           role="dialog"
