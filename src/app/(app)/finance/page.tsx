@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useTransition, FormEvent, useCallback, lazy, Suspense } from 'react';
 import Link from 'next/link';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc, query, orderBy, limit } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,7 +18,7 @@ import { DollarSign, PiggyBank, Receipt, PlusCircle, Loader2, Wand2, BrainCircui
 // Lazy load FinanceChart to reduce initial bundle size by ~200KB
 const FinanceChart = lazy(() => import('./FinanceChart').then(mod => ({ default: mod.FinanceChart })));
 import { Button } from '@/components/ui/button';
-import { EmeraldPrismButton } from './EmeraldPrismButton';
+import { EmeraldPrismButton } from '@/components/ui/EmeraldPrismButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -83,6 +83,7 @@ export default function FinancePage() {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
   const [budgetCreateSuccess, setBudgetCreateSuccess] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const handleRefresh = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }, []);
@@ -110,21 +111,21 @@ export default function FinancePage() {
   const [isAnalyzing, startAiTransition] = useTransition();
   const [showAiThinking, setShowAiThinking] = useState(false);
 
-  const budgetsCollection = useMemoFirebase(() => {
+  const budgetsCollection = useMemo(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'budgets');
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
   const { data: budgets, isLoading: isLoadingBudgets } = useCollection<Budget>(budgetsCollection, { mode: 'realtime' });
 
-  const expensesQuery = useMemoFirebase(() => {
+  const expensesQuery = useMemo(() => {
     if (!user || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'expenses'),
       orderBy('date', 'desc'),
       limit(50) // Only fetch recent 50 expenses for performance
     );
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
   const { data: expenses, isLoading: isLoadingExpenses } = useCollection<Expense>(expensesQuery, { mode: 'realtime' });
 
@@ -185,13 +186,17 @@ export default function FinancePage() {
             updatedAt: serverTimestamp(),
         });
         
-        // Visual feedback via button animation instead of toast
+        setRefreshKey(k => k + 1);
         setBudgetCreateSuccess(true);
-        setTimeout(() => setBudgetCreateSuccess(false), 1200);
+        setTimeout(() => {
+          setBudgetCreateSuccess(false);
+        }, 1200);
+
+        setIsBudgetDialogOpen(false);
         setNewBudgetName('');
         setNewBudgetAmount('');
         setNewBudgetCategory('');
-        setIsBudgetDialogOpen(false);
+
     } catch {
         toast({ variant: 'destructive', title: "Save Failed", description: "Could not save your budget. Please try again." });
     } finally {

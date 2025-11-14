@@ -12,6 +12,7 @@ export const EmberPrismButton: React.FC<EmberPrismButtonProps> = ({
   loading,
   success,
   children,
+  onClick,
   ...rest
 }) => (
   <PrismButton
@@ -19,6 +20,7 @@ export const EmberPrismButton: React.FC<EmberPrismButtonProps> = ({
     loading={loading}
     success={success}
     icon={<Flame className="w-5 h-5" />}
+    onClick={onClick}
     {...rest}
   >
     {children || 'Log Habit'}

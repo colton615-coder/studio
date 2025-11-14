@@ -12,6 +12,7 @@ export const EmeraldPrismButton: React.FC<EmeraldPrismButtonProps> = ({
   loading,
   success,
   children,
+  onClick,
   ...rest
 }) => (
   <PrismButton
@@ -19,6 +20,7 @@ export const EmeraldPrismButton: React.FC<EmeraldPrismButtonProps> = ({
     loading={loading}
     success={success}
     icon={<Plus className="w-5 h-5" />}
+    onClick={onClick}
     {...rest}
   >
     {children || 'New Budget'}

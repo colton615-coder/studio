@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, FormEvent, useCallback } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, query, where, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,14 +46,16 @@ export default function TasksPage() {
   const { toast } = useToast();
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newPriority, setNewPriority] = useState<Priority>('Medium');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const tasksCollection = useMemoFirebase(() => {
+  const tasksCollection = useMemo(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'tasks');
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
   const handleRefresh = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
+    setRefreshKey(k => k + 1);
   }, []);
 
   const pullToRefresh = usePullToRefresh({
@@ -62,22 +64,22 @@ export default function TasksPage() {
     enabled: true,
   });
 
-  const activeTasksQuery = useMemoFirebase(() => {
+  const activeTasksQuery = useMemo(() => {
     if (!user || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'tasks'),
       where('completed', '==', false)
     );
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
-  const completedTasksQuery = useMemoFirebase(() => {
+  const completedTasksQuery = useMemo(() => {
     if (!user || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'tasks'),
       where('completed', '==', true),
       limit(50) // Show recent 50 completed tasks
     );
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
   const { data: activeTasks, isLoading: isLoadingActive, setData: setActiveTasks } = useCollection<Task>(activeTasksQuery, { mode: 'realtime' });
   const { data: completedTasksData, isLoading: isLoadingCompleted, setData: setCompletedTasks } = useCollection<Task>(completedTasksQuery, { mode: 'realtime' });
@@ -115,44 +117,34 @@ export default function TasksPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newTaskDescription.trim() || !user || !tasksCollection || !tasks || !setTasks) return;
+    if (!newTaskDescription.trim() || !user || !tasksCollection) return;
     
     const description = newTaskDescription;
     const priority = newPriority;
+    
     setNewTaskDescription('');
     setNewPriority('Medium');
 
-    const optimisticId = uuidv4();
-    const optimisticTask: Task = {
-      id: optimisticId,
-      userProfileId: user.uid,
-      description: description,
-      completed: false,
-      priority: priority,
-      isOptimistic: true,
-    };
-
-    // 1. Optimistic UI update
-    setTasks([...tasks, optimisticTask]);
+    const newTaskId = uuidv4();
 
     try {
-      // 2. Background Firestore write
-      const docRef = doc(tasksCollection, optimisticId);
+      const docRef = doc(tasksCollection, newTaskId);
       setDocumentNonBlocking(docRef, {
-        id: optimisticId,
+        id: newTaskId,
         userProfileId: user.uid,
         description: description,
         completed: false,
         priority: priority,
-        dueDate: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      // Optimistic UI update provides sufficient feedback
+      setRefreshKey(k => k + 1);
     } catch {
-      // 3. Rollback on failure
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not add task.' });
-      setTasks(tasks.filter(t => t.id !== optimisticId));
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: 'Could not add task. Your connection may be offline.' 
+      });
     }
   };
 

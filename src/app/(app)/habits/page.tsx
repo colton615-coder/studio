@@ -4,7 +4,6 @@ import {
   useUser,
   useFirestore,
   useCollection,
-  useMemoFirebase,
   setDocumentNonBlocking,
   deleteDocumentNonBlocking,
 } from '@/firebase';
@@ -24,7 +23,7 @@ import { NetworkStatusIndicator } from '@/components/ui/network-status-indicator
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { EmberPrismButton } from './EmberPrismButton';
+import { EmberPrismButton } from '@/components/ui/EmberPrismButton';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -105,6 +104,7 @@ export default function HabitsPageNew() {
   const [habitCreateSuccess, setHabitCreateSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [interactiveSuggestion, setInteractiveSuggestion] = useState<HabitSuggestion | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const habitNameInputRef = useRef<HTMLInputElement>(null);
 
   const handleRefresh = useCallback(async () => {
@@ -131,15 +131,15 @@ export default function HabitsPageNew() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  const habitsCollection = useMemoFirebase(() => {
+  const habitsCollection = useMemo(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'habits');
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
-  const habitLogsCollection = useMemoFirebase(() => {
+  const habitLogsCollection = useMemo(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'habitLogs');
-  }, [user, firestore]);
+  }, [user, firestore, refreshKey]);
 
   const { data: habits, isLoading: isLoadingHabits, setData: setHabits } = useCollection<Habit>(habitsCollection, { mode: 'realtime' });
   const { data: habitHistory, isLoading: isLoadingHistory } = useCollection<DailyLog>(habitLogsCollection, { mode: 'realtime' });
@@ -183,28 +183,15 @@ export default function HabitsPageNew() {
   }, [watchName, debouncedFetchSuggestion]);
 
   const onSubmit = async (data: HabitFormData) => {
-    if (!user || !habitsCollection || !habits || !setHabits) return;
+    if (!user || !habitsCollection) return;
 
     setIsSaving(true);
-    const optimisticId = uuidv4();
-    const optimisticHabit: Habit = {
-      id: optimisticId,
-      userProfileId: user.uid,
-      name: data.name,
-      icon: data.icon,
-      color: data.color,
-      frequency: data.frequency,
-      streak: 0,
-      createdAt: new Date(),
-      isOptimistic: true,
-    };
-
-    setHabits([...habits, optimisticHabit]);
+    const newHabitId = uuidv4();
 
     try {
-      const docRef = doc(habitsCollection, optimisticId);
+      const docRef = doc(habitsCollection, newHabitId);
       await setDocumentNonBlocking(docRef, {
-        id: optimisticId,
+        id: newHabitId,
         userProfileId: user.uid,
         name: data.name,
         icon: data.icon,
@@ -214,15 +201,17 @@ export default function HabitsPageNew() {
         createdAt: serverTimestamp(),
       });
 
-      // Visual feedback via button animation instead of toast
+      setRefreshKey(k => k + 1);
       setHabitCreateSuccess(true);
       setTimeout(() => setHabitCreateSuccess(false), 1200);
+      
       setIsDialogOpen(false);
       reset();
       setInteractiveSuggestion(null);
-    } catch {
+
+    } catch (error) {
+      console.error("Error creating habit:", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not create habit. Please try again.' });
-      setHabits(habits.filter(h => h.id !== optimisticId));
     } finally {
       setIsSaving(false);
     }
